@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard – English Lesson Analyzer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .score-ring { stroke-dasharray: 282; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+    <span class="text-2xl">🎓</span>
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">English Lesson Analyzer</h1>
+      <p class="text-xs text-slate-500">Student Progress Dashboard</p>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- Student info -->
+    <div id="student-info" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600" id="avatar">?</div>
+        <div>
+          <h2 class="text-xl font-semibold" id="student-name">Loading…</h2>
+          <p class="text-sm text-slate-500" id="student-email"></p>
+        </div>
+        <div class="ml-auto text-right">
+          <p class="text-xs text-slate-400">Total lessons</p>
+          <p class="text-3xl font-bold text-indigo-600" id="total-lessons">–</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading / error state -->
+    <div id="loading" class="text-center py-12 text-slate-400">
+      <svg class="animate-spin w-8 h-8 mx-auto mb-3 text-indigo-400" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+      Loading reports…
+    </div>
+    <div id="error-box" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm"></div>
+    <div id="empty-box" class="hidden bg-slate-100 rounded-xl p-8 text-center text-slate-500">
+      No lesson reports yet. Reports appear here after a lesson is transcribed.
+    </div>
+
+    <!-- Latest report -->
+    <section id="latest-section" class="hidden space-y-4">
+      <h3 class="text-lg font-semibold text-slate-700">📊 Latest Lesson Report</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Fluency score ring -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Fluency Score</p>
+          <svg class="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+            <circle id="fluency-ring" cx="50" cy="50" r="45" fill="none" stroke="#6366f1" stroke-width="10"
+              class="score-ring" style="stroke-dashoffset:282"/>
+          </svg>
+          <p class="text-3xl font-bold text-indigo-600 -mt-16" id="fluency-score">–</p>
+          <p class="text-xs text-slate-400 mt-10">out of 10</p>
+        </div>
+
+        <!-- Vocabulary level -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center justify-center">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Vocabulary Level</p>
+          <p class="text-5xl font-extrabold text-indigo-500" id="vocab-level">–</p>
+          <p class="text-xs text-slate-400 mt-2">CEFR scale</p>
+        </div>
+
+        <!-- Lesson date -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center justify-center">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Lesson Date</p>
+          <p class="text-xl font-semibold text-slate-700" id="latest-date">–</p>
+          <p class="text-xs text-slate-400 mt-2" id="latest-meeting">–</p>
+        </div>
+      </div>
+
+      <!-- Grammar errors -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h4 class="font-semibold text-slate-700 mb-4">✏️ Grammar Errors</h4>
+        <div id="grammar-errors" class="space-y-3 text-sm">
+          <p class="text-slate-400 italic">No errors recorded.</p>
+        </div>
+      </div>
+
+      <!-- Weak topics + Recommendations -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h4 class="font-semibold text-slate-700 mb-3">🔍 Weak Topics</h4>
+          <ul id="weak-topics" class="space-y-2 text-sm text-slate-600">
+            <li class="text-slate-400 italic">None identified.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h4 class="font-semibold text-slate-700 mb-3">💡 Recommendations</h4>
+          <ol id="recommendations" class="space-y-2 text-sm text-slate-600 list-decimal list-inside">
+            <li class="text-slate-400 italic">None yet.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lesson history -->
+    <section id="history-section" class="hidden space-y-4">
+      <h3 class="text-lg font-semibold text-slate-700">📅 Lesson History</h3>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="text-left px-5 py-3 font-medium text-slate-500">Date</th>
+              <th class="text-left px-5 py-3 font-medium text-slate-500">Meeting ID</th>
+              <th class="text-center px-5 py-3 font-medium text-slate-500">Fluency</th>
+              <th class="text-center px-5 py-3 font-medium text-slate-500">Vocabulary</th>
+              <th class="text-left px-5 py-3 font-medium text-slate-500">Weak Topics</th>
+            </tr>
+          </thead>
+          <tbody id="history-table" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const STUDENT_ID = "__STUDENT_ID__";
+    const API_URL = `/api/students/${STUDENT_ID}/reports`;
+
+    function fmt(dateStr) {
+      if (!dateStr) return "–";
+      return new Date(dateStr).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+      });
+    }
+
+    function fluencyColor(score) {
+      if (score >= 8) return "text-green-600";
+      if (score >= 5) return "text-amber-500";
+      return "text-red-500";
+    }
+
+    function levelBadge(level) {
+      const colors = {
+        A1: "bg-red-100 text-red-700", A2: "bg-orange-100 text-orange-700",
+        B1: "bg-yellow-100 text-yellow-700", B2: "bg-lime-100 text-lime-700",
+        C1: "bg-green-100 text-green-700", C2: "bg-emerald-100 text-emerald-700",
+      };
+      const cls = colors[level] || "bg-slate-100 text-slate-600";
+      return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${cls}">${level || "–"}</span>`;
+    }
+
+    async function load() {
+      const loading = document.getElementById("loading");
+      const errorBox = document.getElementById("error-box");
+      const emptyBox = document.getElementById("empty-box");
+
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+
+        loading.classList.add("hidden");
+
+        // Student header
+        document.getElementById("student-name").textContent = data.student_name || "Unknown";
+        document.getElementById("student-email").textContent = data.student_email || "";
+        document.getElementById("avatar").textContent = (data.student_name || "?")[0].toUpperCase();
+        document.getElementById("total-lessons").textContent = data.reports.length;
+
+        if (!data.reports.length) {
+          emptyBox.classList.remove("hidden");
+          return;
+        }
+
+        // ── Latest report ──────────────────────────────────────────────
+        const latest = data.reports[0];
+        document.getElementById("latest-section").classList.remove("hidden");
+
+        // Fluency ring (circumference = 2π×45 ≈ 282)
+        const pct = (latest.fluency_score / 10);
+        const offset = 282 - pct * 282;
+        document.getElementById("fluency-ring").style.strokeDashoffset = offset;
+        const scoreEl = document.getElementById("fluency-score");
+        scoreEl.textContent = latest.fluency_score.toFixed(1);
+        scoreEl.className = `text-3xl font-bold -mt-16 ${fluencyColor(latest.fluency_score)}`;
+
+        document.getElementById("vocab-level").textContent = latest.vocabulary_level || "–";
+        document.getElementById("latest-date").textContent = fmt(latest.lesson_date || latest.created_at);
+        document.getElementById("latest-meeting").textContent = latest.meeting_id
+          ? `Meeting: ${latest.meeting_id}` : "";
+
+        // Grammar errors
+        const grammarEl = document.getElementById("grammar-errors");
+        if (latest.grammar_errors && latest.grammar_errors.length) {
+          grammarEl.innerHTML = latest.grammar_errors.map(e => `
+            <div class="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <p class="text-red-600 font-medium">❌ "${e.error}"</p>
+              <p class="text-green-700 mt-1">✅ Correct: <em>${e.correction}</em></p>
+              <p class="text-slate-500 mt-1">💬 ${e.example}</p>
+            </div>
+          `).join("");
+        } else {
+          grammarEl.innerHTML = `<p class="text-green-600">No grammar errors detected — great job! 🎉</p>`;
+        }
+
+        // Weak topics
+        const weakEl = document.getElementById("weak-topics");
+        weakEl.innerHTML = (latest.weak_topics || []).length
+          ? latest.weak_topics.map(t =>
+              `<li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>${t}</li>`
+            ).join("")
+          : `<li class="text-slate-400 italic">None identified.</li>`;
+
+        // Recommendations
+        const recEl = document.getElementById("recommendations");
+        recEl.innerHTML = (latest.recommendations || []).length
+          ? latest.recommendations.map((r, i) =>
+              `<li><span class="font-semibold text-indigo-600">${i + 1}.</span> ${r}</li>`
+            ).join("")
+          : `<li class="text-slate-400 italic">None yet.</li>`;
+
+        // ── History table ───────────────────────────────────────────────
+        if (data.reports.length > 1) {
+          document.getElementById("history-section").classList.remove("hidden");
+          const tbody = document.getElementById("history-table");
+          tbody.innerHTML = data.reports.map(r => `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="px-5 py-3">${fmt(r.lesson_date || r.created_at)}</td>
+              <td class="px-5 py-3 text-slate-500 text-xs font-mono">${r.meeting_id || "–"}</td>
+              <td class="px-5 py-3 text-center font-semibold ${fluencyColor(r.fluency_score)}">
+                ${r.fluency_score.toFixed(1)}
+              </td>
+              <td class="px-5 py-3 text-center">${levelBadge(r.vocabulary_level)}</td>
+              <td class="px-5 py-3 text-slate-500 text-xs">
+                ${(r.weak_topics || []).slice(0, 3).join(", ") || "–"}
+              </td>
+            </tr>
+          `).join("");
+        }
+
+      } catch (err) {
+        loading.classList.add("hidden");
+        errorBox.textContent = `Failed to load reports: ${err.message}`;
+        errorBox.classList.remove("hidden");
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

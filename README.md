@@ -1,0 +1,247 @@
+# English Lesson Analyzer
+
+SaaS-сервис анализа уроков английского языка.  
+Принимает транскрипты от **Recall.ai**, анализирует речь студента с помощью **Claude claude-opus-4-8**, сохраняет результаты в **Supabase** и отображает прогресс на HTML-дашборде.
+
+---
+
+## Архитектура
+
+```
+Recall.ai  ──POST──►  /webhook/recall
+                            │
+                    background task
+                            │
+                    ┌───────▼───────┐
+                    │ Claude claude-opus-4-8  │  ← анализ транскрипта
+                    └───────┬───────┘
+                            │ JSON-отчёт
+                    ┌───────▼───────┐
+                    │   Supabase    │  ← students / lessons / reports
+                    └───────┬───────┘
+                            │
+          GET /api/students/{id}/reports
+          GET /api/dashboard/{id}        ──► HTML дашборд
+```
+
+---
+
+## Быстрый старт
+
+### 1. Клонируем и устанавливаем зависимости
+
+```bash
+git clone <repo-url>
+cd english-agent
+
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Настраиваем переменные окружения
+
+```bash
+cp .env.example .env
+# Открываем .env и вписываем ключи
+```
+
+| Переменная | Где взять |
+|---|---|
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `SUPABASE_URL` | Settings → API → Project URL |
+| `SUPABASE_KEY` | Settings → API → service_role или anon key |
+| `RECALL_WEBHOOK_SECRET` | Опционально, для верификации подписи Recall.ai |
+
+### 3. Создаём таблицы в Supabase
+
+Выполните следующий SQL в **Supabase SQL Editor**:
+
+```sql
+-- Студенты
+CREATE TABLE students (
+    id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name       TEXT NOT NULL,
+    email      TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Уроки (сырой транскрипт)
+CREATE TABLE lessons (
+    id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE NOT NULL,
+    meeting_id TEXT,
+    transcript TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Отчёты Claude
+CREATE TABLE reports (
+    id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lesson_id        UUID REFERENCES lessons(id) ON DELETE CASCADE NOT NULL,
+    student_id       UUID REFERENCES students(id) ON DELETE CASCADE NOT NULL,
+    grammar_errors   JSONB    DEFAULT '[]',
+    vocabulary_level TEXT,
+    fluency_score    FLOAT,
+    weak_topics      JSONB    DEFAULT '[]',
+    recommendations  JSONB    DEFAULT '[]',
+    created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Индексы для быстрых выборок по студенту
+CREATE INDEX ON lessons (student_id);
+CREATE INDEX ON reports (student_id);
+CREATE INDEX ON reports (lesson_id);
+```
+
+### 4. Запускаем сервер
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+Документация API доступна по адресу: <http://localhost:8000/docs>
+
+---
+
+## API
+
+### `POST /webhook/recall`
+
+Принимает вебхук от Recall.ai с транскриптом звонка.
+
+**Пример payload:**
+```json
+{
+  "event": "bot.transcription",
+  "data": {
+    "bot_id": "bot_abc123",
+    "metadata": {
+      "student_name": "Ivan Petrov",
+      "student_email": "ivan@example.com"
+    },
+    "transcript": [
+      {
+        "speaker": "Ivan",
+        "words": [
+          {"text": "Hello,"},
+          {"text": "I"},
+          {"text": "want"},
+          {"text": "to"},
+          {"text": "practice."}
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Ответ:**
+```json
+{"status": "accepted", "event": "bot.transcription"}
+```
+
+Анализ выполняется **в фоне** — ответ возвращается мгновенно.
+
+---
+
+### `GET /api/students/{student_id}/reports`
+
+Возвращает все отчёты студента.
+
+**Ответ:**
+```json
+{
+  "student_id": "uuid",
+  "student_name": "Ivan Petrov",
+  "student_email": "ivan@example.com",
+  "reports": [
+    {
+      "id": "uuid",
+      "lesson_id": "uuid",
+      "fluency_score": 6.5,
+      "vocabulary_level": "B1",
+      "grammar_errors": [
+        {
+          "error": "I have went to school",
+          "correction": "I went to school",
+          "example": "I went to school yesterday."
+        }
+      ],
+      "weak_topics": ["past perfect", "article usage"],
+      "recommendations": [
+        "Practice past simple vs past perfect using daily diary writing"
+      ],
+      "lesson_date": "2025-01-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /api/dashboard/{student_id}`
+
+Возвращает HTML-дашборд студента с последним отчётом и историей уроков.
+
+---
+
+## Настройка Recall.ai
+
+1. Создайте бот через Recall.ai API, передав **metadata** студента:
+   ```json
+   {
+     "meeting_url": "https://meet.google.com/xxx",
+     "metadata": {
+       "student_name": "Ivan Petrov",
+       "student_email": "ivan@example.com"
+     },
+     "bot_name": "English Coach"
+   }
+   ```
+
+2. Зарегистрируйте вебхук в настройках Recall.ai:
+   - URL: `https://your-domain.com/webhook/recall`
+   - Events: `bot.transcription` / `bot.transcription_complete`
+
+3. Для локального тестирования используйте [ngrok](https://ngrok.com):
+   ```bash
+   ngrok http 8000
+   # Используйте полученный URL как адрес вебхука
+   ```
+
+---
+
+## Структура проекта
+
+```
+english-agent/
+├── main.py                    # FastAPI приложение
+├── requirements.txt
+├── .env.example
+│
+├── models/
+│   └── schemas.py             # Pydantic-модели
+│
+├── services/
+│   ├── claude_service.py      # Анализ через Anthropic API
+│   └── supabase_service.py    # CRUD-операции Supabase
+│
+├── routers/
+│   ├── webhook.py             # POST /webhook/recall
+│   └── reports.py             # GET /api/students/{id}/reports + дашборд
+│
+└── static/
+    └── dashboard.html         # HTML-дашборд студента
+```
+
+---
+
+## Ключевые технические решения
+
+| Решение | Причина |
+|---|---|
+| **Prompt caching** на системном промпте | Системный промпт (~600 токенов) одинаков для каждого анализа — кэш экономит ~90% токенов на повторных вызовах |
+| **Structured output** (`output_config.format`) | Гарантирует валидный JSON от модели без парсинга с ошибками |
+| **BackgroundTasks** для обработки вебхука | Recall.ai ожидает быстрый ответ `200 OK`; тяжёлый анализ идёт асинхронно |
+| **Upsert студента по email** | Предотвращает дубликаты при повторных уроках одного студента |
