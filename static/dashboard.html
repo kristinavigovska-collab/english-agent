@@ -1,257 +1,1128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Dashboard – English Lesson Analyzer</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Дашборд урока — English Lesson Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    .score-ring { stroke-dasharray: 282; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --card: #F2F2F2;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --text-light: #9ca3af;
+      --border: #e5e7eb;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --accent-hover: #4338ca;
+      --btn-active: #0F1012;
+      --btn-active-hover: #2a2b2e;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --green-border: #a7f3d0;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --red: #dc2626;
+      --red-soft: #fef2f2;
+      --radius: 40px;
+      --radius-sm: 40px;
+      --sidebar-width: 280px;
+      --page-padding: 24px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── App layout ── */
+    .app {
+      display: flex;
+      min-height: 100vh;
+      padding: var(--page-padding);
+      gap: var(--page-padding);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      position: sticky;
+      top: var(--page-padding);
+      align-self: flex-start;
+      max-height: calc(100vh - var(--page-padding) * 2);
+      overflow-y: auto;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff;
+      font-size: 1.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    .sidebar-name {
+      text-align: center;
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+    }
+
+    .sidebar-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.625rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn:hover {
+      background: #e8e8e8;
+      border-color: #d1d5db;
+    }
+
+    .btn-primary {
+      background: var(--btn-active);
+      border-color: var(--btn-active);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--btn-active-hover);
+      border-color: var(--btn-active-hover);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.25rem 0;
+    }
+
+    .sidebar-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+    }
+
+    .stat-row .label { color: var(--text-muted); }
+    .stat-row .value { font-weight: 600; color: var(--text); }
+
+    .stat-row .value.cefr {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    .lesson-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .meta-item .meta-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 0.2rem;
+    }
+
+    .meta-item .meta-value {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      background: var(--card);
+      padding: 0.375rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.625rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .tab:hover { color: var(--text); background: #e8e8e8; }
+
+    .tab.active {
+      background: var(--btn-active);
+      color: #fff;
+    }
+
+    .tab-panel { display: none; flex-direction: column; gap: 1.25rem; }
+    .tab-panel.active { display: flex; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      gap: 1rem;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-grammar   { background: #fef3c7; }
+    .icon-vocab     { background: #dbeafe; }
+    .icon-fluency   { background: #ede9fe; }
+    .icon-pronounce { background: #fce7f3; }
+    .icon-strength  { background: var(--green-soft); }
+    .icon-plan      { background: var(--accent-soft); }
+    .icon-chart     { background: #f0fdf4; }
+    .icon-summary   { background: #f3f4f6; }
+
+    .score-badge {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.1rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+
+    .score-badge .num { font-size: 1.1rem; }
+    .score-badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .score-badge.green { background: var(--green-soft); color: var(--green); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    /* ── Grammar ── */
+    .error-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .error-item {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.875rem 1rem;
+    }
+
+    .error-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .error-row .arrow { color: var(--text-light); font-size: 0.75rem; }
+
+    .said {
+      color: var(--red);
+      text-decoration: line-through;
+      text-decoration-color: rgba(220, 38, 38, 0.35);
+    }
+
+    .correct { color: var(--green); font-weight: 600; }
+
+    .error-tag {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-light);
+      background: var(--border);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-top: 0.45rem;
+    }
+
+    /* ── Vocabulary ── */
+    .vocab-section { margin-bottom: 1.125rem; }
+    .vocab-section:last-child { margin-bottom: 0; }
+
+    .vocab-section h4 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .misused-list { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+
+    .misused-list li {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.45rem;
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--red-soft);
+      border-radius: var(--radius-sm);
+      border: 1px solid #fecaca;
+    }
+
+    .misused-list .wrong { color: var(--red); font-weight: 500; }
+    .misused-list .right { color: var(--green); font-weight: 600; }
+
+    .new-words { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+    .word-chip {
+      display: inline-flex;
+      flex-direction: column;
+      background: var(--accent-soft);
+      border: 1px solid #c7d2fe;
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .word-chip strong { color: var(--accent); font-weight: 600; }
+    .word-chip span { color: var(--text-muted); font-size: 0.75rem; margin-top: 0.1rem; }
+
+    /* ── Metrics ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.625rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric {
+      text-align: center;
+      padding: 0.75rem 0.4rem;
+      background: #fafbfc;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .metric .val { font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+    .metric .lbl { font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    .metric-bar-wrap { margin-top: 0.65rem; }
+
+    .metric-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .metric-bar {
+      height: 5px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    /* ── Pronunciation ── */
+    .pronounce-words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.875rem;
+    }
+
+    .pronounce-word {
+      background: var(--red-soft);
+      color: var(--red);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid #fecaca;
+    }
+
+    .sound-list { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+
+    .sound-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.8125rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sound-list li:last-child { border-bottom: none; }
+
+    .phoneme {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      min-width: 2.25rem;
+      text-align: center;
+    }
+
+    /* ── Strengths ── */
+    .strengths-card {
+      background: var(--card);
+      border-color: var(--border);
+    }
+
+    .strengths-card .card-title { color: var(--text); }
+
+    .strength-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .strength-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.875rem;
+      color: #047857;
+    }
+
+    .strength-list li::before {
+      content: "✓";
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* ── Plan ── */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .plan-block h4 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .plan-block ol, .plan-block ul {
+      padding-left: 1.1rem;
+      font-size: 0.8125rem;
+    }
+
+    .plan-block li { margin-bottom: 0.35rem; }
+    .plan-block li::marker { color: var(--accent); font-weight: 600; }
+
+    /* ── Summary tab ── */
+    .summary-score {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-score-ring {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0deg 252deg, var(--border) 252deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .summary-score-ring-inner {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .summary-text { font-size: 0.9375rem; color: var(--text-muted); line-height: 1.65; }
+
+    .summary-highlights {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .highlight-box {
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fafbfc;
+    }
+
+    .highlight-box h4 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight-box.focus h4 { color: var(--amber); }
+    .highlight-box.win h4 { color: var(--green); }
+
+    .highlight-box ul {
+      padding-left: 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .highlight-box li { margin-bottom: 0.3rem; }
+
+    /* ── Chart ── */
+    .chart-wrap { padding: 0.25rem 0; }
+    .chart-svg { width: 100%; height: auto; display: block; }
+
+    .chart-grid-line { stroke: var(--border); stroke-width: 1; }
+    .chart-area { fill: url(#areaGradient); opacity: 0.25; }
+    .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-dot { fill: #fff; stroke: var(--accent); stroke-width: 2; }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+
+    .chart-labels span {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      flex: 1;
+      text-align: center;
+    }
+
+    .trend-up { color: var(--green); font-weight: 600; font-size: 0.8125rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .app { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+      }
+      .grid-2, .plan-grid, .summary-highlights { grid-template-columns: 1fr; }
+      .tabs { flex-wrap: wrap; }
+      .tab { flex: 1 1 auto; }
+    }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+<body>
 
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-    <span class="text-2xl">🎓</span>
-    <div>
-      <h1 class="text-xl font-bold text-slate-900">English Lesson Analyzer</h1>
-      <p class="text-xs text-slate-500">Student Progress Dashboard</p>
-    </div>
-  </header>
+  <div class="app">
 
-  <main class="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <!-- Left sidebar -->
+    <aside class="sidebar">
+      <div class="avatar">А</div>
+      <h1 class="sidebar-name">Анна Петрова</h1>
 
-    <!-- Student info -->
-    <div id="student-info" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600" id="avatar">?</div>
-        <div>
-          <h2 class="text-xl font-semibold" id="student-name">Loading…</h2>
-          <p class="text-sm text-slate-500" id="student-email"></p>
-        </div>
-        <div class="ml-auto text-right">
-          <p class="text-xs text-slate-400">Total lessons</p>
-          <p class="text-3xl font-bold text-indigo-600" id="total-lessons">–</p>
-        </div>
+      <div class="sidebar-actions">
+        <button class="btn" type="button">📅 История уроков</button>
+        <button class="btn btn-primary" type="button">⬇ Скачать PDF</button>
       </div>
-    </div>
 
-    <!-- Loading / error state -->
-    <div id="loading" class="text-center py-12 text-slate-400">
-      <svg class="animate-spin w-8 h-8 mx-auto mb-3 text-indigo-400" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-      </svg>
-      Loading reports…
-    </div>
-    <div id="error-box" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm"></div>
-    <div id="empty-box" class="hidden bg-slate-100 rounded-xl p-8 text-center text-slate-500">
-      No lesson reports yet. Reports appear here after a lesson is transcribed.
-    </div>
+      <div class="divider"></div>
 
-    <!-- Latest report -->
-    <section id="latest-section" class="hidden space-y-4">
-      <h3 class="text-lg font-semibold text-slate-700">📊 Latest Lesson Report</h3>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <!-- Fluency score ring -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center">
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Fluency Score</p>
-          <svg class="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="10"/>
-            <circle id="fluency-ring" cx="50" cy="50" r="45" fill="none" stroke="#6366f1" stroke-width="10"
-              class="score-ring" style="stroke-dashoffset:282"/>
-          </svg>
-          <p class="text-3xl font-bold text-indigo-600 -mt-16" id="fluency-score">–</p>
-          <p class="text-xs text-slate-400 mt-10">out of 10</p>
+      <div class="sidebar-stats">
+        <div class="stat-row">
+          <span class="label">Всего уроков</span>
+          <span class="value">7</span>
         </div>
-
-        <!-- Vocabulary level -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center justify-center">
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Vocabulary Level</p>
-          <p class="text-5xl font-extrabold text-indigo-500" id="vocab-level">–</p>
-          <p class="text-xs text-slate-400 mt-2">CEFR scale</p>
+        <div class="stat-row">
+          <span class="label">Средний балл</span>
+          <span class="value">6.2 / 10</span>
         </div>
-
-        <!-- Lesson date -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col items-center justify-center">
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Lesson Date</p>
-          <p class="text-xl font-semibold text-slate-700" id="latest-date">–</p>
-          <p class="text-xs text-slate-400 mt-2" id="latest-meeting">–</p>
+        <div class="stat-row">
+          <span class="label">Уровень CEFR</span>
+          <span class="value cefr">B1</span>
         </div>
       </div>
 
-      <!-- Grammar errors -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h4 class="font-semibold text-slate-700 mb-4">✏️ Grammar Errors</h4>
-        <div id="grammar-errors" class="space-y-3 text-sm">
-          <p class="text-slate-400 italic">No errors recorded.</p>
+      <div class="divider"></div>
+
+      <div class="lesson-meta">
+        <div class="meta-item">
+          <div class="meta-label">Дата последнего урока</div>
+          <div class="meta-value">28 мая 2026</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Тема урока</div>
+          <div class="meta-value">Travel &amp; Past Tenses</div>
         </div>
       </div>
+    </aside>
 
-      <!-- Weak topics + Recommendations -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h4 class="font-semibold text-slate-700 mb-3">🔍 Weak Topics</h4>
-          <ul id="weak-topics" class="space-y-2 text-sm text-slate-600">
-            <li class="text-slate-400 italic">None identified.</li>
+    <!-- Right main content -->
+    <div class="main">
+
+      <nav class="tabs" role="tablist">
+        <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Текущий урок</button>
+        <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
+        <button class="tab" type="button" role="tab" data-tab="detailed" aria-selected="false">Детальный отчёт</button>
+      </nav>
+
+      <!-- Tab: Current lesson -->
+      <div class="tab-panel active" id="panel-current" role="tabpanel">
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-grammar">✏️</span>
+              Грамматика
+            </h2>
+            <span class="score-badge amber"><span class="num">6</span>/10</span>
+          </div>
+          <ul class="error-list">
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«I have went to Paris last year»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«I went to Paris last year»</span>
+              </div>
+              <span class="error-tag">Past Simple vs Present Perfect</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«She don't like spicy food»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«She doesn't like spicy food»</span>
+              </div>
+              <span class="error-tag">Third person — Present Simple</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«I am living here since 2020»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«I have lived here since 2020»</span>
+              </div>
+              <span class="error-tag">Present Perfect + since</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«More better than before»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«Much better than before»</span>
+              </div>
+              <span class="error-tag">Comparatives</span>
+            </li>
           </ul>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h4 class="font-semibold text-slate-700 mb-3">💡 Recommendations</h4>
-          <ol id="recommendations" class="space-y-2 text-sm text-slate-600 list-decimal list-inside">
-            <li class="text-slate-400 italic">None yet.</li>
-          </ol>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- Lesson history -->
-    <section id="history-section" class="hidden space-y-4">
-      <h3 class="text-lg font-semibold text-slate-700">📅 Lesson History</h3>
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th class="text-left px-5 py-3 font-medium text-slate-500">Date</th>
-              <th class="text-left px-5 py-3 font-medium text-slate-500">Meeting ID</th>
-              <th class="text-center px-5 py-3 font-medium text-slate-500">Fluency</th>
-              <th class="text-center px-5 py-3 font-medium text-slate-500">Vocabulary</th>
-              <th class="text-left px-5 py-3 font-medium text-slate-500">Weak Topics</th>
-            </tr>
-          </thead>
-          <tbody id="history-table" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-    </section>
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-vocab">📚</span>
+              Словарный запас
+            </h2>
+            <span class="score-badge"><span class="num">7</span>/10</span>
+          </div>
+          <div class="vocab-section">
+            <h4>Использованы неправильно</h4>
+            <ul class="misused-list">
+              <li>
+                <span class="wrong">boring</span>
+                <span class="arrow">→</span>
+                <span class="right">bored</span>
+                <span style="color:var(--text-muted);font-size:.75rem">(ed/-ing)</span>
+              </li>
+              <li>
+                <span class="wrong">funny</span>
+                <span class="arrow">→</span>
+                <span class="right">fun</span>
+                <span style="color:var(--text-muted);font-size:.75rem">(fun ≠ funny)</span>
+              </li>
+              <li>
+                <span class="wrong">actually</span>
+                <span class="arrow">→</span>
+                <span class="right">currently</span>
+                <span style="color:var(--text-muted);font-size:.75rem">(false friend)</span>
+              </li>
+            </ul>
+          </div>
+          <div class="vocab-section">
+            <h4>5 новых слов для изучения</h4>
+            <div class="new-words">
+              <div class="word-chip"><strong>itinerary</strong><span>маршрут поездки</span></div>
+              <div class="word-chip"><strong>layover</strong><span>пересадка</span></div>
+              <div class="word-chip"><strong>scenic</strong><span>живописный</span></div>
+              <div class="word-chip"><strong>backpacking</strong><span>с рюкзаком</span></div>
+              <div class="word-chip"><strong>off the beaten path</strong><span>вдали от туристов</span></div>
+            </div>
+          </div>
+        </section>
 
-  </main>
+        <div class="grid-2">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-fluency">💬</span>
+                Беглость речи
+              </h2>
+              <span class="score-badge green"><span class="num">8</span>/10</span>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <div class="val">112</div>
+                <div class="lbl">слов/мин</div>
+              </div>
+              <div class="metric">
+                <div class="val">1.4<span style="font-size:.8rem">с</span></div>
+                <div class="lbl">средняя пауза</div>
+              </div>
+              <div class="metric">
+                <div class="val">9.2</div>
+                <div class="lbl">слов в предложении</div>
+              </div>
+            </div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar-label">
+                <span>Темп речи</span>
+                <span>100–130 wpm</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
+            </div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar-label">
+                <span>Длина предложений</span>
+                <span>цель: 10–12</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width:76%"></div></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-pronounce">🎙️</span>
+                Произношение
+              </h2>
+              <span class="score-badge amber"><span class="num">6</span>/10</span>
+            </div>
+            <div class="vocab-section">
+              <h4>Слова с ошибками</h4>
+              <div class="pronounce-words">
+                <span class="pronounce-word">thought</span>
+                <span class="pronounce-word">world</span>
+                <span class="pronounce-word">beach</span>
+                <span class="pronounce-word">vocabulary</span>
+                <span class="pronounce-word">comfortable</span>
+              </div>
+            </div>
+            <div class="vocab-section">
+              <h4>Проблемные звуки</h4>
+              <ul class="sound-list">
+                <li>
+                  <span class="phoneme">θ</span>
+                  <span><strong>th</strong> — «thought» → «sought»</span>
+                </li>
+                <li>
+                  <span class="phoneme">w</span>
+                  <span><strong>w vs v</strong> — «world» → «vorld»</span>
+                </li>
+                <li>
+                  <span class="phoneme">iː</span>
+                  <span><strong>long ee</strong> — «beach» → «bitch»</span>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <section class="card strengths-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-strength">🌟</span>
+              Сильные стороны
+            </h2>
+          </div>
+          <ul class="strength-list">
+            <li>Уверенно поддерживает разговор на тему путешествий — перефразирует при незнакомых словах</li>
+            <li>Хороший словарный запас по теме: «destination», «booking», «reservation» без подсказок</li>
+            <li>Естественные интонационные паузы — речь звучит живой, не монотонной</li>
+            <li>Активно задаёт уточняющие вопросы: «Could you explain that?»</li>
+            <li>Заметный прогресс: меньше длинных пауз и самокоррекций</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-plan">📋</span>
+              План на следующий урок
+            </h2>
+          </div>
+          <div class="plan-grid">
+            <div class="plan-block">
+              <h4>Темы для проработки</h4>
+              <ol>
+                <li>Present Perfect vs Past Simple</li>
+                <li>Comparatives &amp; Superlatives</li>
+                <li>Ed/-ing adjectives</li>
+                <li>Th-sounds (/θ/ и /ð/)</li>
+              </ol>
+            </div>
+            <div class="plan-block">
+              <h4>Упражнения</h4>
+              <ul>
+                <li>Gap-fill: 15 предложений</li>
+                <li>Minimal pairs: think/sink</li>
+                <li>Role-play: booking a hotel</li>
+                <li>Shadowing: подкаст о путешествиях</li>
+              </ul>
+            </div>
+            <div class="plan-block">
+              <h4>Слова для заучивания</h4>
+              <ul>
+                <li>itinerary, layover, scenic</li>
+                <li>backpacking, off the beaten path</li>
+                <li>currently, recently, lately</li>
+                <li>comfortable, thought, through</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Tab: Summary -->
+      <div class="tab-panel" id="panel-summary" role="tabpanel">
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-summary">📝</span>
+              Краткое саммари урока
+            </h2>
+            <span class="score-badge"><span class="num">7</span>/10</span>
+          </div>
+          <div class="summary-score">
+            <div class="summary-score-ring">
+              <div class="summary-score-ring-inner">7</div>
+            </div>
+            <p class="summary-text">
+              Анна уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
+              Основные зоны роста — грамматика времен (Past Simple vs Present Perfect) и произношение
+              звуков /θ/ и /iː/. Словарный запас на уровне B1, заметен прогресс за последний месяц (+1.2 балла).
+            </p>
+          </div>
+          <div class="summary-highlights">
+            <div class="highlight-box win">
+              <h4>Что получилось</h4>
+              <ul>
+                <li>Беглая речь на тему travel</li>
+                <li>Активное участие в диалоге</li>
+                <li>Хороший тематический словарь</li>
+              </ul>
+            </div>
+            <div class="highlight-box focus">
+              <h4>На что обратить внимание</h4>
+              <ul>
+                <li>Past Simple vs Present Perfect</li>
+                <li>Звук /θ/ в «thought», «three»</li>
+                <li>Ed/-ing adjectives (bored/boring)</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab: Detailed report -->
+      <div class="tab-panel" id="panel-detailed" role="tabpanel">
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-chart">📈</span>
+              Прогресс по урокам
+            </h2>
+            <span class="trend-up">↑ +1.2 за месяц</span>
+          </div>
+          <div class="chart-wrap">
+            <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">
+              <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <line class="chart-grid-line" x1="40" y1="20"  x2="560" y2="20"/>
+              <line class="chart-grid-line" x1="40" y1="65"  x2="560" y2="65"/>
+              <line class="chart-grid-line" x1="40" y1="110" x2="560" y2="110"/>
+              <line class="chart-grid-line" x1="40" y1="155" x2="560" y2="155"/>
+              <text x="30" y="24"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">10</text>
+              <text x="30" y="69"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">7.5</text>
+              <text x="30" y="114" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">5</text>
+              <text x="30" y="159" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">2.5</text>
+              <path class="chart-area" d="M 40,90.2 L 127,84.8 L 214,80.75 L 301,75.35 L 388,69.95 L 475,63.2 L 562,60.5 L 562,170 L 40,170 Z"/>
+              <polyline class="chart-line" points="40,90.2 127,84.8 214,80.75 301,75.35 388,69.95 475,63.2 562,60.5"/>
+              <circle class="chart-dot" cx="40"  cy="90.2"  r="4"/>
+              <circle class="chart-dot" cx="127" cy="84.8"  r="4"/>
+              <circle class="chart-dot" cx="214" cy="80.75" r="4"/>
+              <circle class="chart-dot" cx="301" cy="75.35" r="4"/>
+              <circle class="chart-dot" cx="388" cy="69.95" r="4"/>
+              <circle class="chart-dot" cx="475" cy="63.2"  r="4"/>
+              <circle class="chart-dot" cx="562" cy="60.5"  r="5" style="fill:#4f46e5;stroke:#fff;stroke-width:2.5"/>
+              <text x="562" y="48" text-anchor="middle" fill="#4f46e5" font-size="13" font-weight="700" font-family="Inter,sans-serif">7.0</text>
+            </svg>
+            <div class="chart-labels">
+              <span>14 апр</span>
+              <span>21 апр</span>
+              <span>28 апр</span>
+              <span>5 мая</span>
+              <span>12 мая</span>
+              <span>19 мая</span>
+              <span>28 мая</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-grammar">✏️</span>
+              Грамматика — детально
+            </h2>
+            <span class="score-badge amber"><span class="num">6</span>/10</span>
+          </div>
+          <ul class="error-list">
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«I have went to Paris last year»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«I went to Paris last year»</span>
+              </div>
+              <span class="error-tag">Past Simple vs Present Perfect — маркер «last year» требует Past Simple</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«She don't like spicy food»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«She doesn't like spicy food»</span>
+              </div>
+              <span class="error-tag">Third person — вспомогательный глагол does + V1</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«I am living here since 2020»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«I have lived here since 2020»</span>
+              </div>
+              <span class="error-tag">Present Perfect Continuous vs Present Perfect — since + for</span>
+            </li>
+            <li class="error-item">
+              <div class="error-row">
+                <span class="said">«More better than before»</span>
+                <span class="arrow">→</span>
+                <span class="correct">«Much better than before»</span>
+              </div>
+              <span class="error-tag">Comparatives — much/more с односложными прилагательными</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-vocab">📚</span>
+              Словарный запас — детально
+            </h2>
+            <span class="score-badge"><span class="num">7</span>/10</span>
+          </div>
+          <div class="vocab-section">
+            <h4>Использованы неправильно</h4>
+            <ul class="misused-list">
+              <li><span class="wrong">boring</span><span class="arrow">→</span><span class="right">bored</span></li>
+              <li><span class="wrong">funny</span><span class="arrow">→</span><span class="right">fun</span></li>
+              <li><span class="wrong">actually</span><span class="arrow">→</span><span class="right">currently</span></li>
+            </ul>
+          </div>
+          <div class="vocab-section">
+            <h4>Новые слова</h4>
+            <div class="new-words">
+              <div class="word-chip"><strong>itinerary</strong><span>маршрут поездки</span></div>
+              <div class="word-chip"><strong>layover</strong><span>пересадка</span></div>
+              <div class="word-chip"><strong>scenic</strong><span>живописный</span></div>
+              <div class="word-chip"><strong>backpacking</strong><span>с рюкзаком</span></div>
+              <div class="word-chip"><strong>off the beaten path</strong><span>вдали от туристов</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid-2">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-fluency">💬</span>
+                Беглость речи
+              </h2>
+              <span class="score-badge green"><span class="num">8</span>/10</span>
+            </div>
+            <div class="metrics">
+              <div class="metric"><div class="val">112</div><div class="lbl">слов/мин</div></div>
+              <div class="metric"><div class="val">1.4с</div><div class="lbl">средняя пауза</div></div>
+              <div class="metric"><div class="val">9.2</div><div class="lbl">слов в предложении</div></div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-pronounce">🎙️</span>
+                Произношение
+              </h2>
+              <span class="score-badge amber"><span class="num">6</span>/10</span>
+            </div>
+            <div class="pronounce-words">
+              <span class="pronounce-word">thought</span>
+              <span class="pronounce-word">world</span>
+              <span class="pronounce-word">beach</span>
+              <span class="pronounce-word">vocabulary</span>
+              <span class="pronounce-word">comfortable</span>
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
 
   <script>
-    const STUDENT_ID = "__STUDENT_ID__";
-    const API_URL = `/api/students/${STUDENT_ID}/reports`;
-
-    function fmt(dateStr) {
-      if (!dateStr) return "–";
-      return new Date(dateStr).toLocaleDateString("en-GB", {
-        day: "2-digit", month: "short", year: "numeric",
+    document.querySelectorAll(".tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        var target = tab.dataset.tab;
+        document.querySelectorAll(".tab").forEach(function (t) {
+          t.classList.toggle("active", t === tab);
+          t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        document.querySelectorAll(".tab-panel").forEach(function (panel) {
+          panel.classList.toggle("active", panel.id === "panel-" + target);
+        });
       });
-    }
-
-    function fluencyColor(score) {
-      if (score >= 8) return "text-green-600";
-      if (score >= 5) return "text-amber-500";
-      return "text-red-500";
-    }
-
-    function levelBadge(level) {
-      const colors = {
-        A1: "bg-red-100 text-red-700", A2: "bg-orange-100 text-orange-700",
-        B1: "bg-yellow-100 text-yellow-700", B2: "bg-lime-100 text-lime-700",
-        C1: "bg-green-100 text-green-700", C2: "bg-emerald-100 text-emerald-700",
-      };
-      const cls = colors[level] || "bg-slate-100 text-slate-600";
-      return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${cls}">${level || "–"}</span>`;
-    }
-
-    async function load() {
-      const loading = document.getElementById("loading");
-      const errorBox = document.getElementById("error-box");
-      const emptyBox = document.getElementById("empty-box");
-
-      try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-        const data = await res.json();
-
-        loading.classList.add("hidden");
-
-        // Student header
-        document.getElementById("student-name").textContent = data.student_name || "Unknown";
-        document.getElementById("student-email").textContent = data.student_email || "";
-        document.getElementById("avatar").textContent = (data.student_name || "?")[0].toUpperCase();
-        document.getElementById("total-lessons").textContent = data.reports.length;
-
-        if (!data.reports.length) {
-          emptyBox.classList.remove("hidden");
-          return;
-        }
-
-        // ── Latest report ──────────────────────────────────────────────
-        const latest = data.reports[0];
-        document.getElementById("latest-section").classList.remove("hidden");
-
-        // Fluency ring (circumference = 2π×45 ≈ 282)
-        const pct = (latest.fluency_score / 10);
-        const offset = 282 - pct * 282;
-        document.getElementById("fluency-ring").style.strokeDashoffset = offset;
-        const scoreEl = document.getElementById("fluency-score");
-        scoreEl.textContent = latest.fluency_score.toFixed(1);
-        scoreEl.className = `text-3xl font-bold -mt-16 ${fluencyColor(latest.fluency_score)}`;
-
-        document.getElementById("vocab-level").textContent = latest.vocabulary_level || "–";
-        document.getElementById("latest-date").textContent = fmt(latest.lesson_date || latest.created_at);
-        document.getElementById("latest-meeting").textContent = latest.meeting_id
-          ? `Meeting: ${latest.meeting_id}` : "";
-
-        // Grammar errors
-        const grammarEl = document.getElementById("grammar-errors");
-        if (latest.grammar_errors && latest.grammar_errors.length) {
-          grammarEl.innerHTML = latest.grammar_errors.map(e => `
-            <div class="rounded-lg border border-slate-100 bg-slate-50 p-3">
-              <p class="text-red-600 font-medium">❌ "${e.error}"</p>
-              <p class="text-green-700 mt-1">✅ Correct: <em>${e.correction}</em></p>
-              <p class="text-slate-500 mt-1">💬 ${e.example}</p>
-            </div>
-          `).join("");
-        } else {
-          grammarEl.innerHTML = `<p class="text-green-600">No grammar errors detected — great job! 🎉</p>`;
-        }
-
-        // Weak topics
-        const weakEl = document.getElementById("weak-topics");
-        weakEl.innerHTML = (latest.weak_topics || []).length
-          ? latest.weak_topics.map(t =>
-              `<li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>${t}</li>`
-            ).join("")
-          : `<li class="text-slate-400 italic">None identified.</li>`;
-
-        // Recommendations
-        const recEl = document.getElementById("recommendations");
-        recEl.innerHTML = (latest.recommendations || []).length
-          ? latest.recommendations.map((r, i) =>
-              `<li><span class="font-semibold text-indigo-600">${i + 1}.</span> ${r}</li>`
-            ).join("")
-          : `<li class="text-slate-400 italic">None yet.</li>`;
-
-        // ── History table ───────────────────────────────────────────────
-        if (data.reports.length > 1) {
-          document.getElementById("history-section").classList.remove("hidden");
-          const tbody = document.getElementById("history-table");
-          tbody.innerHTML = data.reports.map(r => `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="px-5 py-3">${fmt(r.lesson_date || r.created_at)}</td>
-              <td class="px-5 py-3 text-slate-500 text-xs font-mono">${r.meeting_id || "–"}</td>
-              <td class="px-5 py-3 text-center font-semibold ${fluencyColor(r.fluency_score)}">
-                ${r.fluency_score.toFixed(1)}
-              </td>
-              <td class="px-5 py-3 text-center">${levelBadge(r.vocabulary_level)}</td>
-              <td class="px-5 py-3 text-slate-500 text-xs">
-                ${(r.weak_topics || []).slice(0, 3).join(", ") || "–"}
-              </td>
-            </tr>
-          `).join("");
-        }
-
-      } catch (err) {
-        loading.classList.add("hidden");
-        errorBox.textContent = `Failed to load reports: ${err.message}`;
-        errorBox.classList.remove("hidden");
-      }
-    }
-
-    load();
+    });
   </script>
+
 </body>
 </html>

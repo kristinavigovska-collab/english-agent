@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from routers import reports, webhook
@@ -25,3 +26,8 @@ app.include_router(reports.router, prefix="/api", tags=["reports"])
 @app.get("/", tags=["health"])
 def root():
     return {"status": "ok", "service": "English Lesson Analyzer"}
+
+
+@app.get("/dashboard", tags=["dashboard"])
+def dashboard():
+    return FileResponse("static/dashboard.html")
