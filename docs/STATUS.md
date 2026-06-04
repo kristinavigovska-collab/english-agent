@@ -35,9 +35,9 @@ Last updated: 2026-06-04
 
 ### P1 — student-facing
 
-- Wire `static/dashboard.html` to API (`__STUDENT_ID__` + `fetch` reports).
-- Map UI to Claude fields only, or extend Claude schema + DB.
-- Student login: email → magic link (no UUID in URL).
+- [x] Wire `static/dashboard.html` to API (`__STUDENT_ID__` + `fetch` reports) — `static/dashboard.js`
+- [x] Map UI to Claude fields only (demo blocks hidden when live data loads)
+- [ ] Student login: email → magic link (no UUID in URL)
 
 ### P2 — school ops
 
@@ -49,7 +49,7 @@ Last updated: 2026-06-04
 
 | Gap | Notes |
 |-----|--------|
-| Dashboard | Hardcoded demo data; no API fetch |
+| Dashboard | `/dashboard` = demo; `/api/dashboard/{uuid}` loads live reports |
 | Auth | `student_id` in URL is public |
 | Webhook signature | `RECALL_WEBHOOK_SECRET` unused |
 | UI vs Claude | UI shows pronunciation, wpm, etc.; API does not |

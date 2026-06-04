@@ -14,7 +14,7 @@ SaaS for an English school: Recall.ai bot joins lessons → transcript → Claud
 |------|-----|
 | API / health | https://english-agent.onrender.com/ |
 | Webhook | `POST https://english-agent.onrender.com/webhook/recall` |
-| Dashboard (static mock) | `/dashboard` or `/api/dashboard/{student_id}` |
+| Dashboard | `/dashboard` (demo) · `/api/dashboard/{student_id}` (live) |
 | Reports JSON | `GET /api/students/{student_id}/reports` |
 | Supabase project | `esmtlsjbovkqtzrheijl.supabase.co` |
 | Recall region | `eu-central-1.recall.ai` |
@@ -32,7 +32,8 @@ routers/reports.py      # Reports API + dashboard HTML inject
 services/claude_service.py
 services/supabase_service.py
 models/schemas.py
-static/dashboard.html   # UI mock — NOT wired to API yet
+static/dashboard.html   # UI; demo at /dashboard, live at /api/dashboard/{id}
+static/dashboard.js     # fetches /api/students/{id}/reports
 render.yaml             # Render deploy
 ```
 
@@ -57,7 +58,7 @@ render.yaml             # Render deploy
 ## Next (Phase 2 — priority)
 
 1. **Recall:** Connect **school / test** Google (not personal gmail). Separate calendar `English Lessons` only; enable recording preferences.
-2. **Dashboard:** Load real data from `/api/students/{id}/reports` (UI has extra fields Claude does not produce — simplify or extend schema).
+2. **Dashboard:** Live data wired; optional: extend Claude schema for pronunciation/wpm fields.
 3. **Student access:** Magic link or lookup by email (no auth today — anyone with UUID sees dashboard).
 4. **Lesson test:** Calendar event with **Google Meet** + student guest email → verify row in `reports`.
 

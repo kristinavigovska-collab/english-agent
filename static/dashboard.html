@@ -617,6 +617,44 @@
 
     .trend-up { color: var(--green); font-weight: 600; font-size: 0.8125rem; }
 
+    .cefr-badge { font-size: 0.875rem; font-weight: 600; padding: 0.35rem 0.75rem; }
+
+    #dash-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.85);
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+    }
+
+    #dash-error {
+      margin: 0 var(--page-padding) 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 0.875rem;
+    }
+
+    .vocab-live-level {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0.5rem 0;
+    }
+
+    .fluency-live-score {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--green);
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 900px) {
       .app { flex-direction: column; }
@@ -632,13 +670,15 @@
   </style>
 </head>
 <body>
+  <div id="dash-loading" hidden>Загрузка отчётов…</div>
+  <p id="dash-error" hidden></p>
 
   <div class="app">
 
     <!-- Left sidebar -->
     <aside class="sidebar">
-      <div class="avatar">А</div>
-      <h1 class="sidebar-name">Анна Петрова</h1>
+      <div class="avatar" id="dash-avatar">А</div>
+      <h1 class="sidebar-name" id="dash-name">Анна Петрова</h1>
 
       <div class="sidebar-actions">
         <button class="btn" type="button">📅 История уроков</button>
@@ -650,15 +690,15 @@
       <div class="sidebar-stats">
         <div class="stat-row">
           <span class="label">Всего уроков</span>
-          <span class="value">7</span>
+          <span class="value" id="dash-stat-lessons">7</span>
         </div>
         <div class="stat-row">
           <span class="label">Средний балл</span>
-          <span class="value">6.2 / 10</span>
+          <span class="value" id="dash-stat-avg">6.2 / 10</span>
         </div>
         <div class="stat-row">
           <span class="label">Уровень CEFR</span>
-          <span class="value cefr">B1</span>
+          <span class="value cefr" id="dash-stat-cefr">B1</span>
         </div>
       </div>
 
@@ -667,11 +707,11 @@
       <div class="lesson-meta">
         <div class="meta-item">
           <div class="meta-label">Дата последнего урока</div>
-          <div class="meta-value">28 мая 2026</div>
+          <div class="meta-value" id="dash-last-date">28 мая 2026</div>
         </div>
         <div class="meta-item">
           <div class="meta-label">Тема урока</div>
-          <div class="meta-value">Travel &amp; Past Tenses</div>
+          <div class="meta-value" id="dash-lesson-topic">Travel &amp; Past Tenses</div>
         </div>
       </div>
     </aside>
@@ -694,9 +734,9 @@
               <span class="card-icon icon-grammar">✏️</span>
               Грамматика
             </h2>
-            <span class="score-badge amber"><span class="num">6</span>/10</span>
+            <span class="score-badge amber" id="badge-grammar-current"><span class="num">6</span> ошибок</span>
           </div>
-          <ul class="error-list">
+          <ul class="error-list" id="grammar-list-current">
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«I have went to Paris last year»</span>
@@ -738,9 +778,13 @@
               <span class="card-icon icon-vocab">📚</span>
               Словарный запас
             </h2>
-            <span class="score-badge"><span class="num">7</span>/10</span>
+            <span class="score-badge" id="badge-vocab-current"><span class="num">7</span>/10</span>
           </div>
-          <div class="vocab-section">
+          <div id="vocab-live" hidden>
+            <p style="font-size:0.875rem;color:var(--text-muted)">Уровень CEFR (последний урок)</p>
+            <div class="vocab-live-level" id="vocab-level-live">—</div>
+          </div>
+          <div class="demo-only vocab-section">
             <h4>Использованы неправильно</h4>
             <ul class="misused-list">
               <li>
@@ -763,7 +807,7 @@
               </li>
             </ul>
           </div>
-          <div class="vocab-section">
+          <div class="demo-only vocab-section">
             <h4>5 новых слов для изучения</h4>
             <div class="new-words">
               <div class="word-chip"><strong>itinerary</strong><span>маршрут поездки</span></div>
@@ -782,39 +826,44 @@
                 <span class="card-icon icon-fluency">💬</span>
                 Беглость речи
               </h2>
-              <span class="score-badge green"><span class="num">8</span>/10</span>
+              <span class="score-badge green" id="badge-fluency-current"><span class="num">8</span>/10</span>
             </div>
-            <div class="metrics">
-              <div class="metric">
-                <div class="val">112</div>
-                <div class="lbl">слов/мин</div>
-              </div>
-              <div class="metric">
-                <div class="val">1.4<span style="font-size:.8rem">с</span></div>
-                <div class="lbl">средняя пауза</div>
-              </div>
-              <div class="metric">
-                <div class="val">9.2</div>
-                <div class="lbl">слов в предложении</div>
-              </div>
+            <div id="fluency-live" hidden>
+              <div class="fluency-live-score"><span id="fluency-score-live">—</span> / 10</div>
             </div>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar-label">
-                <span>Темп речи</span>
-                <span>100–130 wpm</span>
+            <div class="demo-only">
+              <div class="metrics">
+                <div class="metric">
+                  <div class="val">112</div>
+                  <div class="lbl">слов/мин</div>
+                </div>
+                <div class="metric">
+                  <div class="val">1.4<span style="font-size:.8rem">с</span></div>
+                  <div class="lbl">средняя пауза</div>
+                </div>
+                <div class="metric">
+                  <div class="val">9.2</div>
+                  <div class="lbl">слов в предложении</div>
+                </div>
               </div>
-              <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
-            </div>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar-label">
-                <span>Длина предложений</span>
-                <span>цель: 10–12</span>
+              <div class="metric-bar-wrap">
+                <div class="metric-bar-label">
+                  <span>Темп речи</span>
+                  <span>100–130 wpm</span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
               </div>
-              <div class="metric-bar"><div class="metric-bar-fill" style="width:76%"></div></div>
+              <div class="metric-bar-wrap">
+                <div class="metric-bar-label">
+                  <span>Длина предложений</span>
+                  <span>цель: 10–12</span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill" style="width:76%"></div></div>
+              </div>
             </div>
           </section>
 
-          <section class="card">
+          <section class="card demo-only">
             <div class="card-header">
               <h2 class="card-title">
                 <span class="card-icon icon-pronounce">🎙️</span>
@@ -852,7 +901,7 @@
           </section>
         </div>
 
-        <section class="card strengths-card">
+        <section class="card strengths-card demo-only">
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-strength">🌟</span>
@@ -878,23 +927,27 @@
           <div class="plan-grid">
             <div class="plan-block">
               <h4>Темы для проработки</h4>
-              <ol>
-                <li>Present Perfect vs Past Simple</li>
-                <li>Comparatives &amp; Superlatives</li>
-                <li>Ed/-ing adjectives</li>
-                <li>Th-sounds (/θ/ и /ð/)</li>
-              </ol>
+              <div id="plan-weak-topics">
+                <ol class="demo-only">
+                  <li>Present Perfect vs Past Simple</li>
+                  <li>Comparatives &amp; Superlatives</li>
+                  <li>Ed/-ing adjectives</li>
+                  <li>Th-sounds (/θ/ и /ð/)</li>
+                </ol>
+              </div>
             </div>
             <div class="plan-block">
-              <h4>Упражнения</h4>
-              <ul>
-                <li>Gap-fill: 15 предложений</li>
-                <li>Minimal pairs: think/sink</li>
-                <li>Role-play: booking a hotel</li>
-                <li>Shadowing: подкаст о путешествиях</li>
-              </ul>
+              <h4>Рекомендации</h4>
+              <div id="plan-recommendations">
+                <ul class="demo-only">
+                  <li>Gap-fill: 15 предложений</li>
+                  <li>Minimal pairs: think/sink</li>
+                  <li>Role-play: booking a hotel</li>
+                  <li>Shadowing: подкаст о путешествиях</li>
+                </ul>
+              </div>
             </div>
-            <div class="plan-block">
+            <div class="plan-block demo-only">
               <h4>Слова для заучивания</h4>
               <ul>
                 <li>itinerary, layover, scenic</li>
@@ -916,13 +969,13 @@
               <span class="card-icon icon-summary">📝</span>
               Краткое саммари урока
             </h2>
-            <span class="score-badge"><span class="num">7</span>/10</span>
+            <span class="score-badge"><span class="num" id="summary-score-num">7</span>/10</span>
           </div>
           <div class="summary-score">
             <div class="summary-score-ring">
-              <div class="summary-score-ring-inner">7</div>
+              <div class="summary-score-ring-inner" id="summary-score-ring">7</div>
             </div>
-            <p class="summary-text">
+            <p class="summary-text" id="summary-text">
               Анна уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
               Основные зоны роста — грамматика времен (Past Simple vs Present Perfect) и произношение
               звуков /θ/ и /iː/. Словарный запас на уровне B1, заметен прогресс за последний месяц (+1.2 балла).
@@ -930,17 +983,17 @@
           </div>
           <div class="summary-highlights">
             <div class="highlight-box win">
-              <h4>Что получилось</h4>
-              <ul>
-                <li>Беглая речь на тему travel</li>
+              <h4>Рекомендации</h4>
+              <ul id="highlight-win">
+                <li class="demo-only">Беглая речь на тему travel</li>
                 <li>Активное участие в диалоге</li>
                 <li>Хороший тематический словарь</li>
               </ul>
             </div>
             <div class="highlight-box focus">
               <h4>На что обратить внимание</h4>
-              <ul>
-                <li>Past Simple vs Present Perfect</li>
+              <ul id="highlight-focus">
+                <li class="demo-only">Past Simple vs Present Perfect</li>
                 <li>Звук /θ/ в «thought», «three»</li>
                 <li>Ed/-ing adjectives (bored/boring)</li>
               </ul>
@@ -958,9 +1011,10 @@
               <span class="card-icon icon-chart">📈</span>
               Прогресс по урокам
             </h2>
-            <span class="trend-up">↑ +1.2 за месяц</span>
+            <span class="trend-up demo-only">↑ +1.2 за месяц</span>
           </div>
-          <div class="chart-wrap">
+          <div class="chart-wrap" id="chart-dynamic" hidden></div>
+          <div class="chart-wrap demo-only">
             <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">
               <defs>
                 <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1005,9 +1059,9 @@
               <span class="card-icon icon-grammar">✏️</span>
               Грамматика — детально
             </h2>
-            <span class="score-badge amber"><span class="num">6</span>/10</span>
+            <span class="score-badge amber" id="badge-grammar-detailed"><span class="num">6</span> ошибок</span>
           </div>
-          <ul class="error-list">
+          <ul class="error-list" id="grammar-list-detailed">
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«I have went to Paris last year»</span>
@@ -1049,9 +1103,9 @@
               <span class="card-icon icon-vocab">📚</span>
               Словарный запас — детально
             </h2>
-            <span class="score-badge"><span class="num">7</span>/10</span>
+            <span class="score-badge" id="badge-vocab-detailed"><span class="num">7</span>/10</span>
           </div>
-          <div class="vocab-section">
+          <div class="demo-only vocab-section">
             <h4>Использованы неправильно</h4>
             <ul class="misused-list">
               <li><span class="wrong">boring</span><span class="arrow">→</span><span class="right">bored</span></li>
@@ -1059,7 +1113,7 @@
               <li><span class="wrong">actually</span><span class="arrow">→</span><span class="right">currently</span></li>
             </ul>
           </div>
-          <div class="vocab-section">
+          <div class="demo-only vocab-section">
             <h4>Новые слова</h4>
             <div class="new-words">
               <div class="word-chip"><strong>itinerary</strong><span>маршрут поездки</span></div>
@@ -1071,14 +1125,14 @@
           </div>
         </section>
 
-        <div class="grid-2">
+        <div class="grid-2 demo-only">
           <section class="card">
             <div class="card-header">
               <h2 class="card-title">
                 <span class="card-icon icon-fluency">💬</span>
                 Беглость речи
               </h2>
-              <span class="score-badge green"><span class="num">8</span>/10</span>
+              <span class="score-badge green" id="badge-fluency-detailed"><span class="num">8</span>/10</span>
             </div>
             <div class="metrics">
               <div class="metric"><div class="val">112</div><div class="lbl">слов/мин</div></div>
@@ -1109,20 +1163,8 @@
     </div>
   </div>
 
-  <script>
-    document.querySelectorAll(".tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        var target = tab.dataset.tab;
-        document.querySelectorAll(".tab").forEach(function (t) {
-          t.classList.toggle("active", t === tab);
-          t.setAttribute("aria-selected", t === tab ? "true" : "false");
-        });
-        document.querySelectorAll(".tab-panel").forEach(function (panel) {
-          panel.classList.toggle("active", panel.id === "panel-" + target);
-        });
-      });
-    });
-  </script>
+  <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
+  <script src="/static/dashboard.js" defer></script>
 
 </body>
 </html>
