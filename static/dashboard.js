@@ -20,7 +20,11 @@
     });
   });
 
-  if (isDemo) return;
+  if (isDemo) {
+    var loadingDemo = document.getElementById("dash-loading");
+    if (loadingDemo) loadingDemo.hidden = true;
+    return;
+  }
 
   var loadingEl = document.getElementById("dash-loading");
   var errorEl = document.getElementById("dash-error");
