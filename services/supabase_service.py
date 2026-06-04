@@ -38,7 +38,7 @@ def create_lesson(student_id: str, meeting_id: str, transcript: str) -> dict:
         .insert(
             {
                 "student_id": student_id,
-                "meeting_id": meeting_id,
+                "recall_bot_id": meeting_id,
                 "transcript": transcript,
             }
         )
@@ -77,7 +77,7 @@ def get_student_reports(student_id: str) -> list[dict]:
     db = get_supabase()
     result = (
         db.table("reports")
-        .select("*, lessons(meeting_id, created_at)")
+        .select("*, lessons(recall_bot_id, created_at)")
         .eq("student_id", student_id)
         .order("created_at", desc=True)
         .execute()

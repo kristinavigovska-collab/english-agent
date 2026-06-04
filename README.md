@@ -70,7 +70,7 @@ CREATE TABLE students (
 CREATE TABLE lessons (
     id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_id UUID REFERENCES students(id) ON DELETE CASCADE NOT NULL,
-    meeting_id TEXT,
+    recall_bot_id TEXT,
     transcript TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -101,6 +101,22 @@ uvicorn main:app --reload --port 8000
 ```
 
 Документация API доступна по адресу: <http://localhost:8000/docs>
+
+### 5. Деплой на Render (постоянный URL для Recall)
+
+1. Залейте репозиторий на GitHub.
+2. [render.com](https://render.com) → **New +** → **Blueprint** (или **Web Service** из репозитория).
+3. Подключите репозиторий — Render подхватит `render.yaml`.
+4. В **Environment** добавьте переменные из `.env`:
+   - `ANTHROPIC_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_KEY`
+   - `RECALL_WEBHOOK_SECRET` (опционально)
+5. После деплоя URL будет вида `https://english-agent-xxxx.onrender.com`.
+6. В Recall → Webhooks укажите:
+   `https://english-agent-xxxx.onrender.com/webhook/recall`
+
+На бесплатном плане сервис «засыпает» без трафика (~50 с на первый запрос после простоя). Для урока достаточно один раз открыть `/` за минуту до звонка.
 
 ---
 

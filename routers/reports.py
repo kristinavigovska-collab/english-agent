@@ -30,7 +30,7 @@ def get_student_reports(student_id: str):
                 weak_topics=row.get("weak_topics") or [],
                 recommendations=row.get("recommendations") or [],
                 created_at=row.get("created_at"),
-                meeting_id=lesson_data.get("meeting_id"),
+                meeting_id=lesson_data.get("recall_bot_id"),
                 lesson_date=lesson_data.get("created_at"),
             )
         )
