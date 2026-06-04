@@ -1,5 +1,7 @@
 # English Lesson Analyzer
 
+> **Agents:** read [`AGENTS.md`](AGENTS.md) first, then [`docs/STATUS.md`](docs/STATUS.md).
+
 SaaS-сервис анализа уроков английского языка.  
 Принимает транскрипты от **Recall.ai**, анализирует речь студента с помощью **Claude claude-opus-4-8**, сохраняет результаты в **Supabase** и отображает прогресс на HTML-дашборде.
 
