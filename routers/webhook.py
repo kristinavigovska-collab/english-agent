@@ -89,7 +89,11 @@ def _process_webhook(data: dict) -> None:
             meeting_id=meeting_id,
             transcript=transcript,
         )
-        analysis = claude_service.analyze_transcript(transcript)
+        analysis = claude_service.analyze_transcript(
+            transcript,
+            student_name=name,
+            student_email=email,
+        )
         supabase_service.save_report(
             student_id=student["id"],
             lesson_id=lesson["id"],

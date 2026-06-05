@@ -57,10 +57,14 @@ render.yaml             # Render deploy
 
 ## Next (Phase 2 — priority)
 
+**Now:** calibrate Claude scoring with **one test student** (`services/student_profiles.py`):
+`kristina.vigovska@gmail.com` → Кристина, goal B2 discussions. Webhook passes guest email → `analyze_transcript()` identifies speaker + goal. Other students get name/email only until school calendar is live.
+
 1. **Recall:** Connect **school / test** Google (not personal gmail). Separate calendar `English Lessons` only; enable recording preferences.
-2. **Dashboard:** Live data wired; optional: extend Claude schema for pronunciation/wpm fields.
-3. **Student access:** Magic link or lookup by email (no auth today — anyone with UUID sees dashboard).
-4. **Lesson test:** Calendar event with **Google Meet** + student guest email → verify row in `reports`.
+2. **Agent rubric:** Tune CEFR / fluency prompts using real lesson transcripts (single-student test first).
+3. **Dashboard:** Live data wired; optional: extend Claude schema for pronunciation/wpm fields.
+4. **Student access:** Magic link or lookup by email (no auth today — anyone with UUID sees dashboard).
+5. **Lesson test:** Calendar event with **Google Meet** + student guest email → verify row in `reports`.
 
 **Before a lesson:** follow `docs/LESSON_DAY.md`. See `docs/STATUS.md` for pitfalls.
 
