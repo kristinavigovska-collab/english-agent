@@ -16,5 +16,9 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
+      - key: RECALL_API_KEY
+        sync: false
+      - key: RECALL_REGION
+        value: eu-central-1
       - key: RECALL_WEBHOOK_SECRET
         sync: false

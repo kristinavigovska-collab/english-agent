@@ -45,7 +45,7 @@ render.yaml             # Render deploy
 
 ## Env vars (see `.env.example`)
 
-`ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (`sb_secret_…` needs `supabase>=2.16`), optional `RECALL_WEBHOOK_SECRET` (not verified in code yet).
+`ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (`sb_secret_…` needs `supabase>=2.16`), `RECALL_API_KEY` + `RECALL_REGION` (for full transcript download), optional `RECALL_WEBHOOK_SECRET` (not verified in code yet).
 
 ## Done (Phase 0–1)
 

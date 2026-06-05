@@ -31,6 +31,39 @@ def get_or_create_student(name: str, email: str) -> dict:
     return new_result.data[0]
 
 
+def get_lesson_by_bot_id(recall_bot_id: str) -> Optional[dict]:
+    db = get_supabase()
+    result = (
+        db.table("lessons")
+        .select("*")
+        .eq("recall_bot_id", recall_bot_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
+
+
+def get_or_create_lesson_for_bot(
+    student_id: str, recall_bot_id: str, transcript: str = ""
+) -> dict:
+    existing = get_lesson_by_bot_id(recall_bot_id)
+    if existing:
+        return existing
+    return create_lesson(student_id, recall_bot_id, transcript)
+
+
+def update_lesson_transcript(lesson_id: str, transcript: str) -> dict:
+    db = get_supabase()
+    result = (
+        db.table("lessons")
+        .update({"transcript": transcript})
+        .eq("id", lesson_id)
+        .execute()
+    )
+    return result.data[0]
+
+
 def create_lesson(student_id: str, meeting_id: str, transcript: str) -> dict:
     db = get_supabase()
     result = (
@@ -47,23 +80,42 @@ def create_lesson(student_id: str, meeting_id: str, transcript: str) -> dict:
     return result.data[0]
 
 
+def _report_payload(student_id: str, lesson_id: str, analysis: LessonAnalysis) -> dict:
+    return {
+        "student_id": student_id,
+        "lesson_id": lesson_id,
+        "grammar_errors": [e.model_dump() for e in analysis.grammar_errors],
+        "vocabulary_level": analysis.vocabulary_level,
+        "fluency_score": analysis.fluency_score,
+        "weak_topics": analysis.weak_topics,
+        "recommendations": analysis.recommendations,
+    }
+
+
 def save_report(student_id: str, lesson_id: str, analysis: LessonAnalysis) -> dict:
     db = get_supabase()
     result = (
         db.table("reports")
-        .insert(
-            {
-                "student_id": student_id,
-                "lesson_id": lesson_id,
-                "grammar_errors": [e.model_dump() for e in analysis.grammar_errors],
-                "vocabulary_level": analysis.vocabulary_level,
-                "fluency_score": analysis.fluency_score,
-                "weak_topics": analysis.weak_topics,
-                "recommendations": analysis.recommendations,
-            }
-        )
+        .insert(_report_payload(student_id, lesson_id, analysis))
         .execute()
     )
+    return result.data[0]
+
+
+def upsert_report_for_lesson(
+    student_id: str, lesson_id: str, analysis: LessonAnalysis
+) -> dict:
+    db = get_supabase()
+    existing = (
+        db.table("reports").select("id").eq("lesson_id", lesson_id).limit(1).execute()
+    )
+    payload = _report_payload(student_id, lesson_id, analysis)
+    if existing.data:
+        result = (
+            db.table("reports").update(payload).eq("lesson_id", lesson_id).execute()
+        )
+    else:
+        result = db.table("reports").insert(payload).execute()
     return result.data[0]
 
 

@@ -45,11 +45,16 @@
 https://english-agent.onrender.com/webhook/recall
 ```
 
-События (events):
+События (events) — **обязательно все**:
 
-- `bot.transcription`
-- `bot.transcript`
-- `bot.transcription_complete`
+| Событие | Зачем |
+|---------|--------|
+| `recording.done` | Запуск полной транскрипции после урока |
+| `transcript.done` | Скачать полный транскрипт и создать отчёт |
+| `transcript.data` | Накапливать реплики во время урока (опционально, но полезно) |
+| `bot.transcription` / `bot.transcript` / `bot.transcription_complete` | Legacy Calendar V1 (если есть) |
+
+**Render → Environment:** добавь `RECALL_API_KEY` (API key из Recall dashboard, регион `eu-central-1`).
 
 Сохрани. Старый ngrok URL удалить, если остался.
 
