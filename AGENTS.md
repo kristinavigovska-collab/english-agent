@@ -62,7 +62,7 @@ render.yaml             # Render deploy
 3. **Student access:** Magic link or lookup by email (no auth today — anyone with UUID sees dashboard).
 4. **Lesson test:** Calendar event with **Google Meet** + student guest email → verify row in `reports`.
 
-See `docs/STATUS.md` for checklist and pitfalls.
+**Before a lesson:** follow `docs/LESSON_DAY.md`. See `docs/STATUS.md` for pitfalls.
 
 ## Do not
 

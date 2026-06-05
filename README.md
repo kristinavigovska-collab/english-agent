@@ -214,7 +214,7 @@ uvicorn main:app --reload --port 8000
        "student_name": "Ivan Petrov",
        "student_email": "ivan@example.com"
      },
-     "bot_name": "English Coach"
+     "bot_name": "Yappi Tutor"
    }
    ```
 

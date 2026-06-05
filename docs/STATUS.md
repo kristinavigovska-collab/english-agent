@@ -29,7 +29,7 @@ Last updated: 2026-06-04
 
 1. Recall **Connect** with school/test Google (add email to GCP **Audience → Test users** first).
 2. Google Calendar: calendar **English Lessons** only; event with **Meet link** + student guest email.
-3. Recall: **Recording preferences** not all `false` (e.g. `record_confirmed: true`).
+3. Recall: **Recording preferences** not all `false`; `bot_name`: **Yappi Tutor**.
 4. Before lesson: open `https://english-agent.onrender.com/` (wake Render).
 5. After lesson: Supabase `reports` + Recall webhook logs.
 
@@ -67,5 +67,6 @@ Last updated: 2026-06-04
 
 ## Links
 
+- **Lesson day checklist:** `docs/LESSON_DAY.md`
 - Deploy: `docs/DEPLOY_RENDER.md`
 - Architecture: `docs/ARCHITECTURE.md`
