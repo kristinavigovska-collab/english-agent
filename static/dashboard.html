@@ -339,17 +339,35 @@
 
     .correct { color: var(--green); font-weight: 600; }
 
-    .error-tag {
-      display: inline-block;
-      font-size: 0.6875rem;
+    .error-alternatives {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .error-alternatives-label {
+      font-size: 0.75rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--text-light);
-      background: var(--border);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      margin-top: 0.45rem;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+    }
+
+    .error-alternatives-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .error-alternatives-list li {
+      font-size: 0.8125rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .empty-msg {
+      font-size: 0.875rem;
+      color: var(--text-muted);
     }
 
     /* ── Vocabulary ── */
@@ -937,7 +955,7 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-grammar">✏️</span>
-              Грамматика
+              Грамматические ошибки
             </h2>
             <span class="score-badge amber" id="badge-grammar-current"><span class="num">6</span> ошибок</span>
           </div>
@@ -948,7 +966,14 @@
                 <span class="arrow">→</span>
                 <span class="correct">«I went to Paris last year»</span>
               </div>
-              <span class="error-tag">Past Simple vs Present Perfect</span>
+              <div class="error-alternatives">
+                <p class="error-alternatives-label">Как ещё можно сказать:</p>
+                <ul class="error-alternatives-list">
+                  <li>«I visited Paris last year»</li>
+                  <li>«Last year I went to Paris»</li>
+                  <li>«I traveled to Paris last year»</li>
+                </ul>
+              </div>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -956,7 +981,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«She doesn't like spicy food»</span>
               </div>
-              <span class="error-tag">Third person — Present Simple</span>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -964,7 +988,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«I have lived here since 2020»</span>
               </div>
-              <span class="error-tag">Present Perfect + since</span>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -972,7 +995,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«Much better than before»</span>
               </div>
-              <span class="error-tag">Comparatives</span>
             </li>
           </ul>
         </section>
@@ -1270,7 +1292,7 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-grammar">✏️</span>
-              Грамматика — детально
+              Грамматические ошибки — детально
             </h2>
             <span class="score-badge amber" id="badge-grammar-detailed"><span class="num">6</span> ошибок</span>
           </div>
@@ -1281,7 +1303,14 @@
                 <span class="arrow">→</span>
                 <span class="correct">«I went to Paris last year»</span>
               </div>
-              <span class="error-tag">Past Simple vs Present Perfect — маркер «last year» требует Past Simple</span>
+              <div class="error-alternatives">
+                <p class="error-alternatives-label">Как ещё можно сказать:</p>
+                <ul class="error-alternatives-list">
+                  <li>«I visited Paris last year»</li>
+                  <li>«Last year I went to Paris»</li>
+                  <li>«I traveled to Paris last year»</li>
+                </ul>
+              </div>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -1289,7 +1318,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«She doesn't like spicy food»</span>
               </div>
-              <span class="error-tag">Third person — вспомогательный глагол does + V1</span>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -1297,7 +1325,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«I have lived here since 2020»</span>
               </div>
-              <span class="error-tag">Present Perfect Continuous vs Present Perfect — since + for</span>
             </li>
             <li class="error-item">
               <div class="error-row">
@@ -1305,7 +1332,6 @@
                 <span class="arrow">→</span>
                 <span class="correct">«Much better than before»</span>
               </div>
-              <span class="error-tag">Comparatives — much/more с односложными прилагательными</span>
             </li>
           </ul>
         </section>

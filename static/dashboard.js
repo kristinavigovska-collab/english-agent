@@ -22,10 +22,26 @@
       lesson_date: "2026-05-28T14:00:00Z",
       created_at: "2026-05-28T14:00:00Z",
       grammar_errors: [
-        { error: "I have went to Paris last year", correction: "I went to Paris last year", example: "Past Simple vs Present Perfect" },
-        { error: "She don't like spicy food", correction: "She doesn't like spicy food", example: "Third person — Present Simple" },
-        { error: "I am living here since 2020", correction: "I have lived here since 2020", example: "Present Perfect + since" },
-        { error: "More better than before", correction: "Much better than before", example: "Comparatives" },
+        {
+          error: "I have went to Paris last year",
+          correction: "I went to Paris last year",
+          alternatives: ["I visited Paris last year", "Last year I went to Paris", "I traveled to Paris last year"],
+        },
+        {
+          error: "She don't like spicy food",
+          correction: "She doesn't like spicy food",
+          alternatives: ["She isn't fond of spicy food", "Spicy food isn't her thing", "She dislikes spicy food"],
+        },
+        {
+          error: "I am living here since 2020",
+          correction: "I have lived here since 2020",
+          alternatives: ["I've been living here since 2020", "I moved here in 2020 and still live here", "Since 2020, I have lived here"],
+        },
+        {
+          error: "More better than before",
+          correction: "Much better than before",
+          alternatives: ["A lot better than before", "Far better than I used to be", "Noticeably better than before"],
+        },
       ],
       vocabulary_level: "B1",
       fluency_score: 8,
@@ -37,8 +53,16 @@
       lesson_date: "2026-05-19T14:00:00Z",
       created_at: "2026-05-19T14:00:00Z",
       grammar_errors: [
-        { error: "If I will have time, I will call you", correction: "If I have time, I will call you", example: "First conditional" },
-        { error: "He suggested to go earlier", correction: "He suggested going earlier", example: "Verb + gerund" },
+        {
+          error: "If I will have time, I will call you",
+          correction: "If I have time, I will call you",
+          alternatives: ["Should I have time, I'll call you", "When I have time, I'll give you a call", "I'll call you if I'm free"],
+        },
+        {
+          error: "He suggested to go earlier",
+          correction: "He suggested going earlier",
+          alternatives: ["He proposed leaving earlier", "He recommended that we go earlier", "His suggestion was to go earlier"],
+        },
       ],
       vocabulary_level: "B1",
       fluency_score: 7.5,
@@ -50,9 +74,21 @@
       lesson_date: "2026-05-12T14:00:00Z",
       created_at: "2026-05-12T14:00:00Z",
       grammar_errors: [
-        { error: "I didn't went there", correction: "I didn't go there", example: "Past Simple negative" },
-        { error: "Much people were waiting", correction: "Many people were waiting", example: "Much vs many" },
-        { error: "She is teacher", correction: "She is a teacher", example: "Articles" },
+        {
+          error: "I didn't went there",
+          correction: "I didn't go there",
+          alternatives: ["I never went there", "I didn't visit that place", "I stayed away from there"],
+        },
+        {
+          error: "Much people were waiting",
+          correction: "Many people were waiting",
+          alternatives: ["There were a lot of people waiting", "Plenty of people were waiting", "A large crowd was waiting"],
+        },
+        {
+          error: "She is teacher",
+          correction: "She is a teacher",
+          alternatives: ["She works as a teacher", "She teaches for a living", "Her job is teaching"],
+        },
       ],
       vocabulary_level: "A2",
       fluency_score: 7,
@@ -64,7 +100,11 @@
       lesson_date: "2026-05-05T14:00:00Z",
       created_at: "2026-05-05T14:00:00Z",
       grammar_errors: [
-        { error: "I look forward to meet you", correction: "I look forward to meeting you", example: "look forward to + gerund" },
+        {
+          error: "I look forward to meet you",
+          correction: "I look forward to meeting you",
+          alternatives: ["I can't wait to meet you", "I'm excited to see you soon", "I'm eager to meet you in person"],
+        },
       ],
       vocabulary_level: "A2",
       fluency_score: 6.5,
@@ -76,8 +116,16 @@
       lesson_date: "2026-04-28T14:00:00Z",
       created_at: "2026-04-28T14:00:00Z",
       grammar_errors: [
-        { error: "He don't know the answer", correction: "He doesn't know the answer", example: "Third person" },
-        { error: "I am agree with you", correction: "I agree with you", example: "State verbs" },
+        {
+          error: "He don't know the answer",
+          correction: "He doesn't know the answer",
+          alternatives: ["He isn't sure of the answer", "He has no idea what the answer is", "The answer isn't clear to him"],
+        },
+        {
+          error: "I am agree with you",
+          correction: "I agree with you",
+          alternatives: ["I see your point", "You're absolutely right", "I'm on the same page as you"],
+        },
       ],
       vocabulary_level: "A2",
       fluency_score: 6,
@@ -89,8 +137,16 @@
       lesson_date: "2026-04-21T14:00:00Z",
       created_at: "2026-04-21T14:00:00Z",
       grammar_errors: [
-        { error: "I have 25 years old", correction: "I am 25 years old", example: "Age with be" },
-        { error: "She is more tall than me", correction: "She is taller than me", example: "Comparatives" },
+        {
+          error: "I have 25 years old",
+          correction: "I am 25 years old",
+          alternatives: ["I'm twenty-five", "My age is twenty-five", "I turned twenty-five recently"],
+        },
+        {
+          error: "She is more tall than me",
+          correction: "She is taller than me",
+          alternatives: ["She's taller than I am", "I'm shorter than she is", "She stands taller than me"],
+        },
       ],
       vocabulary_level: "A2",
       fluency_score: 5.5,
@@ -102,9 +158,21 @@
       lesson_date: "2026-04-14T14:00:00Z",
       created_at: "2026-04-14T14:00:00Z",
       grammar_errors: [
-        { error: "I go to school yesterday", correction: "I went to school yesterday", example: "Past Simple" },
-        { error: "He can to swim", correction: "He can swim", example: "Modals" },
-        { error: "She is speak English", correction: "She speaks English", example: "Present Simple" },
+        {
+          error: "I go to school yesterday",
+          correction: "I went to school yesterday",
+          alternatives: ["Yesterday I attended school", "I was at school yesterday", "I had classes yesterday"],
+        },
+        {
+          error: "He can to swim",
+          correction: "He can swim",
+          alternatives: ["He knows how to swim", "He's able to swim", "He's a good swimmer"],
+        },
+        {
+          error: "She is speak English",
+          correction: "She speaks English",
+          alternatives: ["She can speak English", "English is one of her languages", "She talks in English"],
+        },
       ],
       vocabulary_level: "A1",
       fluency_score: 5,
@@ -456,6 +524,32 @@
     return parts.join(" ");
   }
 
+  function grammarAlternatives(error) {
+    var alts = error.alternatives;
+    if (!Array.isArray(alts)) return [];
+    return alts
+      .map(function (item) {
+        return String(item || "").trim();
+      })
+      .filter(Boolean)
+      .slice(0, 3);
+  }
+
+  function renderGrammarAlternatives(alts) {
+    if (!alts.length) return "";
+    return (
+      '<div class="error-alternatives">' +
+      '<p class="error-alternatives-label">Как ещё можно сказать:</p>' +
+      '<ul class="error-alternatives-list">' +
+      alts
+        .map(function (alt) {
+          return "<li>«" + esc(alt) + "»</li>";
+        })
+        .join("") +
+      "</ul></div>"
+    );
+  }
+
   function renderGrammarList(id, errors) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -465,9 +559,9 @@
     }
     el.innerHTML = errors
       .map(function (e) {
-        var said = esc(e.error || e.example || "");
+        var said = esc(e.error || "");
         var correct = esc(e.correction || "");
-        var tag = esc(e.example || "");
+        var alts = grammarAlternatives(e);
         return (
           '<li class="error-item">' +
           '<div class="error-row">' +
@@ -475,7 +569,7 @@
           (said && correct ? '<span class="arrow">→</span>' : "") +
           (correct ? '<span class="correct">«' + correct + '»</span>' : "") +
           "</div>" +
-          (tag ? '<span class="error-tag">' + tag + "</span>" : "") +
+          renderGrammarAlternatives(alts) +
           "</li>"
         );
       })
@@ -643,7 +737,7 @@
   }
 
   function emptyMsg(text) {
-    return '<li class="error-item" style="list-style:none"><span class="error-tag">' + esc(text) + "</span></li>";
+    return '<li class="error-item" style="list-style:none"><span class="empty-msg">' + esc(text) + "</span></li>";
   }
 
   function initials(name) {

@@ -27,7 +27,7 @@ Analyze the following dimensions:
 1. **Grammar errors** — Identify specific grammatical mistakes the student made. For each error, provide:
    - The exact error as spoken
    - The correct form
-   - A brief example sentence using the correction
+   - Exactly 3 alternative correct ways to express the same idea (different wording or style; all grammatically correct; do not repeat the correction verbatim)
 
 2. **Vocabulary level** — Rate the student's vocabulary range using the CEFR scale:
    A1 (Beginner) | A2 (Elementary) | B1 (Intermediate) | B2 (Upper-Intermediate) | C1 (Advanced) | C2 (Proficient)
@@ -106,9 +106,14 @@ ANALYSIS_JSON_SCHEMA = {
                 "properties": {
                     "error": {"type": "string"},
                     "correction": {"type": "string"},
-                    "example": {"type": "string"},
+                    "alternatives": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
                 },
-                "required": ["error", "correction", "example"],
+                "required": ["error", "correction", "alternatives"],
                 "additionalProperties": False,
             },
         },
