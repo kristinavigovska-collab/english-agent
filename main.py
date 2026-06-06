@@ -28,6 +28,9 @@ def root():
     return {"status": "ok", "service": "English Lesson Analyzer"}
 
 
+_NO_CACHE = {"Cache-Control": "no-cache"}
+
+
 @app.get("/dashboard", tags=["dashboard"])
 def dashboard():
-    return FileResponse("static/dashboard.html")
+    return FileResponse("static/dashboard.html", headers=_NO_CACHE)

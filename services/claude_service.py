@@ -109,8 +109,6 @@ ANALYSIS_JSON_SCHEMA = {
                     "alternatives": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "minItems": 3,
-                        "maxItems": 3,
                     },
                 },
                 "required": ["error", "correction", "alternatives"],
@@ -143,7 +141,7 @@ def analyze_transcript(
     context = _build_student_context(student_name, student_email)
     response = client.messages.create(
         model="claude-opus-4-8",
-        max_tokens=2048,
+        max_tokens=4096,
         system=[
             {
                 "type": "text",

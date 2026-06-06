@@ -50,4 +50,7 @@ def student_dashboard(student_id: str):
         html = f.read()
     # Inject the student_id into the page
     html = html.replace("__STUDENT_ID__", student_id)
-    return HTMLResponse(content=html)
+    return HTMLResponse(
+        content=html,
+        headers={"Cache-Control": "no-cache"},
+    )
