@@ -1,4 +1,10 @@
+import base64
+import hashlib
+import hmac
+import json
 import logging
+import os
+import time
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
@@ -15,6 +21,69 @@ router = APIRouter()
 
 # Do not run Claude on tiny partial snippets (e.g. "Hello. Glad.")
 MIN_TRANSCRIPT_CHARS = 120
+
+_WEBHOOK_TOLERANCE_SECONDS = 300  # reject requests older/newer than 5 minutes
+
+
+def _verify_recall_signature(request: Request, raw_body: bytes) -> None:
+    """Verify Recall.ai webhook signature (Svix HMAC-SHA256).
+
+    If RECALL_WEBHOOK_SECRET is unset, logs a warning and allows through.
+    Raises HTTPException(403) on any verification failure.
+    """
+    secret = os.getenv("RECALL_WEBHOOK_SECRET", "")
+    if not secret:
+        logger.warning(
+            "RECALL_WEBHOOK_SECRET not configured — skipping signature verification"
+        )
+        return
+
+    # Recall sends Svix-style headers; also accept legacy svix-* names
+    msg_id = (
+        request.headers.get("webhook-id")
+        or request.headers.get("svix-id", "")
+    )
+    msg_timestamp = (
+        request.headers.get("webhook-timestamp")
+        or request.headers.get("svix-timestamp", "")
+    )
+    msg_signature = (
+        request.headers.get("webhook-signature")
+        or request.headers.get("svix-signature", "")
+    )
+
+    if not (msg_id and msg_timestamp and msg_signature):
+        raise HTTPException(status_code=403, detail="Missing webhook signature headers")
+
+    # Replay-attack guard: reject if timestamp is > 5 minutes off
+    try:
+        ts = int(msg_timestamp)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail="Invalid webhook timestamp") from exc
+
+    if abs(int(time.time()) - ts) > _WEBHOOK_TOLERANCE_SECONDS:
+        raise HTTPException(status_code=403, detail="Webhook timestamp out of tolerance")
+
+    # Decode the workspace secret (strip optional whsec_ prefix, then base64)
+    raw_secret = secret.removeprefix("whsec_")
+    try:
+        key_bytes = base64.b64decode(raw_secret)
+    except Exception as exc:
+        logger.exception("RECALL_WEBHOOK_SECRET is not valid base64")
+        raise HTTPException(status_code=500, detail="Webhook secret misconfigured") from exc
+
+    # Signed content = "{msg_id}.{timestamp}.{raw_body}"
+    signed_content = f"{msg_id}.{msg_timestamp}.".encode() + raw_body
+    expected = base64.b64encode(
+        hmac.new(key_bytes, signed_content, hashlib.sha256).digest()
+    ).decode()
+
+    # Header may contain multiple space-separated "v1,<sig>" entries (during rotation)
+    for entry in msg_signature.split(" "):
+        if entry.startswith("v1,") and hmac.compare_digest(entry[3:], expected):
+            return
+
+    raise HTTPException(status_code=403, detail="Invalid webhook signature")
 
 LEGACY_APPEND_EVENTS = {"bot.transcription"}
 LEGACY_FINALIZE_EVENTS = {"bot.transcription_complete", "bot.transcript"}
@@ -260,8 +329,11 @@ async def recall_webhook(
 
     Legacy calendar events (bot.transcription*) are still supported.
     """
+    raw_body = await request.body()
+    _verify_recall_signature(request, raw_body)
+
     try:
-        body = await request.json()
+        body = json.loads(raw_body)
     except Exception as exc:
         raise HTTPException(status_code=400, detail="Invalid JSON payload") from exc
 
