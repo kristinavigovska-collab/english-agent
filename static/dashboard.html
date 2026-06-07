@@ -200,23 +200,50 @@
       color: var(--text);
     }
 
-    .lesson-topic-bar {
+    .lesson-topic-plaque {
       display: flex;
-      align-items: baseline;
-      gap: 0.35rem;
-      margin-bottom: 1rem;
-      font-size: 0.9375rem;
-      line-height: 1.4;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+    }
+
+    .lesson-topic-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .lesson-topic-content {
+      min-width: 0;
+      flex: 1;
     }
 
     .lesson-topic-label {
-      font-weight: 700;
-      color: var(--text);
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-light);
+      margin-bottom: 0.2rem;
     }
 
     .lesson-topic-value {
-      font-weight: 400;
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
       color: var(--text);
+      line-height: 1.35;
     }
 
     /* ── Main content ── */
@@ -984,9 +1011,12 @@
       <!-- Tab: Current lesson -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
 
-        <div class="lesson-topic-bar">
-          <span class="lesson-topic-label">Topic:</span>
-          <span class="lesson-topic-value" id="lesson-topic-current">Travel &amp; Past Tenses</span>
+        <div class="lesson-topic-plaque">
+          <span class="lesson-topic-icon" aria-hidden="true">📋</span>
+          <div class="lesson-topic-content">
+            <span class="lesson-topic-label">Topic</span>
+            <p class="lesson-topic-value" id="lesson-topic-current">Travel &amp; Past Tenses</p>
+          </div>
         </div>
 
         <section class="card">
