@@ -35,7 +35,8 @@ services/supabase_service.py
 services/transcript_service.py
 services/student_profiles.py
 models/schemas.py
-static/dashboard.html   # UI shell + CSS; demo at /dashboard, live at /api/dashboard/{id}
+static/dashboard.html   # UI shell; demo at /dashboard, live at /api/dashboard/{id}
+static/dashboard.css    # Dashboard styles
 static/dashboard.js     # fetches /api/students/{id}/reports
 scripts/reprocess_lesson.py  # CLI: re-fetch transcript + re-run Claude
 render.yaml             # Render deploy

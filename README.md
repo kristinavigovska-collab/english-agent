@@ -268,7 +268,8 @@ english-agent/
 │   └── DEPLOY_RENDER.md
 │
 └── static/
-    ├── dashboard.html            # HTML + CSS
+    ├── dashboard.html            # HTML shell
+    ├── dashboard.css             # Dashboard styles
     └── dashboard.js              # Логика дашборда, fetch API
 ```
 
