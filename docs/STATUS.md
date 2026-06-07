@@ -22,7 +22,7 @@ Last updated: 2026-06-07
 - [x] GitHub + Render Blueprint (`render.yaml`)
 - [x] Recall webhook endpoint updated from ngrok to Render
 - [x] Google OAuth app “Yappi Tutor” / consent “English Lesson Analyzer” for Calendar V1
-- [x] Recall webhook signature verification (Svix HMAC-SHA256 in `routers/webhook.py`)
+- [x] Recall webhook signature verification — **done** (`routers/webhook.py`, Svix HMAC-SHA256; see below)
 - [x] Full Recall transcript download via `recall_service.py`
 - [x] Live dashboard wired to reports API (`static/dashboard.js`)
 
@@ -49,6 +49,28 @@ Last updated: 2026-06-07
 - `schools` table + school calendar account docs for teachers.
 - Auto-email “report ready” after webhook.
 
+## Webhook signature (`RECALL_WEBHOOK_SECRET`)
+
+> **For AI agents:** verification is **already implemented**. Do not list “add webhook HMAC” as a todo.
+
+| | |
+|---|---|
+| **Code** | `routers/webhook.py` → `_verify_recall_signature()` |
+| **Algorithm** | Svix-style HMAC-SHA256 (`v1,<base64-sig>`) |
+| **Headers** | `webhook-id`, `webhook-timestamp`, `webhook-signature` (or `svix-*` aliases) |
+| **Production** | Set `RECALL_WEBHOOK_SECRET=whsec_…` on **Render** and in **Recall → Webhooks** (must match) |
+| **Dev / unset** | Webhooks accepted without verification; warning in logs |
+| **Test** | `python scripts/test_webhook_sig.py` |
+
+### Troubleshooting 403 on webhook
+
+| Symptom | Fix |
+|---------|-----|
+| `Missing webhook signature headers` | Recall not sending signed webhooks — check webhook endpoint config |
+| `Invalid webhook signature` | `RECALL_WEBHOOK_SECRET` on Render ≠ Recall dashboard secret |
+| `Webhook timestamp out of tolerance` | Server clock skew; retry or check Render time |
+| `Webhook secret misconfigured` | Secret is not valid base64 after `whsec_` strip — copy again from Recall |
+
 ## Known gaps
 
 | Gap | Notes |
@@ -68,6 +90,7 @@ Last updated: 2026-06-07
 - “No meeting link” on event → bot will not join
 - Removing Test users ≠ revoking Google access (also delete app in Google permissions)
 - Webhook may not persist if Render restarts mid-BackgroundTask — use `scripts/reprocess_lesson.py` to re-run analysis
+- Agents often cite old docs saying webhook secret is “unused” — it is **implemented**; check env sync if webhooks fail
 
 ## Links
 

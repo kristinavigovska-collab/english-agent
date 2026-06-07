@@ -50,7 +50,30 @@ docs/                   # STATUS, ARCHITECTURE, LESSON_DAY, DEPLOY_RENDER
 
 ## Env vars (see `.env.example`)
 
-`ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (`sb_secret_…` needs `supabase>=2.16`), `RECALL_API_KEY` + `RECALL_REGION` (for full transcript download), optional `RECALL_WEBHOOK_SECRET` (Svix HMAC-SHA256 verification in `routers/webhook.py`; if unset, webhooks are accepted with a warning).
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `ANTHROPIC_API_KEY` | yes | Claude analysis |
+| `SUPABASE_URL`, `SUPABASE_KEY` | yes | `sb_secret_…` needs `supabase>=2.16` |
+| `RECALL_API_KEY`, `RECALL_REGION` | yes (prod) | Full transcript download; region `eu-central-1` |
+| `RECALL_WEBHOOK_SECRET` | recommended | See **Webhook signature** below |
+
+## Webhook signature (`RECALL_WEBHOOK_SECRET`)
+
+**Status: implemented.** Verification lives in `routers/webhook.py` → `_verify_recall_signature()`.  
+**Do not** tell users or docs that the secret is “unused” or “not verified in code” — that was true before June 2026 and is **outdated**.
+
+| Secret set? | Behavior |
+|-------------|----------|
+| **Yes** (Render + Recall) | Every `POST /webhook/recall` must carry Svix-style headers: `webhook-id`, `webhook-timestamp`, `webhook-signature` (legacy aliases `svix-*` also accepted). Invalid/missing signature → **403**. Timestamp must be within ±5 minutes. |
+| **No** | Request is **accepted**; server logs `RECALL_WEBHOOK_SECRET not configured — skipping signature verification`. OK for local dev only — **set on Render for production**. |
+
+**Secret value:** from Recall dashboard → Webhooks → signing secret, format `whsec_…`. Same value must be in Render **Environment** as `RECALL_WEBHOOK_SECRET`.
+
+**Smoke test:** `python scripts/test_webhook_sig.py` (local server + `.env` with real `whsec_` value).
+
+**If Recall webhooks fail with 403:** (1) secret mismatch between Recall and Render, (2) missing signature headers, (3) clock skew > 5 min, (4) wrong secret encoding (must be valid base64 after stripping `whsec_` prefix).
+
+**Agent rule:** never suggest “implement webhook verification” as new work — it exists. Suggest fixing env/config or running the smoke test instead.
 
 ## Done (Phase 0–1)
 
@@ -79,6 +102,7 @@ docs/                   # STATUS, ARCHITECTURE, LESSON_DAY, DEPLOY_RENDER
 - Commit `.env` or `ngrok` binary
 - Use Vercel (BackgroundTasks + long Claude calls — use Render)
 - Re-connect personal `kristina.vigovska@gmail.com` without updating Google Cloud **Test users**
+- Claim `RECALL_WEBHOOK_SECRET` is unimplemented — see **Webhook signature** above
 
 ## Commands
 
