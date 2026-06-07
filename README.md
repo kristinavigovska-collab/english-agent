@@ -53,7 +53,9 @@ cp .env.example .env
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
 | `SUPABASE_URL` | Settings → API → Project URL |
 | `SUPABASE_KEY` | Settings → API → service_role или anon key |
-| `RECALL_WEBHOOK_SECRET` | Опционально, для верификации подписи Recall.ai |
+| `RECALL_WEBHOOK_SECRET` | Recall dashboard → Webhooks; Svix-style secret (`whsec_…`). Verified in `routers/webhook.py`; if unset, requests are accepted with a warning |
+| `RECALL_API_KEY` | Recall dashboard → API keys (for full transcript download) |
+| `RECALL_REGION` | `eu-central-1` (EU workspace) |
 
 ### 3. Создаём таблицы в Supabase
 
@@ -183,7 +185,7 @@ uvicorn main:app --reload --port 8000
         {
           "error": "I have went to school",
           "correction": "I went to school",
-          "example": "I went to school yesterday."
+          "explanation": "Past Simple нужен для завершённого действия в прошлом; have + V3 здесь не используется."
         }
       ],
       "weak_topics": ["past perfect", "article usage"],
@@ -220,7 +222,7 @@ uvicorn main:app --reload --port 8000
 
 2. Зарегистрируйте вебхук в настройках Recall.ai:
    - URL: `https://your-domain.com/webhook/recall`
-   - Events: `bot.transcription` / `bot.transcription_complete`
+   - Events: `recording.done`, `transcript.data`, `transcript.done` (legacy: `bot.transcription`, `bot.transcription_complete`)
 
 3. Для локального тестирования используйте [ngrok](https://ngrok.com):
    ```bash
@@ -234,23 +236,40 @@ uvicorn main:app --reload --port 8000
 
 ```
 english-agent/
-├── main.py                    # FastAPI приложение
+├── main.py                       # FastAPI приложение
 ├── requirements.txt
+├── render.yaml                   # Render Blueprint
 ├── .env.example
+├── AGENTS.md                     # Контекст для AI-агентов
 │
 ├── models/
-│   └── schemas.py             # Pydantic-модели
+│   └── schemas.py                # Pydantic-модели
 │
 ├── services/
-│   ├── claude_service.py      # Анализ через Anthropic API
-│   └── supabase_service.py    # CRUD-операции Supabase
+│   ├── claude_service.py         # Анализ через Anthropic API
+│   ├── recall_service.py         # Recall API (транскрипты)
+│   ├── supabase_service.py       # CRUD Supabase
+│   ├── transcript_service.py     # Парсинг и merge транскриптов
+│   └── student_profiles.py       # Профили студентов для Claude
 │
 ├── routers/
-│   ├── webhook.py             # POST /webhook/recall
-│   └── reports.py             # GET /api/students/{id}/reports + дашборд
+│   ├── webhook.py                # POST /webhook/recall (+ signature verify)
+│   └── reports.py                # GET /api/students/{id}/reports + дашборд
+│
+├── scripts/
+│   ├── reprocess_lesson.py       # CLI: перезапуск анализа по bot_id
+│   ├── test_webhook_sig.py       # Smoke-test верификации подписи
+│   └── setup-ngrok.sh            # Локальный ngrok
+│
+├── docs/
+│   ├── STATUS.md
+│   ├── ARCHITECTURE.md
+│   ├── LESSON_DAY.md
+│   └── DEPLOY_RENDER.md
 │
 └── static/
-    └── dashboard.html         # HTML-дашборд студента
+    ├── dashboard.html            # HTML + CSS
+    └── dashboard.js              # Логика дашборда, fetch API
 ```
 
 ---

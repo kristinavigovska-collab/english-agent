@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-06-04
+Last updated: 2026-06-07
 
 ## Decisions
 
@@ -22,8 +22,11 @@ Last updated: 2026-06-04
 - [x] GitHub + Render Blueprint (`render.yaml`)
 - [x] Recall webhook endpoint updated from ngrok to Render
 - [x] Google OAuth app “Yappi Tutor” / consent “English Lesson Analyzer” for Calendar V1
+- [x] Recall webhook signature verification (Svix HMAC-SHA256 in `routers/webhook.py`)
+- [x] Full Recall transcript download via `recall_service.py`
+- [x] Live dashboard wired to reports API (`static/dashboard.js`)
 
-## Phase 2 — next work
+## Phase 2 — in progress
 
 ### P0 — test one real lesson
 
@@ -35,25 +38,25 @@ Last updated: 2026-06-04
 
 ### P1 — student-facing
 
-- [x] Wire `static/dashboard.html` to API (`__STUDENT_ID__` + `fetch` reports) — `static/dashboard.js`
-- [x] Map UI to Claude fields only (demo blocks hidden when live data loads)
+- [x] Wire `static/dashboard.html` to API (`__STUDENT_ID__` + `fetch` reports)
+- [x] Map UI to Claude fields (grammar errors with `explanation`, CEFR, fluency, weak topics, recommendations)
+- [x] Lesson topic plaque above grammar card (demo `lesson_topic`; live fallback from `weak_topics`)
+- [ ] `lessons.lesson_topic` from school materials / calendar event title
 - [ ] Student login: email → magic link (no UUID in URL)
 
 ### P2 — school ops
 
 - `schools` table + school calendar account docs for teachers.
 - Auto-email “report ready” after webhook.
-- Verify `RECALL_WEBHOOK_SECRET` in `webhook.py`.
 
 ## Known gaps
 
 | Gap | Notes |
 |-----|--------|
-| Dashboard | `/dashboard` = demo; `/api/dashboard/{uuid}` loads live reports |
-| Auth | `student_id` in URL is public |
-| Webhook signature | `RECALL_WEBHOOK_SECRET` unused |
-| UI vs Claude | UI shows pronunciation, wpm, etc.; API does not |
-| Render free | Cold start; ping `/` before lessons |
+| Dashboard auth | `student_id` in URL is public — anyone with UUID sees reports |
+| Lesson topic (live) | UI ready; DB field `lessons.lesson_topic` not wired yet — falls back to `weak_topics` |
+| UI vs Claude | Demo blocks show pronunciation/wpm; API does not — hidden on live load |
+| Render free | Cold start ~30–50 s; ping `/` before lessons |
 | Calendar filter | Use separate Google calendar; Recall UI limited |
 
 ## Pitfalls we hit
@@ -64,6 +67,7 @@ Last updated: 2026-06-04
 - Calendar Connect needs **calendar.events.readonly** scope + Calendar API enabled
 - “No meeting link” on event → bot will not join
 - Removing Test users ≠ revoking Google access (also delete app in Google permissions)
+- Webhook may not persist if Render restarts mid-BackgroundTask — use `scripts/reprocess_lesson.py` to re-run analysis
 
 ## Links
 

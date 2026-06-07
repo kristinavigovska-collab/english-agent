@@ -24,17 +24,6 @@ class RecallWebhookPayload(BaseModel):
     data: dict[str, Any]
 
 
-class StudentCreate(BaseModel):
-    name: str
-    email: str
-
-
-class LessonCreate(BaseModel):
-    student_id: str
-    meeting_id: str
-    transcript: str
-
-
 class ReportResponse(BaseModel):
     id: str
     lesson_id: str

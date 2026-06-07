@@ -306,11 +306,6 @@ def _process_webhook(event: str, data: dict) -> None:
         _append_utterance(bot_id, data, utterance)
         return
 
-    if event in LEGACY_FINALIZE_EVENTS:
-        transcript = extract_transcript_text(data)
-        _finalize_lesson(bot_id, data, transcript)
-        return
-
     logger.info("Ignored unhandled webhook event: %s", event)
 
 
