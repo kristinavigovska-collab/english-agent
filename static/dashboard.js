@@ -49,6 +49,7 @@
       ],
       vocabulary_level: "B1",
       fluency_score: 8,
+      lesson_topic: "Travel & Past Tenses",
       weak_topics: ["Past Simple vs Present Perfect", "Comparatives", "Ed/-ing adjectives"],
       recommendations: ["Gap-fill: 15 предложений на времена", "Role-play: booking a hotel", "Shadowing: travel podcast"],
     },
@@ -394,10 +395,7 @@
 
     setText("dash-date-label", isLatest ? "Дата последнего урока" : "Дата урока");
     setText("dash-last-date", formatDate(lessonDate));
-    setText(
-      "dash-lesson-topic",
-      isLatest ? "Последний урок" : "Урок от " + formatDateShort(lessonDate)
-    );
+    setText("lesson-topic-current", formatLessonTopic(report));
 
     renderGrammarList("grammar-list-current", report.grammar_errors);
     renderGrammarList("grammar-list-detailed", report.grammar_errors);
@@ -541,6 +539,14 @@
       parts.push(report.recommendations[0]);
     }
     return parts.join(" ");
+  }
+
+  function formatLessonTopic(report) {
+    if (report.lesson_topic) return report.lesson_topic;
+    var topics = report.weak_topics;
+    if (!topics || !topics.length) return "—";
+    if (topics.length === 1) return topics[0];
+    return topics.slice(0, 2).join(" · ");
   }
 
   function grammarExplanation(error) {

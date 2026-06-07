@@ -200,6 +200,25 @@
       color: var(--text);
     }
 
+    .lesson-topic-bar {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      font-size: 0.9375rem;
+      line-height: 1.4;
+    }
+
+    .lesson-topic-label {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .lesson-topic-value {
+      font-weight: 400;
+      color: var(--text);
+    }
+
     /* ── Main content ── */
     .main {
       flex: 1;
@@ -945,10 +964,6 @@
           <div class="meta-label" id="dash-date-label">Дата последнего урока</div>
           <div class="meta-value" id="dash-last-date">28 мая 2026</div>
         </div>
-        <div class="meta-item">
-          <div class="meta-label">Тема урока</div>
-          <div class="meta-value" id="dash-lesson-topic">Travel &amp; Past Tenses</div>
-        </div>
       </div>
     </aside>
 
@@ -968,6 +983,11 @@
 
       <!-- Tab: Current lesson -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
+
+        <div class="lesson-topic-bar">
+          <span class="lesson-topic-label">Topic:</span>
+          <span class="lesson-topic-value" id="lesson-topic-current">Travel &amp; Past Tenses</span>
+        </div>
 
         <section class="card">
           <div class="card-header">
