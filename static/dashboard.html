@@ -327,6 +327,7 @@
       align-items: center;
       gap: 0.5rem 0.75rem;
       font-size: 0.875rem;
+      width: 100%;
     }
 
     .error-row .arrow { color: var(--text-light); font-size: 0.75rem; }
@@ -339,30 +340,47 @@
 
     .correct { color: var(--green); font-weight: 600; }
 
-    .error-alternatives {
+    .error-explain-toggle {
+      margin-left: auto;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .error-explain-toggle:hover {
+      background: var(--accent-soft);
+      border-color: rgba(79, 70, 229, 0.25);
+      color: var(--accent);
+    }
+
+    .error-chevron {
+      display: block;
+      font-size: 0.625rem;
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    .error-item.is-open .error-chevron {
+      transform: rotate(180deg);
+    }
+
+    .error-explanation {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
       border-top: 1px solid var(--border);
-    }
-
-    .error-alternatives-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 0.45rem;
-    }
-
-    .error-alternatives-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-
-    .error-alternatives-list li {
       font-size: 0.8125rem;
-      color: var(--text);
-      line-height: 1.45;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
 
     .empty-msg {
@@ -965,36 +983,36 @@
                 <span class="said">«I have went to Paris last year»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«I went to Paris last year»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
-              <div class="error-alternatives">
-                <p class="error-alternatives-label">Как ещё можно сказать:</p>
-                <ul class="error-alternatives-list">
-                  <li>«I visited Paris last year»</li>
-                  <li>«Last year I went to Paris»</li>
-                  <li>«I traveled to Paris last year»</li>
-                </ul>
-              </div>
+              <div class="error-explanation" hidden>Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«She don't like spicy food»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«She doesn't like spicy food»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«I am living here since 2020»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«I have lived here since 2020»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«More better than before»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«Much better than before»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.</div>
             </li>
           </ul>
         </section>
@@ -1302,36 +1320,36 @@
                 <span class="said">«I have went to Paris last year»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«I went to Paris last year»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
-              <div class="error-alternatives">
-                <p class="error-alternatives-label">Как ещё можно сказать:</p>
-                <ul class="error-alternatives-list">
-                  <li>«I visited Paris last year»</li>
-                  <li>«Last year I went to Paris»</li>
-                  <li>«I traveled to Paris last year»</li>
-                </ul>
-              </div>
+              <div class="error-explanation" hidden>Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«She don't like spicy food»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«She doesn't like spicy food»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«I am living here since 2020»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«I have lived here since 2020»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.</div>
             </li>
             <li class="error-item">
               <div class="error-row">
                 <span class="said">«More better than before»</span>
                 <span class="arrow">→</span>
                 <span class="correct">«Much better than before»</span>
+                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
               </div>
+              <div class="error-explanation" hidden>У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.</div>
             </li>
           </ul>
         </section>
@@ -1404,7 +1422,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260606-2" defer></script>
+  <script src="/static/dashboard.js?v=20260607-1" defer></script>
 
 </body>
 </html>

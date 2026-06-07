@@ -27,7 +27,7 @@ Analyze the following dimensions:
 1. **Grammar errors** — Identify specific grammatical mistakes the student made. For each error, provide:
    - The exact error as spoken
    - The correct form
-   - Exactly 3 alternative correct ways to express the same idea (different wording or style; all grammatically correct; do not repeat the correction verbatim)
+   - A brief grammar explanation in Russian (2–3 sentences): why the student's phrase was wrong, which tense or rule applies (name it, e.g. Past Simple, Present Perfect, third person -s), and why the correction is correct
 
 2. **Vocabulary level** — Rate the student's vocabulary range using the CEFR scale:
    A1 (Beginner) | A2 (Elementary) | B1 (Intermediate) | B2 (Upper-Intermediate) | C1 (Advanced) | C2 (Proficient)
@@ -106,12 +106,9 @@ ANALYSIS_JSON_SCHEMA = {
                 "properties": {
                     "error": {"type": "string"},
                     "correction": {"type": "string"},
-                    "alternatives": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    },
+                    "explanation": {"type": "string"},
                 },
-                "required": ["error", "correction", "alternatives"],
+                "required": ["error", "correction", "explanation"],
                 "additionalProperties": False,
             },
         },

@@ -25,22 +25,26 @@
         {
           error: "I have went to Paris last year",
           correction: "I went to Paris last year",
-          alternatives: ["I visited Paris last year", "Last year I went to Paris", "I traveled to Paris last year"],
+          explanation:
+            "Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.",
         },
         {
           error: "She don't like spicy food",
           correction: "She doesn't like spicy food",
-          alternatives: ["She isn't fond of spicy food", "Spicy food isn't her thing", "She dislikes spicy food"],
+          explanation:
+            "В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.",
         },
         {
           error: "I am living here since 2020",
           correction: "I have lived here since 2020",
-          alternatives: ["I've been living here since 2020", "I moved here in 2020 and still live here", "Since 2020, I have lived here"],
+          explanation:
+            "Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.",
         },
         {
           error: "More better than before",
           correction: "Much better than before",
-          alternatives: ["A lot better than before", "Far better than I used to be", "Noticeably better than before"],
+          explanation:
+            "У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.",
         },
       ],
       vocabulary_level: "B1",
@@ -56,12 +60,14 @@
         {
           error: "If I will have time, I will call you",
           correction: "If I have time, I will call you",
-          alternatives: ["Should I have time, I'll call you", "When I have time, I'll give you a call", "I'll call you if I'm free"],
+          explanation:
+            "В First Conditional (реальное условие) после if используется Present Simple, а не will. Will стоит только в главной части предложения.",
         },
         {
           error: "He suggested to go earlier",
           correction: "He suggested going earlier",
-          alternatives: ["He proposed leaving earlier", "He recommended that we go earlier", "His suggestion was to go earlier"],
+          explanation:
+            "После suggest нужен gerund (-ing), а не infinitive с to. Правильно: suggest doing something.",
         },
       ],
       vocabulary_level: "B1",
@@ -77,17 +83,20 @@
         {
           error: "I didn't went there",
           correction: "I didn't go there",
-          alternatives: ["I never went there", "I didn't visit that place", "I stayed away from there"],
+          explanation:
+            "После didn't (Past Simple) идёт базовая форма глагола (go), а не Past Simple (went).",
         },
         {
           error: "Much people were waiting",
           correction: "Many people were waiting",
-          alternatives: ["There were a lot of people waiting", "Plenty of people were waiting", "A large crowd was waiting"],
+          explanation:
+            "Much используется с неисчисляемыми существительными. People — исчисляемое, поэтому many.",
         },
         {
           error: "She is teacher",
           correction: "She is a teacher",
-          alternatives: ["She works as a teacher", "She teaches for a living", "Her job is teaching"],
+          explanation:
+            "Перед профессией в единственном числе нужен неопределённый артикль a/an: a teacher.",
         },
       ],
       vocabulary_level: "A2",
@@ -103,7 +112,8 @@
         {
           error: "I look forward to meet you",
           correction: "I look forward to meeting you",
-          alternatives: ["I can't wait to meet you", "I'm excited to see you soon", "I'm eager to meet you in person"],
+          explanation:
+            "Look forward to — устойчивое сочетание, после to здесь идёт gerund (-ing), а не infinitive.",
         },
       ],
       vocabulary_level: "A2",
@@ -119,12 +129,14 @@
         {
           error: "He don't know the answer",
           correction: "He doesn't know the answer",
-          alternatives: ["He isn't sure of the answer", "He has no idea what the answer is", "The answer isn't clear to him"],
+          explanation:
+            "В Present Simple с he/she/it вспомогательный — doesn't + базовая форма глагола.",
         },
         {
           error: "I am agree with you",
           correction: "I agree with you",
-          alternatives: ["I see your point", "You're absolutely right", "I'm on the same page as you"],
+          explanation:
+            "Agree — глагол состояния (stative verb), не используется с am/is/are. Правильно: I agree.",
         },
       ],
       vocabulary_level: "A2",
@@ -140,12 +152,14 @@
         {
           error: "I have 25 years old",
           correction: "I am 25 years old",
-          alternatives: ["I'm twenty-five", "My age is twenty-five", "I turned twenty-five recently"],
+          explanation:
+            "Возраст выражается через to be: I am + число + years old. Have здесь не используется.",
         },
         {
           error: "She is more tall than me",
           correction: "She is taller than me",
-          alternatives: ["She's taller than I am", "I'm shorter than she is", "She stands taller than me"],
+          explanation:
+            "У односложных прилагательных сравнительная степень — суффикс -er (taller), без more.",
         },
       ],
       vocabulary_level: "A2",
@@ -161,17 +175,20 @@
         {
           error: "I go to school yesterday",
           correction: "I went to school yesterday",
-          alternatives: ["Yesterday I attended school", "I was at school yesterday", "I had classes yesterday"],
+          explanation:
+            "Yesterday — маркер Past Simple. Нужна форма went, а не go (Present Simple).",
         },
         {
           error: "He can to swim",
           correction: "He can swim",
-          alternatives: ["He knows how to swim", "He's able to swim", "He's a good swimmer"],
+          explanation:
+            "После модального глагола can идёт базовая форма без to: can swim.",
         },
         {
           error: "She is speak English",
           correction: "She speaks English",
-          alternatives: ["She can speak English", "English is one of her languages", "She talks in English"],
+          explanation:
+            "Present Simple: с she/he/it глагол получает -s (speaks). Is используется только для Continuous или пассива.",
         },
       ],
       vocabulary_level: "A1",
@@ -180,6 +197,8 @@
       recommendations: ["Базовые глаголы — карточки", "Present Simple — 10 фраз о себе"],
     },
   ];
+
+  initGrammarToggles();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -524,29 +543,20 @@
     return parts.join(" ");
   }
 
-  function grammarAlternatives(error) {
-    var alts = error.alternatives;
-    if (!Array.isArray(alts)) return [];
-    return alts
-      .map(function (item) {
-        return String(item || "").trim();
-      })
-      .filter(Boolean)
-      .slice(0, 3);
+  function grammarExplanation(error) {
+    return String(error.explanation || "").trim();
   }
 
-  function renderGrammarAlternatives(alts) {
-    if (!alts.length) return "";
+  function renderGrammarExplanation(text) {
+    if (!text) return "";
+    return '<div class="error-explanation" hidden>' + esc(text) + "</div>";
+  }
+
+  function renderGrammarToggle(hasExplanation) {
+    if (!hasExplanation) return "";
     return (
-      '<div class="error-alternatives">' +
-      '<p class="error-alternatives-label">Как ещё можно сказать:</p>' +
-      '<ul class="error-alternatives-list">' +
-      alts
-        .map(function (alt) {
-          return "<li>«" + esc(alt) + "»</li>";
-        })
-        .join("") +
-      "</ul></div>"
+      '<button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение">' +
+      '<span class="error-chevron" aria-hidden="true">▼</span></button>'
     );
   }
 
@@ -561,19 +571,40 @@
       .map(function (e) {
         var said = esc(e.error || "");
         var correct = esc(e.correction || "");
-        var alts = grammarAlternatives(e);
+        var explanation = grammarExplanation(e);
         return (
           '<li class="error-item">' +
           '<div class="error-row">' +
           (said ? '<span class="said">«' + said + '»</span>' : "") +
           (said && correct ? '<span class="arrow">→</span>' : "") +
           (correct ? '<span class="correct">«' + correct + '»</span>' : "") +
+          renderGrammarToggle(explanation) +
           "</div>" +
-          renderGrammarAlternatives(alts) +
+          renderGrammarExplanation(explanation) +
           "</li>"
         );
       })
       .join("");
+  }
+
+  function initGrammarToggles() {
+    ["grammar-list-current", "grammar-list-detailed"].forEach(function (listId) {
+      var list = document.getElementById(listId);
+      if (!list || list.dataset.grammarBound) return;
+      list.dataset.grammarBound = "1";
+      list.addEventListener("click", function (e) {
+        var btn = e.target.closest(".error-explain-toggle");
+        if (!btn) return;
+        var item = btn.closest(".error-item");
+        if (!item) return;
+        var panel = item.querySelector(".error-explanation");
+        if (!panel) return;
+        var expanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", expanded ? "false" : "true");
+        panel.hidden = expanded;
+        item.classList.toggle("is-open", !expanded);
+      });
+    });
   }
 
   function renderHighlightList(id, items, emptyText) {

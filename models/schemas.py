@@ -6,7 +6,7 @@ from datetime import datetime
 class GrammarError(BaseModel):
     error: str
     correction: str
-    alternatives: list[str] = Field(min_length=3, max_length=3)
+    explanation: str
 
 
 class LessonAnalysis(BaseModel):
