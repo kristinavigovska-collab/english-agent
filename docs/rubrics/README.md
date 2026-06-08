@@ -37,4 +37,6 @@ docs/rubrics/speaking/
 
 ## Подключение к коду
 
-Пока файлы **только документация**. Следующий шаг: `services/rubric_service.py` + поле `course_level` у студента → блок рубрики в промпт Claude.
+- `services/rubric_service.py` — загрузка YAML и форматирование блока для промпта.
+- `services/student_profiles.py` — поле `course_level` (например `upper_intermediate`).
+- `services/claude_service.py` — рубрика уровня студента добавляется во второй cached system block.

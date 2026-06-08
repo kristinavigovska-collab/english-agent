@@ -5,13 +5,14 @@ Phase 3 (later): school Google Calendar — guest email identifies each student;
 profiles move to Supabase or are derived from calendar metadata.
 """
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class StudentProfile(TypedDict):
     display_name: str
     name_aliases: list[str]
     goal: str
+    course_level: NotRequired[str]
 
 
 # Keyed by lowercase email from calendar guest / Recall participant metadata.
@@ -23,6 +24,7 @@ STUDENT_PROFILES: dict[str, StudentProfile] = {
             "Свободно участвовать в дискуссиях. "
             "Быть уверенным Upper-Intermediate (CEFR B2)."
         ),
+        "course_level": "upper_intermediate",
     },
 }
 

@@ -5,6 +5,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from models.schemas import LessonAnalysis
+from services.rubric_service import get_rubric_prompt
 from services.student_profiles import get_student_profile
 
 load_dotenv()
@@ -37,6 +38,7 @@ Analyze the following dimensions:
    - 4–6: Functional but with noticeable gaps
    - 7–8: Comfortable, occasional errors
    - 9–10: Near-native or native fluency
+   If a speaking rubric is provided in a separate system block, follow its fluency band and mapping instead of this generic scale.
 
 4. **Weak topics** — List grammar or language topics the student struggles with
    (e.g., "third conditional", "article usage", "phrasal verbs", "past perfect")
@@ -48,6 +50,27 @@ Compare the student's current level against the goal (e.g. B2 discussion skills)
 
 Be constructive and specific. If the transcript is very short, note that the analysis may be limited.\
 """
+
+
+def _build_system_blocks(course_level: str | None) -> list[dict]:
+    blocks: list[dict] = [
+        {
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+    if course_level:
+        rubric_prompt = get_rubric_prompt(course_level)
+        if rubric_prompt:
+            blocks.append(
+                {
+                    "type": "text",
+                    "text": rubric_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            )
+    return blocks
 
 
 def _build_student_context(student_name: str, student_email: str) -> str:
@@ -82,6 +105,9 @@ def _build_student_context(student_name: str, student_email: str) -> str:
                 "Tailor weak_topics and recommendations toward this goal.",
             ]
         )
+
+    if profile and profile.get("course_level"):
+        lines.append(f"- Course level (rubric): {profile['course_level'].replace('_', ' ')}")
 
     lines.extend(["", "## Transcript", ""])
     return "\n".join(lines)
@@ -135,18 +161,13 @@ def analyze_transcript(
     student_email: str = "",
 ) -> LessonAnalysis:
     """Send transcript to Claude and return a structured lesson analysis."""
+    profile = get_student_profile(student_email)
+    course_level = profile.get("course_level") if profile else None
     context = _build_student_context(student_name, student_email)
     response = client.messages.create(
         model="claude-opus-4-8",
         max_tokens=4096,
-        system=[
-            {
-                "type": "text",
-                "text": SYSTEM_PROMPT,
-                # Cache the large system prompt — reused on every analysis call
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
+        system=_build_system_blocks(course_level),
         messages=[
             {
                 "role": "user",
