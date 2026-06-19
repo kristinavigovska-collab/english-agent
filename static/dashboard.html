@@ -7,11 +7,53 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260607-2" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-1" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
   <p id="dash-error" hidden></p>
+
+  <div class="goal-overlay" id="goal-overlay" hidden>
+    <div class="goal-panel" role="dialog" aria-labelledby="goal-title" aria-modal="true">
+      <div class="goal-panel-header">
+        <h2 id="goal-title">Цель обучения</h2>
+        <button class="goal-close" type="button" id="btn-goal-close" aria-label="Закрыть">×</button>
+      </div>
+      <form id="goal-form" class="goal-form">
+        <label class="goal-field">
+          <span class="goal-field-label">Целевой уровень CEFR</span>
+          <select name="target_cefr_level" id="goal-cefr-select" required>
+            <option value="">Выберите уровень</option>
+            <option value="A1">A1</option>
+            <option value="A2">A2</option>
+            <option value="B1">B1</option>
+            <option value="B2">B2</option>
+            <option value="C1">C1</option>
+            <option value="C2">C2</option>
+          </select>
+        </label>
+        <label class="goal-field">
+          <span class="goal-field-label">К какой дате хотите достичь?</span>
+          <input type="date" name="target_date" id="goal-date-input" required />
+        </label>
+        <label class="goal-field">
+          <span class="goal-field-label">Опишите цель своими словами <span class="goal-optional">(необязательно)</span></span>
+          <textarea
+            name="goal_label"
+            id="goal-label-input"
+            rows="3"
+            maxlength="500"
+            placeholder="Например: уверенно проходить собеседования на английском"
+          ></textarea>
+        </label>
+        <p class="goal-form-error" id="goal-form-error" hidden></p>
+        <div class="goal-form-actions">
+          <button class="btn" type="button" id="btn-goal-cancel">Отмена</button>
+          <button class="btn btn-primary" type="submit" id="btn-goal-save">Сохранить цель</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div class="history-overlay" id="lesson-history-overlay" hidden>
     <div class="history-panel" role="dialog" aria-labelledby="history-title" aria-modal="true">
@@ -46,10 +88,28 @@
           <span class="label">Средний балл</span>
           <span class="value" id="dash-stat-avg">6.2 / 10</span>
         </div>
-        <div class="stat-row stat-row-cefr">
-          <span class="label">Уровень CEFR (международная шкала A1–C2)</span>
-          <span class="value cefr" id="dash-stat-cefr" title="Уровень CEFR (международная шкала A1–C2)">B1</span>
+      </div>
+
+      <div class="cefr-journey">
+        <div class="cefr-journey-caption">Уровень CEFR (международная шкала A1–C2)</div>
+        <div class="cefr-journey-levels">
+          <div class="cefr-level-block">
+            <span class="cefr-level-caption">Сейчас</span>
+            <span class="cefr-level-value" id="dash-cefr-current">B1</span>
+          </div>
+          <div class="cefr-journey-arrow" aria-hidden="true">→</div>
+          <div class="cefr-level-block cefr-level-target" id="cefr-target-block">
+            <span class="cefr-level-caption">Цель</span>
+            <span class="cefr-level-value cefr-level-value-target" id="dash-cefr-target">—</span>
+          </div>
         </div>
+        <div class="goal-details" id="goal-details" hidden>
+          <p class="goal-deadline" id="goal-deadline"></p>
+          <p class="goal-remaining" id="goal-remaining"></p>
+          <p class="goal-label-text" id="goal-label-text" hidden></p>
+          <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
+        </div>
+        <button class="goal-cta" type="button" id="btn-set-goal-cta" hidden>Задать цель обучения</button>
       </div>
 
       <div class="divider"></div>
@@ -540,7 +600,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260607-1" defer></script>
+  <script src="/static/dashboard.js?v=20260620-1" defer></script>
 
 </body>
 </html>

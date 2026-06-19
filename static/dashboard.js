@@ -14,6 +14,20 @@
     studentName: "Студент",
     selectedId: null,
     historyBound: false,
+    goal: {
+      target_cefr_level: null,
+      target_date: null,
+      goal_label: null,
+      goal_set_date: null,
+    },
+    goalModalBound: false,
+  };
+
+  var DEMO_GOAL = {
+    target_cefr_level: "C1",
+    target_date: "2026-12-01",
+    goal_label: "уверенно обсуждать рабочие темы на английском",
+    goal_set_date: "2026-05-28",
   };
 
   var DEMO_REPORTS = [
@@ -200,6 +214,7 @@
   ];
 
   initGrammarToggles();
+  initGoalModal();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -214,6 +229,7 @@
     if (loadingDemo) loadingDemo.hidden = true;
     state.reports = sortReports(DEMO_REPORTS);
     state.studentName = "Анна Петрова";
+    state.goal = DEMO_GOAL;
     renderStudentOverview();
     renderHistoryList();
     if (state.reports.length) {
@@ -244,6 +260,12 @@
       });
       state.reports = sortReports(data.reports || []);
       state.studentName = data.student_name || data.student_email || "Студент";
+      state.goal = {
+        target_cefr_level: data.target_cefr_level || null,
+        target_date: data.target_date || null,
+        goal_label: data.goal_label || null,
+        goal_set_date: data.goal_set_date || null,
+      };
       renderStudentOverview();
       renderHistoryList();
       if (!state.reports.length) {
@@ -387,7 +409,271 @@
           ) + " / 10"
         : "—"
     );
-    setText("dash-stat-cefr", latest ? latest.vocabulary_level || "—" : "—");
+    setText("dash-cefr-current", latest ? latest.vocabulary_level || "—" : "—");
+    renderStudentGoal();
+  }
+
+  function hasGoal() {
+    return !!(state.goal && state.goal.target_cefr_level && state.goal.target_date);
+  }
+
+  function renderStudentGoal() {
+    var detailsEl = document.getElementById("goal-details");
+    var ctaEl = document.getElementById("btn-set-goal-cta");
+    var targetEl = document.getElementById("dash-cefr-target");
+    var targetBlock = document.getElementById("cefr-target-block");
+
+    if (!detailsEl || !ctaEl || !targetEl) return;
+
+    if (hasGoal()) {
+      targetEl.textContent = state.goal.target_cefr_level;
+      if (targetBlock) targetBlock.classList.add("has-goal");
+
+      setText("goal-deadline", "к " + formatDateLocal(state.goal.target_date));
+      setText("goal-remaining", formatRemainingTime(state.goal.target_date));
+
+      var labelEl = document.getElementById("goal-label-text");
+      if (labelEl) {
+        if (state.goal.goal_label) {
+          labelEl.textContent = "«" + state.goal.goal_label + "»";
+          labelEl.hidden = false;
+        } else {
+          labelEl.hidden = true;
+        }
+      }
+
+      detailsEl.hidden = false;
+      ctaEl.hidden = true;
+    } else {
+      targetEl.textContent = "—";
+      if (targetBlock) targetBlock.classList.remove("has-goal");
+      detailsEl.hidden = true;
+      ctaEl.hidden = false;
+    }
+  }
+
+  function initGoalModal() {
+    if (state.goalModalBound) return;
+    state.goalModalBound = true;
+
+    var overlay = document.getElementById("goal-overlay");
+    var form = document.getElementById("goal-form");
+    var openCta = document.getElementById("btn-set-goal-cta");
+    var editBtn = document.getElementById("btn-goal-edit");
+    var closeBtn = document.getElementById("btn-goal-close");
+    var cancelBtn = document.getElementById("btn-goal-cancel");
+    var dateInput = document.getElementById("goal-date-input");
+
+    if (openCta) openCta.addEventListener("click", openGoalModal);
+    if (editBtn) editBtn.addEventListener("click", openGoalModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeGoalModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeGoalModal);
+
+    if (overlay) {
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeGoalModal();
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && overlay && !overlay.hidden) closeGoalModal();
+    });
+
+    if (dateInput) {
+      dateInput.min = tomorrowIsoDate();
+    }
+
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        saveGoal(form);
+      });
+    }
+  }
+
+  function openGoalModal() {
+    var overlay = document.getElementById("goal-overlay");
+    var form = document.getElementById("goal-form");
+    var errorEl = document.getElementById("goal-form-error");
+    if (!overlay || !form) return;
+
+    if (errorEl) errorEl.hidden = true;
+
+    var cefrSelect = form.querySelector('[name="target_cefr_level"]');
+    var dateInput = form.querySelector('[name="target_date"]');
+    var labelInput = form.querySelector('[name="goal_label"]');
+
+    if (hasGoal()) {
+      if (cefrSelect) cefrSelect.value = state.goal.target_cefr_level;
+      if (dateInput) dateInput.value = isoDateOnly(state.goal.target_date);
+      if (labelInput) labelInput.value = state.goal.goal_label || "";
+    } else {
+      form.reset();
+      if (dateInput) dateInput.min = tomorrowIsoDate();
+    }
+
+    overlay.hidden = false;
+  }
+
+  function closeGoalModal() {
+    var overlay = document.getElementById("goal-overlay");
+    if (overlay) overlay.hidden = true;
+  }
+
+  function saveGoal(form) {
+    var errorEl = document.getElementById("goal-form-error");
+    var saveBtn = document.getElementById("btn-goal-save");
+    var cefr = form.target_cefr_level.value;
+    var targetDate = form.target_date.value;
+    var label = (form.goal_label.value || "").trim();
+
+    if (!cefr || !targetDate) {
+      showGoalError("Выберите целевой уровень и дату.");
+      return;
+    }
+
+    if (targetDate <= todayIsoDate()) {
+      showGoalError("Дата должна быть в будущем.");
+      return;
+    }
+
+    if (isDemo) {
+      state.goal = {
+        target_cefr_level: cefr,
+        target_date: targetDate,
+        goal_label: label || null,
+        goal_set_date: todayIsoDate(),
+      };
+      renderStudentGoal();
+      closeGoalModal();
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Сохранение…";
+    }
+    if (errorEl) errorEl.hidden = true;
+
+    fetch("/api/students/" + encodeURIComponent(STUDENT_ID) + "/goal", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        target_cefr_level: cefr,
+        target_date: targetDate,
+        goal_label: label || null,
+      }),
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().then(function (body) {
+            var detail = body.detail;
+            if (Array.isArray(detail)) {
+              throw new Error(detail.map(function (d) { return d.msg; }).join(" "));
+            }
+            throw new Error(detail || res.statusText);
+          });
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        state.goal = {
+          target_cefr_level: data.target_cefr_level || null,
+          target_date: data.target_date || null,
+          goal_label: data.goal_label || null,
+          goal_set_date: data.goal_set_date || null,
+        };
+        renderStudentGoal();
+        closeGoalModal();
+      })
+      .catch(function (err) {
+        showGoalError(err.message || "Не удалось сохранить цель.");
+      })
+      .finally(function () {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Сохранить цель";
+        }
+      });
+  }
+
+  function showGoalError(message) {
+    var errorEl = document.getElementById("goal-form-error");
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+  }
+
+  function formatRemainingTime(targetDateIso) {
+    var target = parseIsoDate(targetDateIso);
+    if (!target) return "";
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+
+    var diffMs = target - today;
+    var days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (days < 0) {
+      return "Срок цели прошёл";
+    }
+    if (days === 0) {
+      return "Последний день до цели";
+    }
+
+    var weeks = Math.floor(days / 7);
+    var dayPart =
+      days +
+      " " +
+      pluralize(days, "день", "дня", "дней");
+
+    if (weeks >= 1) {
+      return (
+        "осталось " +
+        dayPart +
+        " (" +
+        weeks +
+        " " +
+        pluralize(weeks, "неделя", "недели", "недель") +
+        ")"
+      );
+    }
+    return "осталось " + dayPart;
+  }
+
+  function todayIsoDate() {
+    return isoDateOnly(new Date());
+  }
+
+  function tomorrowIsoDate() {
+    var d = new Date();
+    d.setDate(d.getDate() + 1);
+    return isoDateOnly(d);
+  }
+
+  function isoDateOnly(value) {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.slice(0, 10);
+    }
+    try {
+      var d = new Date(value);
+      if (isNaN(d.getTime())) return "";
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      return y + "-" + m + "-" + day;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function parseIsoDate(value) {
+    var iso = isoDateOnly(value);
+    if (!iso) return null;
+    var parts = iso.split("-");
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   }
 
   function renderLessonReport(report, isLatest) {
@@ -816,6 +1102,16 @@
     } catch (e) {
       return "—";
     }
+  }
+
+  function formatDateLocal(iso) {
+    var d = parseIsoDate(iso);
+    if (!d) return formatDate(iso);
+    return d.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   }
 
   function formatDateShort(iso) {

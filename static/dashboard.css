@@ -152,6 +152,255 @@ body {
   font-size: 0.75rem;
 }
 
+/* ── CEFR journey (current → target) ── */
+.cefr-journey {
+  margin-bottom: 1.25rem;
+}
+
+.cefr-journey-caption {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+}
+
+.cefr-journey-levels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.cefr-level-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-width: 0;
+}
+
+.cefr-level-block.cefr-level-target {
+  background: var(--accent-soft);
+  border-color: #c7d2fe;
+}
+
+.cefr-level-caption {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.cefr-level-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.cefr-level-value-target {
+  color: var(--accent);
+}
+
+.cefr-journey-arrow {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.goal-details {
+  margin-top: 0.875rem;
+  text-align: center;
+}
+
+.goal-deadline {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.goal-remaining {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.goal-label-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.goal-edit-link {
+  font-size: 0.75rem;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.goal-edit-link:hover {
+  color: var(--accent-hover);
+}
+
+.goal-cta {
+  display: block;
+  width: 100%;
+  margin-top: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.goal-cta:hover {
+  background: #e0e7ff;
+  border-color: var(--accent-hover);
+}
+
+/* ── Goal modal ── */
+.goal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.goal-overlay[hidden] {
+  display: none;
+}
+
+.goal-panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.goal-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.goal-panel-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.goal-close {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.goal-close:hover {
+  background: var(--card);
+  color: var(--text);
+}
+
+.goal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.goal-field-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.goal-optional {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.goal-field select,
+.goal-field input[type="date"],
+.goal-field textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.goal-field select:focus,
+.goal-field input[type="date"]:focus,
+.goal-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.goal-field textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.goal-form-error {
+  font-size: 0.8125rem;
+  color: var(--red);
+  margin: -0.25rem 0 0;
+}
+
+.goal-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.goal-form-actions .btn {
+  width: auto;
+  min-width: 6rem;
+}
+
 .stat-row-cefr {
   align-items: flex-start;
   gap: 0.75rem;

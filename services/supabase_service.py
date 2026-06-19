@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -123,6 +124,25 @@ def get_student(student_id: str) -> Optional[dict]:
     db = get_supabase()
     result = db.table("students").select("*").eq("id", student_id).execute()
     return result.data[0] if result.data else None
+
+
+def update_student_goal(
+    student_id: str,
+    target_cefr_level: str,
+    target_date: str,
+    goal_label: Optional[str] = None,
+) -> dict:
+    db = get_supabase()
+    payload = {
+        "target_cefr_level": target_cefr_level,
+        "target_date": target_date,
+        "goal_label": goal_label,
+        "goal_set_date": date.today().isoformat(),
+    }
+    result = db.table("students").update(payload).eq("id", student_id).execute()
+    if not result.data:
+        raise RuntimeError(f"Student {student_id} not found")
+    return result.data[0]
 
 
 def get_student_reports(student_id: str) -> list[dict]:
