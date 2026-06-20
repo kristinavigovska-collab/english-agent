@@ -7,6 +7,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from models.schemas import LessonAnalysis
+from services.error_category_config import ERROR_CATEGORY_IDS, normalize_category
 from services.rubric_service import get_rubric_prompt
 from services.student_profiles import get_student_profile
 
@@ -31,6 +32,8 @@ Analyze the following dimensions:
    - The exact error as spoken
    - The correct form
    - A brief grammar explanation in Russian (2–3 sentences): why the student's phrase was wrong, which tense or rule applies (name it, e.g. Past Simple, Present Perfect, third person -s), and why the correction is correct
+   - **error_category** — exactly ONE id from the fixed catalog below (reuse the same id when the same rule applies across lessons; do not invent new ids):
+     third_person_singular | noun_plural | verb_preposition | tense_agreement | past_simple | present_perfect | conditionals | question_formation | possessive | articles | comparatives | gerunds_infinitives | much_many | word_order | fillers_coherence | modals | other
 
 2. **Vocabulary level** — Rate the student's vocabulary range using the CEFR scale:
    A1 (Beginner) | A2 (Elementary) | B1 (Intermediate) | B2 (Upper-Intermediate) | C1 (Advanced) | C2 (Proficient)
@@ -135,8 +138,12 @@ ANALYSIS_JSON_SCHEMA = {
                     "error": {"type": "string"},
                     "correction": {"type": "string"},
                     "explanation": {"type": "string"},
+                    "error_category": {
+                        "type": "string",
+                        "enum": list(ERROR_CATEGORY_IDS),
+                    },
                 },
-                "required": ["error", "correction", "explanation"],
+                "required": ["error", "correction", "explanation", "error_category"],
                 "additionalProperties": False,
             },
         },
@@ -190,4 +197,6 @@ def analyze_transcript(
 
     text = next(b.text for b in response.content if b.type == "text")
     data = json.loads(text)
+    for item in data.get("grammar_errors", []):
+        item["error_category"] = normalize_category(item.get("error_category"))
     return LessonAnalysis(**data)

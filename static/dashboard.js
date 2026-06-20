@@ -14,6 +14,32 @@
   var SCENARIO_COEFF = 0.5;
   var PLAN_DISCLAIMER =
     "Расчёт на основе средних нормативов CEFR (~190 ч/уровень), уточняется по мере вашего прогресса";
+  var DURATION_WEEKS_MIN = 1;
+  var DURATION_WEEKS_MAX = 104;
+  var STUCK_LESSONS_THRESHOLD = 3;
+  var RESOLVED_ABSENCE_LESSONS = 2;
+  var STUCK_LOAD_MULTIPLIER = 1.1;
+  var STUCK_LOAD_MIN_CATEGORIES = 2;
+
+  var ERROR_CATEGORY_LABELS = {
+    third_person_singular: "Согласование 3-го лица ед.ч.",
+    noun_plural: "Множественное число существительных",
+    verb_preposition: "Предлоги после глаголов",
+    tense_agreement: "Согласование времён",
+    past_simple: "Past Simple",
+    present_perfect: "Present Perfect / Past vs Perfect",
+    conditionals: "Условные предложения",
+    question_formation: "Построение вопросов",
+    possessive: "Притяжательный падеж",
+    articles: "Артикли (a/an/the)",
+    comparatives: "Сравнительная и превосходная степень",
+    gerunds_infinitives: "Gerund vs Infinitive",
+    much_many: "Much vs Many / исчисляемость",
+    word_order: "Порядок слов",
+    fillers_coherence: "Слова-филлеры / связность речи",
+    modals: "Модальные глаголы",
+    other: "Прочее",
+  };
 
   var state = {
     reports: [],
@@ -35,6 +61,7 @@
     studyPlan: null,
     progressTracker: null,
     demoPractice: {},
+    errorTracking: null,
     goalModalBound: false,
   };
 
@@ -59,28 +86,32 @@
       created_at: "2026-05-28T14:00:00Z",
       grammar_errors: [
         {
-          error: "I have went to Paris last year",
-          correction: "I went to Paris last year",
-          explanation:
-            "Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.",
-        },
-        {
           error: "She don't like spicy food",
           correction: "She doesn't like spicy food",
           explanation:
             "В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.",
+          error_category: "third_person_singular",
         },
         {
           error: "I am living here since 2020",
           correction: "I have lived here since 2020",
           explanation:
             "Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.",
+          error_category: "present_perfect",
+        },
+        {
+          error: "I have went to Paris last year",
+          correction: "I went to Paris last year",
+          explanation:
+            "Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.",
+          error_category: "past_simple",
         },
         {
           error: "More better than before",
           correction: "Much better than before",
           explanation:
             "У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.",
+          error_category: "comparatives",
         },
       ],
       vocabulary_level: "B1",
@@ -99,12 +130,21 @@
           correction: "If I have time, I will call you",
           explanation:
             "В First Conditional (реальное условие) после if используется Present Simple, а не will. Will стоит только в главной части предложения.",
+          error_category: "conditionals",
         },
         {
           error: "He suggested to go earlier",
           correction: "He suggested going earlier",
           explanation:
             "После suggest нужен gerund (-ing), а не infinitive с to. Правильно: suggest doing something.",
+          error_category: "gerunds_infinitives",
+        },
+        {
+          error: "She don't want to wait",
+          correction: "She doesn't want to wait",
+          explanation:
+            "В Present Simple с she/he/it — doesn't + базовая форма глагола.",
+          error_category: "third_person_singular",
         },
       ],
       vocabulary_level: "B1",
@@ -122,18 +162,28 @@
           correction: "I didn't go there",
           explanation:
             "После didn't (Past Simple) идёт базовая форма глагола (go), а не Past Simple (went).",
+          error_category: "past_simple",
         },
         {
           error: "Much people were waiting",
           correction: "Many people were waiting",
           explanation:
             "Much используется с неисчисляемыми существительными. People — исчисляемое, поэтому many.",
+          error_category: "much_many",
         },
         {
           error: "She is teacher",
           correction: "She is a teacher",
           explanation:
             "Перед профессией в единственном числе нужен неопределённый артикль a/an: a teacher.",
+          error_category: "articles",
+        },
+        {
+          error: "My brother work in London",
+          correction: "My brother works in London",
+          explanation:
+            "В Present Simple с he/she/it глагол получает окончание -s: works.",
+          error_category: "third_person_singular",
         },
       ],
       vocabulary_level: "A2",
@@ -251,9 +301,10 @@
     var loadingDemo = document.getElementById("dash-loading");
     if (loadingDemo) loadingDemo.hidden = true;
     state.reports = sortReports(DEMO_REPORTS);
+    refreshErrorTracking();
     state.studentName = "Анна Петрова";
     state.goal = DEMO_GOAL;
-    state.studyPlan = computeStudyPlanClient(DEMO_GOAL, state.reports);
+    state.studyPlan = computeStudyPlanClient(DEMO_GOAL, state.reports, state.errorTracking);
     state.progressTracker = computeProgressTrackerClient(
       DEMO_GOAL,
       state.reports,
@@ -304,6 +355,7 @@
       };
       state.studyPlan = data.study_plan || null;
       state.progressTracker = data.progress_tracker || null;
+      state.errorTracking = data.error_tracking || null;
       renderStudentOverview();
       renderHistoryList();
       if (!state.reports.length) {
@@ -473,7 +525,229 @@
     return idx + (Math.min(Math.max(Number(fluency), 0), 10) / 10) * 0.5;
   }
 
-  function computeStudyPlanClient(goal, reports) {
+  function categoryLabel(catId) {
+    return ERROR_CATEGORY_LABELS[catId] || ERROR_CATEGORY_LABELS.other;
+  }
+
+  function inferErrorCategory(item) {
+    if (item.error_category) return item.error_category;
+    var blob = [item.error, item.correction, item.explanation].join(" ").toLowerCase();
+    if (/3-го лица|third person|doesn't|don't like|he go|she go/.test(blob)) {
+      return "third_person_singular";
+    }
+    if (/past simple|didn't|last year|yesterday/.test(blob)) return "past_simple";
+    if (/present perfect|since |for /.test(blob)) return "present_perfect";
+    if (/артикл|article| a | an /.test(blob)) return "articles";
+    if (/comparative|better|more better/.test(blob)) return "comparatives";
+    if (/conditional|if i will/.test(blob)) return "conditionals";
+    if (/gerund|infinitive|suggest|look forward/.test(blob)) return "gerunds_infinitives";
+    if (/much vs many|many people|much people/.test(blob)) return "much_many";
+    return "other";
+  }
+
+  function categoriesInReport(report) {
+    var counts = {};
+    (report.grammar_errors || []).forEach(function (item) {
+      var cat = inferErrorCategory(item);
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function reportChronoDate(report) {
+    return parseIsoDate(report.lesson_date || report.created_at);
+  }
+
+  function maxConsecutiveStreak(flags) {
+    var best = 0;
+    var current = 0;
+    flags.forEach(function (flag) {
+      if (flag) {
+        current += 1;
+        best = Math.max(best, current);
+      } else {
+        current = 0;
+      }
+    });
+    return best;
+  }
+
+  function consecutiveAtEnd(flags) {
+    var count = 0;
+    for (var i = flags.length - 1; i >= 0; i -= 1) {
+      if (flags[i]) count += 1;
+      else break;
+    }
+    return count;
+  }
+
+  function absentFromLastN(flags, n) {
+    if (flags.length < n) return false;
+    for (var i = flags.length - n; i < flags.length; i += 1) {
+      if (flags[i]) return false;
+    }
+    return true;
+  }
+
+  function classifyPatternStatus(flags, consecutive, maxStreak, firstIdx, numLessons) {
+    if (!numLessons || !flags.some(Boolean)) return "inactive";
+    var wasStuck = maxStreak >= STUCK_LESSONS_THRESHOLD;
+    var isNew = firstIdx === numLessons - 1 && flags[numLessons - 1];
+    if (consecutive >= STUCK_LESSONS_THRESHOLD) return "stuck";
+    if (isNew) return "new";
+    if (wasStuck && consecutive === 0 && absentFromLastN(flags, RESOLVED_ABSENCE_LESSONS)) {
+      return "resolved";
+    }
+    if (flags[numLessons - 1] || consecutive > 0) return "recurring";
+    return "inactive";
+  }
+
+  function buildErrorTracking(reports) {
+    var sorted = reports.slice().sort(function (a, b) {
+      return (reportChronoDate(a) || 0) - (reportChronoDate(b) || 0);
+    });
+    if (!sorted.length) {
+      return { patterns: [], stuck_patterns: [], new_patterns: [], stuck_topics: [] };
+    }
+
+    var categoryMap = {};
+    sorted.forEach(function (report) {
+      var counts = categoriesInReport(report);
+      Object.keys(counts).forEach(function (cat) {
+        if (!categoryMap[cat]) categoryMap[cat] = [];
+        categoryMap[cat].push({
+          lesson_id: report.lesson_id || report.id,
+          report_id: report.id,
+          date: isoDateOnly(reportChronoDate(report) || new Date()),
+          count_in_lesson: counts[cat],
+        });
+      });
+    });
+
+    var patterns = Object.keys(categoryMap).map(function (cat) {
+      var occs = categoryMap[cat];
+      var flags = sorted.map(function (r) {
+        return !!categoriesInReport(r)[cat];
+      });
+      var consecutive = consecutiveAtEnd(flags);
+      var maxStreak = maxConsecutiveStreak(flags);
+      var firstIdx = flags.indexOf(true);
+      var status = classifyPatternStatus(
+        flags,
+        consecutive,
+        maxStreak,
+        firstIdx,
+        sorted.length
+      );
+      return {
+        error_category: cat,
+        label: categoryLabel(cat),
+        occurrences: occs,
+        total_occurrences: occs.reduce(function (sum, o) {
+          return sum + o.count_in_lesson;
+        }, 0),
+        consecutive_lessons_count: consecutive,
+        max_consecutive_lessons: maxStreak,
+        status: status,
+      };
+    });
+
+    var rank = { stuck: 0, new: 1, recurring: 2, resolved: 3, inactive: 4 };
+    patterns.sort(function (a, b) {
+      return (
+        (rank[a.status] || 9) - (rank[b.status] || 9) ||
+        b.consecutive_lessons_count - a.consecutive_lessons_count ||
+        b.total_occurrences - a.total_occurrences
+      );
+    });
+
+    var stuck = patterns.filter(function (p) {
+      return p.status === "stuck";
+    });
+    var fresh = patterns.filter(function (p) {
+      return p.status === "new";
+    });
+    var stuckTopics = stuck.slice(0, 3).map(function (p) {
+      var n = p.consecutive_lessons_count;
+      return {
+        error_category: p.error_category,
+        label: p.label,
+        consecutive_lessons_count: n,
+        message:
+          p.label +
+          " — повторяется " +
+          n +
+          " " +
+          pluralize(n, "урок", "урока", "уроков") +
+          " подряд, стоит закрепить отдельно",
+      };
+    });
+
+    var patternByCat = {};
+    patterns.forEach(function (p) {
+      patternByCat[p.error_category] = p;
+    });
+
+    sorted.forEach(function (report) {
+      report.grammar_errors = (report.grammar_errors || []).map(function (item) {
+        var cat = inferErrorCategory(item);
+        var pat = patternByCat[cat];
+        return Object.assign({}, item, {
+          error_category: cat,
+          category_label: categoryLabel(cat),
+          pattern_status: pat ? pat.status : "inactive",
+          consecutive_lessons_count: pat ? pat.consecutive_lessons_count : 0,
+        });
+      });
+    });
+
+    return {
+      patterns: patterns,
+      stuck_patterns: stuck,
+      new_patterns: fresh,
+      stuck_topics: stuckTopics,
+    };
+  }
+
+  function buildPrioritizedWeakTopics(tracking, weakTopics) {
+    var items = [];
+    var seen = {};
+    (tracking.stuck_patterns || []).forEach(function (p) {
+      items.push({
+        text: p.label,
+        priority: "stuck",
+        consecutive_lessons_count: p.consecutive_lessons_count,
+      });
+      seen[p.label.toLowerCase()] = true;
+    });
+    (tracking.new_patterns || []).forEach(function (p) {
+      if (!seen[p.label.toLowerCase()]) {
+        items.push({ text: p.label, priority: "new", consecutive_lessons_count: 0 });
+        seen[p.label.toLowerCase()] = true;
+      }
+    });
+    (weakTopics || []).forEach(function (topic) {
+      var key = String(topic).trim().toLowerCase();
+      if (key && !seen[key]) {
+        items.push({ text: topic, priority: "normal", consecutive_lessons_count: 0 });
+        seen[key] = true;
+      }
+    });
+    return items;
+  }
+
+  function refreshErrorTracking() {
+    state.errorTracking = buildErrorTracking(state.reports);
+    var latest = state.reports[0];
+    if (latest) {
+      latest.prioritized_weak_topics = buildPrioritizedWeakTopics(
+        state.errorTracking,
+        latest.weak_topics
+      );
+    }
+  }
+
+  function computeStudyPlanClient(goal, reports, tracking) {
     if (!goal || !goal.target_cefr_level || !goal.goal_set_date) return null;
     if (!reports || !reports.length) return null;
 
@@ -499,6 +773,10 @@
     if (targetScore <= startScore) return null;
 
     var typeCoeff = goal.goal_type === "scenario_based" ? SCENARIO_COEFF : 1;
+    var trackingData = tracking || state.errorTracking || buildErrorTracking(reports);
+    if ((trackingData.stuck_patterns || []).length >= STUCK_LOAD_MIN_CATEGORIES) {
+      typeCoeff *= STUCK_LOAD_MULTIPLIER;
+    }
     var totalDistance = targetScore - startScore;
     var remainingDistance = Math.max(0, targetScore - currentScore);
     var totalHours = totalDistance * HOURS_PER_CEFR_LEVEL * typeCoeff;
@@ -927,7 +1205,87 @@
       });
   }
 
+  function clampDurationWeeks(value) {
+    var weeks = Number(value);
+    if (!weeks || isNaN(weeks)) weeks = 12;
+    return Math.min(DURATION_WEEKS_MAX, Math.max(DURATION_WEEKS_MIN, Math.round(weeks)));
+  }
+
+  function formatDurationSummary(weeks) {
+    weeks = clampDurationWeeks(weeks);
+    var months = Math.max(1, Math.round(weeks / 4));
+    var end = new Date();
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + weeks * 7);
+    return (
+      "≈ " +
+      months +
+      " " +
+      pluralize(months, "месяц", "месяца", "месяцев") +
+      " · цель к " +
+      formatDateLocal(isoDateOnly(end))
+    );
+  }
+
+  function syncDurationPicker(weeks) {
+    weeks = clampDurationWeeks(weeks);
+    var input = document.getElementById("goal-weeks-input");
+    var slider = document.getElementById("goal-weeks-slider");
+    var summary = document.getElementById("goal-duration-summary");
+    var presets = document.querySelectorAll(".duration-preset");
+
+    if (input) input.value = String(weeks);
+    if (slider) slider.value = String(weeks);
+    presets.forEach(function (btn) {
+      var presetWeeks = Number(btn.dataset.weeks);
+      var active = presetWeeks === weeks;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    if (summary) summary.textContent = formatDurationSummary(weeks);
+  }
+
+  function initDurationPicker() {
+    if (state.durationPickerBound) return;
+    state.durationPickerBound = true;
+
+    var input = document.getElementById("goal-weeks-input");
+    var slider = document.getElementById("goal-weeks-slider");
+    var presets = document.querySelectorAll(".duration-preset");
+    var steps = document.querySelectorAll(".duration-step");
+
+    if (input) {
+      input.addEventListener("input", function () {
+        syncDurationPicker(input.value);
+      });
+      input.addEventListener("blur", function () {
+        syncDurationPicker(input.value);
+      });
+    }
+
+    if (slider) {
+      slider.addEventListener("input", function () {
+        syncDurationPicker(slider.value);
+      });
+    }
+
+    presets.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        syncDurationPicker(btn.dataset.weeks);
+      });
+    });
+
+    steps.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var delta = Number(btn.dataset.delta);
+        var current = input ? Number(input.value) : 12;
+        syncDurationPicker(current + delta);
+      });
+    });
+  }
+
   function initGoalModal() {
+    initDurationPicker();
     if (state.goalModalBound) return;
     state.goalModalBound = true;
 
@@ -1002,6 +1360,9 @@
     }
 
     syncGoalTypeFields(form);
+    syncDurationPicker(
+      hasGoal() ? state.goal.target_duration_weeks || 12 : Number(form.target_duration_weeks.value) || 12
+    );
     overlay.hidden = false;
   }
 
@@ -1204,6 +1565,11 @@
 
     renderGrammarList("grammar-list-current", report.grammar_errors);
     renderGrammarList("grammar-list-detailed", report.grammar_errors);
+    renderStuckTopics(state.errorTracking);
+    renderPrioritizedWeakTopics(
+      report.prioritized_weak_topics ||
+        buildPrioritizedWeakTopics(state.errorTracking || { stuck_patterns: [], new_patterns: [] }, report.weak_topics)
+    );
 
     setBadge("badge-grammar-current", grammarBadge(report.grammar_errors), true);
     setBadge("badge-vocab-current", report.vocabulary_level || "—", false);
@@ -1224,7 +1590,6 @@
       if (!isDemo) setText("fluency-score-live", formatScore(report.fluency_score));
     }
 
-    renderList("plan-weak-topics", report.weak_topics);
     renderList("plan-recommendations", report.recommendations, true);
     renderHighlightList(
       "highlight-strengths",
@@ -1371,6 +1736,33 @@
     );
   }
 
+  function patternBadgeHtml(item) {
+    var status = item.pattern_status;
+    var n = item.consecutive_lessons_count || 0;
+    if (status === "stuck" && n >= STUCK_LESSONS_THRESHOLD) {
+      return (
+        '<span class="pattern-badge pattern-stuck">Повторяется ' +
+        n +
+        "-й " +
+        pluralize(n, "урок", "урока", "уроков") +
+        " подряд</span>"
+      );
+    }
+    if (status === "new") {
+      return '<span class="pattern-badge pattern-new">Впервые</span>';
+    }
+    if (status === "recurring" && n > 1) {
+      return (
+        '<span class="pattern-badge pattern-recurring">Было на ' +
+        n +
+        " " +
+        pluralize(n, "уроке", "уроках", "уроках") +
+        " подряд</span>"
+      );
+    }
+    return "";
+  }
+
   function renderGrammarList(id, errors) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -1383,8 +1775,18 @@
         var said = esc(e.error || "");
         var correct = esc(e.correction || "");
         var explanation = grammarExplanation(e);
+        var category = esc(e.category_label || categoryLabel(inferErrorCategory(e)));
+        var badge = patternBadgeHtml(e);
+        var meta =
+          category || badge
+            ? '<div class="error-meta">' +
+              (category ? '<span class="error-category-chip">' + category + "</span>" : "") +
+              badge +
+              "</div>"
+            : "";
         return (
           '<li class="error-item">' +
+          meta +
           '<div class="error-row">' +
           (said ? '<span class="said">«' + said + '»</span>' : "") +
           (said && correct ? '<span class="arrow">→</span>' : "") +
@@ -1396,6 +1798,58 @@
         );
       })
       .join("");
+  }
+
+  function renderStuckTopics(tracking) {
+    var card = document.getElementById("stuck-patterns-card");
+    var list = document.getElementById("stuck-topics-list");
+    if (!card || !list) return;
+    var topics = (tracking && tracking.stuck_topics) || [];
+    if (!topics.length) {
+      card.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    card.hidden = false;
+    list.innerHTML = topics
+      .map(function (t) {
+        return "<li>" + esc(t.message || t.label) + "</li>";
+      })
+      .join("");
+  }
+
+  function renderPrioritizedWeakTopics(items) {
+    var el = document.getElementById("plan-weak-topics");
+    if (!el) return;
+    if (!items || !items.length) {
+      el.innerHTML = emptyMsg("Слабых тем не выявлено — отличная работа!");
+      return;
+    }
+    el.innerHTML =
+      "<ol>" +
+      items
+        .map(function (item) {
+          var badge = "";
+          if (item.priority === "stuck") {
+            badge =
+              '<span class="weak-topic-priority priority-stuck">' +
+              item.consecutive_lessons_count +
+              " " +
+              pluralize(item.consecutive_lessons_count, "урок", "урока", "уроков") +
+              " подряд</span>";
+          } else if (item.priority === "new") {
+            badge = '<span class="weak-topic-priority priority-new">Впервые</span>';
+          }
+          return (
+            '<li class="weak-topic-item">' +
+            badge +
+            "<span>" +
+            esc(item.text) +
+            "</span></li>"
+          );
+        })
+        .join("") +
+      "</ol>";
   }
 
   function initGrammarToggles() {

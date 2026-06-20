@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Any, Literal, Optional
 from datetime import date, datetime, timedelta
 
+from services.error_category_config import normalize_category
+
 CefrLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
 CEFR_LEVELS: tuple[str, ...] = ("A1", "A2", "B1", "B2", "C1", "C2")
 GoalType = Literal["general_level", "scenario_based"]
@@ -12,6 +14,12 @@ class GrammarError(BaseModel):
     error: str
     correction: str
     explanation: str
+    error_category: str = "other"
+
+    @field_validator("error_category")
+    @classmethod
+    def normalize_error_category(cls, value: str) -> str:
+        return normalize_category(value)
 
 
 class LessonAnalysis(BaseModel):
@@ -29,6 +37,12 @@ class RecallWebhookPayload(BaseModel):
     data: dict[str, Any]
 
 
+class PrioritizedTopicResponse(BaseModel):
+    text: str
+    priority: str
+    consecutive_lessons_count: int = 0
+
+
 class ReportResponse(BaseModel):
     id: str
     lesson_id: str
@@ -41,6 +55,7 @@ class ReportResponse(BaseModel):
     created_at: Optional[datetime]
     meeting_id: Optional[str] = None
     lesson_date: Optional[datetime] = None
+    prioritized_weak_topics: list[PrioritizedTopicResponse] = []
 
 
 class StudyPlanResponse(BaseModel):
@@ -93,6 +108,42 @@ class MarkPracticeRequest(BaseModel):
     completed_minutes: Optional[int] = Field(default=None, ge=1, le=480)
 
 
+class ErrorPatternOccurrenceResponse(BaseModel):
+    lesson_id: str
+    report_id: str
+    date: date
+    count_in_lesson: int
+
+
+class ErrorPatternResponse(BaseModel):
+    error_category: str
+    label: str
+    occurrences: list[ErrorPatternOccurrenceResponse]
+    first_seen_date: date
+    last_seen_date: date
+    total_occurrences: int
+    consecutive_lessons_count: int
+    max_consecutive_lessons: int
+    status: str
+    resolved_date: Optional[date] = None
+    was_stuck: bool
+
+
+class StuckTopicResponse(BaseModel):
+    error_category: str
+    label: str
+    consecutive_lessons_count: int
+    message: str
+
+
+class ErrorTrackingResponse(BaseModel):
+    patterns: list[ErrorPatternResponse]
+    stuck_patterns: list[ErrorPatternResponse]
+    new_patterns: list[ErrorPatternResponse]
+    stuck_topics: list[StuckTopicResponse]
+    prioritized_weak_topics: list[PrioritizedTopicResponse] = []
+
+
 class StudentGoalUpdate(BaseModel):
     goal_type: GoalType = "general_level"
     target_cefr_level: CefrLevel
@@ -140,4 +191,5 @@ class StudentReportsResponse(BaseModel):
     practice_days_per_week: Optional[int] = None
     study_plan: Optional[StudyPlanResponse] = None
     progress_tracker: Optional[ProgressTrackerResponse] = None
+    error_tracking: Optional[ErrorTrackingResponse] = None
     reports: list[ReportResponse]

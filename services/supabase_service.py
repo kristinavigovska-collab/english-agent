@@ -232,3 +232,12 @@ def mark_self_practice(
 def clear_daily_progress(student_id: str) -> None:
     db = get_supabase()
     db.table("daily_progress").delete().eq("student_id", student_id).execute()
+
+
+def upsert_error_pattern_history(student_id: str, rows: list[dict]) -> None:
+    db = get_supabase()
+    db.table("error_pattern_history").delete().eq("student_id", student_id).execute()
+    if not rows:
+        return
+    payload = [{**row, "updated_at": datetime.utcnow().isoformat()} for row in rows]
+    db.table("error_pattern_history").insert(payload).execute()

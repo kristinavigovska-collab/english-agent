@@ -14,6 +14,8 @@ from services.goal_plan_config import (
     HOURS_PER_CEFR_LEVEL,
     PLAN_DISCLAIMER,
     SCENARIO_BASED_COEFFICIENT,
+    STUCK_LOAD_MIN_CATEGORIES,
+    STUCK_LOAD_MULTIPLIER,
 )
 
 PlanStatus = Literal["on_track", "behind", "ahead"]
@@ -113,6 +115,7 @@ def compute_study_plan(
     *,
     today: Optional[date] = None,
     completion_rate: Optional[float] = None,
+    stuck_category_count: int = 0,
 ) -> Optional[StudyPlan]:
     """Build a reverse study plan from profile goal + lesson history."""
     today = today or date.today()
@@ -157,6 +160,8 @@ def compute_study_plan(
         return None
 
     type_coeff = _goal_type_coefficient(goal_type)
+    if stuck_category_count >= STUCK_LOAD_MIN_CATEGORIES:
+        type_coeff *= STUCK_LOAD_MULTIPLIER
     total_distance = max(0.0, target_score - start_score)
     remaining_distance = max(0.0, target_score - current_score)
 

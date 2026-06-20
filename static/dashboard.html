@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-3" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-7" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -43,11 +43,48 @@
             <option value="C2">C2</option>
           </select>
         </label>
-        <label class="goal-field">
-          <span class="goal-field-label">Срок (недель)</span>
-          <input type="number" name="target_duration_weeks" id="goal-weeks-input" min="1" max="104" value="12" required />
-          <span class="goal-field-hint">Например, 12 недель = 3 месяца</span>
-        </label>
+        <div class="goal-field goal-duration-field">
+          <span class="goal-field-label">Срок обучения</span>
+          <div class="duration-picker">
+            <div class="duration-presets" role="group" aria-label="Быстрый выбор срока">
+              <button type="button" class="duration-preset" data-weeks="4" aria-pressed="false">1 мес</button>
+              <button type="button" class="duration-preset" data-weeks="12" aria-pressed="false">3 мес</button>
+              <button type="button" class="duration-preset" data-weeks="26" aria-pressed="false">6 мес</button>
+              <button type="button" class="duration-preset" data-weeks="39" aria-pressed="false">9 мес</button>
+              <button type="button" class="duration-preset" data-weeks="52" aria-pressed="false">1 год</button>
+            </div>
+            <div class="duration-control">
+              <button type="button" class="duration-step" data-delta="-4" aria-label="На месяц меньше">−</button>
+              <div class="duration-value-wrap">
+                <input
+                  type="number"
+                  name="target_duration_weeks"
+                  id="goal-weeks-input"
+                  class="duration-input"
+                  min="1"
+                  max="104"
+                  value="12"
+                  inputmode="numeric"
+                  required
+                  aria-describedby="goal-duration-summary"
+                />
+                <span class="duration-unit">нед.</span>
+              </div>
+              <button type="button" class="duration-step" data-delta="4" aria-label="На месяц больше">+</button>
+            </div>
+            <p class="duration-step-hint">± по 1 месяцу (4 нед.)</p>
+            <input
+              type="range"
+              class="duration-slider"
+              id="goal-weeks-slider"
+              min="1"
+              max="104"
+              value="12"
+              aria-label="Срок в неделях"
+            />
+            <p class="duration-summary" id="goal-duration-summary">≈ 3 месяца · цель к —</p>
+          </div>
+        </div>
         <label class="goal-field goal-scenario-field" id="goal-scenario-field" hidden>
           <span class="goal-field-label">Опишите прикладную цель</span>
           <textarea
@@ -233,6 +270,16 @@
             <p class="lesson-topic-value" id="lesson-topic-current">Travel &amp; Past Tenses</p>
           </div>
         </div>
+
+        <section class="card stuck-patterns-card" id="stuck-patterns-card" hidden>
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-stuck">🔄</span>
+              Над чем буксуем
+            </h2>
+          </div>
+          <ul class="stuck-topics-list" id="stuck-topics-list"></ul>
+        </section>
 
         <section class="card">
           <div class="card-header">
@@ -687,7 +734,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260620-3" defer></script>
+  <script src="/static/dashboard.js?v=20260620-7" defer></script>
 
 </body>
 </html>

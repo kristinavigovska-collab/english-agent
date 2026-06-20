@@ -15,3 +15,7 @@ PLAN_DISCLAIMER = (
     "Расчёт на основе средних нормативов CEFR (~190 ч/уровень), "
     "уточняется по мере вашего прогресса"
 )
+
+# Extra load when multiple error patterns are stuck across lessons
+STUCK_LOAD_MULTIPLIER = 1.10
+STUCK_LOAD_MIN_CATEGORIES = 2

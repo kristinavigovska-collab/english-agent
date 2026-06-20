@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 from models.schemas import (
+    ErrorTrackingResponse,
     MarkPracticeRequest,
+    PrioritizedTopicResponse,
     ProgressTrackerResponse,
     ReportResponse,
     StudentGoalUpdate,
@@ -14,6 +16,7 @@ from models.schemas import (
 )
 from services import (
     daily_progress_service,
+    error_pattern_service,
     goal_plan_service,
     supabase_service,
 )
@@ -37,16 +40,38 @@ def _student_goal_fields(student: dict) -> dict:
     }
 
 
-def _report_models(rows: list[dict]) -> list[ReportResponse]:
+def _report_models(
+    rows: list[dict],
+    tracking: error_pattern_service.ErrorTrackingView,
+) -> list[ReportResponse]:
+    latest_id = None
+    if rows:
+        sorted_rows = sorted(
+            rows,
+            key=lambda r: r.get("created_at") or "",
+            reverse=True,
+        )
+        latest_id = sorted_rows[0]["id"]
+
     reports = []
     for row in rows:
         lesson_data = row.get("lessons") or {}
+        grammar = tracking.grammar_annotations.get(row["id"]) or row.get(
+            "grammar_errors"
+        ) or []
+        report_prioritized = (
+            error_pattern_service.build_prioritized_weak_topics(
+                tracking, row.get("weak_topics") or []
+            )
+            if row["id"] == latest_id
+            else []
+        )
         reports.append(
             ReportResponse(
                 id=row["id"],
                 lesson_id=row["lesson_id"],
                 student_id=row["student_id"],
-                grammar_errors=row.get("grammar_errors") or [],
+                grammar_errors=grammar,
                 vocabulary_level=row.get("vocabulary_level") or "",
                 fluency_score=row.get("fluency_score") or 0.0,
                 weak_topics=row.get("weak_topics") or [],
@@ -54,21 +79,70 @@ def _report_models(rows: list[dict]) -> list[ReportResponse]:
                 created_at=row.get("created_at"),
                 meeting_id=lesson_data.get("recall_bot_id"),
                 lesson_date=lesson_data.get("created_at"),
+                prioritized_weak_topics=[
+                    PrioritizedTopicResponse(**item) for item in report_prioritized
+                ],
             )
         )
     return reports
 
 
+def _build_error_tracking(
+    rows: list[dict],
+    student_id: str,
+    view: error_pattern_service.ErrorTrackingView,
+) -> ErrorTrackingResponse:
+    sync_rows = error_pattern_service.patterns_for_db_sync(view, student_id)
+    try:
+        supabase_service.upsert_error_pattern_history(student_id, sync_rows)
+    except Exception:
+        pass
+
+    latest = max(rows, key=lambda r: r.get("created_at") or "") if rows else None
+    prioritized = error_pattern_service.build_prioritized_weak_topics(
+        view, (latest or {}).get("weak_topics") or []
+    )
+    payload = error_pattern_service.tracking_to_dict(view)
+    payload["prioritized_weak_topics"] = prioritized
+    return ErrorTrackingResponse(**payload)
+
+
 def _sync_and_build_goal_views(
-    student: dict, report_rows: list[dict]
-) -> tuple[Optional[StudyPlanResponse], Optional[ProgressTrackerResponse]]:
-    base_plan = goal_plan_service.compute_study_plan(student, report_rows)
+    student: dict,
+    report_rows: list[dict],
+    tracking_view: error_pattern_service.ErrorTrackingView,
+) -> tuple[
+    Optional[StudyPlanResponse],
+    Optional[ProgressTrackerResponse],
+    Optional[ErrorTrackingResponse],
+]:
+    stuck_count = len(tracking_view.stuck_patterns)
+
+    base_plan = goal_plan_service.compute_study_plan(
+        student, report_rows, stuck_category_count=stuck_count
+    )
     if not base_plan:
-        return None, None
+        error_tracking = (
+            _build_error_tracking(report_rows, student["id"], tracking_view)
+            if report_rows
+            else None
+        )
+        return None, None, error_tracking
 
     period_start, period_end, _ = daily_progress_service.goal_period(student)
     if not period_start or not period_end:
-        return StudyPlanResponse(**goal_plan_service.study_plan_to_dict(base_plan)), None
+        adjusted = goal_plan_service.compute_study_plan(
+            student, report_rows, stuck_category_count=stuck_count
+        )
+        plan = adjusted or base_plan
+        error_tracking = _build_error_tracking(
+            report_rows, student["id"], tracking_view
+        )
+        return (
+            StudyPlanResponse(**goal_plan_service.study_plan_to_dict(plan)),
+            None,
+            error_tracking,
+        )
 
     existing_rows = supabase_service.get_daily_progress(
         student["id"], period_start.isoformat(), period_end.isoformat()
@@ -98,7 +172,10 @@ def _sync_and_build_goal_views(
         )
 
     adjusted_plan = goal_plan_service.compute_study_plan(
-        student, report_rows, completion_rate=completion_rate
+        student,
+        report_rows,
+        completion_rate=completion_rate,
+        stuck_category_count=stuck_count,
     )
     plan = adjusted_plan or base_plan
 
@@ -118,7 +195,8 @@ def _sync_and_build_goal_views(
         if tracker
         else None
     )
-    return study_plan_response, tracker_response
+    error_tracking = _build_error_tracking(report_rows, student["id"], tracking_view)
+    return study_plan_response, tracker_response, error_tracking
 
 
 @router.get("/students/{student_id}/reports", response_model=StudentReportsResponse)
@@ -129,8 +207,11 @@ def get_student_reports(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     rows = supabase_service.get_student_reports(student_id)
-    reports = _report_models(rows)
-    study_plan, progress_tracker = _sync_and_build_goal_views(student, rows)
+    tracking_view = error_pattern_service.build_error_tracking(rows)
+    reports = _report_models(rows, tracking_view)
+    study_plan, progress_tracker, error_tracking = _sync_and_build_goal_views(
+        student, rows, tracking_view
+    )
 
     return StudentReportsResponse(
         student_id=student["id"],
@@ -139,6 +220,7 @@ def get_student_reports(student_id: str):
         reports=reports,
         study_plan=study_plan,
         progress_tracker=progress_tracker,
+        error_tracking=error_tracking,
         **_student_goal_fields(student),
     )
 
