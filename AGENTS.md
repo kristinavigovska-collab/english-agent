@@ -1,6 +1,6 @@
 # Agent context — English Lesson Analyzer
 
-**Read this first** in a new chat. Details: `docs/STATUS.md`, `docs/ARCHITECTURE.md`.
+**Read this first** in a new chat. Details: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/MIGRATIONS.md`.
 
 ## Product
 
@@ -26,28 +26,41 @@ FastAPI · Claude (`claude-opus-4-8`, structured JSON) · Supabase · Recall.ai 
 ## Repo map
 
 ```
-main.py                 # App entry, mounts routers
-routers/webhook.py      # Recall → signature verify → background analysis
-routers/reports.py      # Reports API + dashboard HTML inject
-services/claude_service.py
-services/recall_service.py
-services/supabase_service.py
-services/transcript_service.py
-services/student_profiles.py
-models/schemas.py
-static/dashboard.html   # UI shell; demo at /dashboard, live at /api/dashboard/{id}
-static/dashboard.css    # Dashboard styles
-static/dashboard.js     # fetches /api/students/{id}/reports
-scripts/reprocess_lesson.py  # CLI: re-fetch transcript + re-run Claude
-render.yaml             # Render deploy
-docs/                   # STATUS, ARCHITECTURE, LESSON_DAY, DEPLOY_RENDER
+main.py                          # App entry, mounts routers
+routers/webhook.py               # Recall → signature verify → background analysis
+routers/reports.py               # Reports API, goal PATCH, practice POST, dashboard HTML
+services/claude_service.py       # Transcript → structured LessonAnalysis
+services/recall_service.py       # Full transcript download from Recall API
+services/supabase_service.py     # CRUD Supabase
+services/transcript_service.py   # Parse / merge transcript shapes
+services/student_profiles.py     # Per-email profiles for Claude (test student: Кристина)
+services/goal_plan_service.py    # Study plan hours, pace, status
+services/daily_progress_service.py  # Habit grid, streak, mark practice
+services/error_pattern_service.py   # Cross-lesson categories, stuck/new
+services/error_category_config.py   # Category catalog + normalization
+services/rubric_service.py       # CEFR / scoring helpers
+models/schemas.py                # Pydantic API + Claude models
+static/dashboard.html            # UI shell; demo at /dashboard, live at /api/dashboard/{id}
+static/dashboard.css
+static/dashboard.js              # Demo + live; goal strip, modal tracker, error badges
+scripts/migrations/              # 001–004 SQL (see docs/MIGRATIONS.md)
+scripts/run_supabase_migration.py
+scripts/reprocess_lesson.py      # CLI: re-fetch transcript + re-run Claude
+scripts/test_webhook_sig.py      # Webhook signature smoke test
+tests/                           # test_goal_plan_service, test_error_pattern_service
+render.yaml
+docs/                            # STATUS, ARCHITECTURE, MIGRATIONS, LESSON_DAY, DEPLOY_RENDER
 ```
 
 ## DB (Supabase)
 
-- `students` — upsert by `email`
-- `lessons` — `recall_bot_id` (not `meeting_id`; code uses `recall_bot_id`)
-- `reports` — `grammar_errors` (error, correction, explanation), `vocabulary_level`, `fluency_score` (float), `weak_topics`, `recommendations`
+Base: `students` (upsert by `email`), `lessons` (`recall_bot_id`, `transcript`), `reports` (Claude JSON).
+
+Goal/plan on `students` (migrations 001–002): `target_cefr_level`, `target_date`, `goal_label`, `goal_type`, `target_duration_weeks`, `scenario_description`, tutor/practice schedule fields.
+
+`reports.grammar_errors`: `error`, `correction`, `explanation`, `error_category`.
+
+Also: `daily_progress` (003), `error_pattern_history` (004). Full list: `docs/MIGRATIONS.md`.
 
 ## Env vars (see `.env.example`)
 
@@ -57,57 +70,68 @@ docs/                   # STATUS, ARCHITECTURE, LESSON_DAY, DEPLOY_RENDER
 | `SUPABASE_URL`, `SUPABASE_KEY` | yes | `sb_secret_…` needs `supabase>=2.16` |
 | `RECALL_API_KEY`, `RECALL_REGION` | yes (prod) | Full transcript download; region `eu-central-1` |
 | `RECALL_WEBHOOK_SECRET` | recommended | See **Webhook signature** below |
+| `SUPABASE_ACCESS_TOKEN` | migrations | `sbp_…` for `run_supabase_migration.py` |
+| `DATABASE_URL` | alt migrations | Direct Postgres instead of Management API |
 
 ## Webhook signature (`RECALL_WEBHOOK_SECRET`)
 
-**Status: implemented.** Verification lives in `routers/webhook.py` → `_verify_recall_signature()`.  
-**Do not** tell users or docs that the secret is “unused” or “not verified in code” — that was true before June 2026 and is **outdated**.
+**Status: implemented.** `routers/webhook.py` → `_verify_recall_signature()`.  
+**Do not** claim it is unimplemented — outdated before June 2026.
 
 | Secret set? | Behavior |
 |-------------|----------|
-| **Yes** (Render + Recall) | Every `POST /webhook/recall` must carry Svix-style headers: `webhook-id`, `webhook-timestamp`, `webhook-signature` (legacy aliases `svix-*` also accepted). Invalid/missing signature → **403**. Timestamp must be within ±5 minutes. |
-| **No** | Request is **accepted**; server logs `RECALL_WEBHOOK_SECRET not configured — skipping signature verification`. OK for local dev only — **set on Render for production**. |
+| **Yes** | Svix headers required (`webhook-id`, `webhook-timestamp`, `webhook-signature` or `svix-*`). Invalid → **403**. |
+| **No** | Accepted with log warning — local dev only. |
 
-**Secret value:** from Recall dashboard → Webhooks → signing secret, format `whsec_…`. Same value must be in Render **Environment** as `RECALL_WEBHOOK_SECRET`.
-
-**Smoke test:** `python scripts/test_webhook_sig.py` (local server + `.env` with real `whsec_` value).
-
-**If Recall webhooks fail with 403:** (1) secret mismatch between Recall and Render, (2) missing signature headers, (3) clock skew > 5 min, (4) wrong secret encoding (must be valid base64 after stripping `whsec_` prefix).
-
-**Agent rule:** never suggest “implement webhook verification” as new work — it exists. Suggest fixing env/config or running the smoke test instead.
+**Smoke test:** `python scripts/test_webhook_sig.py`. **403 troubleshooting:** `docs/STATUS.md` → Webhook signature.
 
 ## Done (Phase 0–1)
 
 - [x] Webhook pipeline: Recall → Claude → Supabase
 - [x] Render deploy, stable webhook URL in Recall
 - [x] GitHub: `kristinavigovska-collab/english-agent`
-- [x] Supabase schema aligned with code
-- [x] Recall webhook signature verification (`RECALL_WEBHOOK_SECRET`, Svix HMAC-SHA256)
-- [x] Personal Gmail **disconnected** from Recall (privacy); OAuth app name in Google: “English Lesson Analyzer”
+- [x] Recall webhook signature verification
+- [x] Personal Gmail disconnected from Recall
 
-## Next (Phase 2 — priority)
+## Done (Phase 2 — partial)
 
-**Now:** calibrate Claude scoring with **one test student** (`services/student_profiles.py`):
-`kristina.vigovska@gmail.com` → Кристина, goal B2 discussions. Webhook passes guest email → `analyze_transcript()` identifies speaker + goal. Other students get name/email only until school calendar is live.
+- [x] Live dashboard + expandable grammar + lesson topic plaque
+- [x] Student goal, study plan, daily progress tracker (modal UI)
+- [x] Cross-lesson error patterns, stuck topics, plan multiplier
+- [x] API: `PATCH /goal`, `POST /practice`; migrations 001–004
 
-1. **Recall:** Connect **school / test** Google (not personal gmail). Separate calendar `English Lessons` only; enable recording preferences.
-2. **Agent rubric:** Tune CEFR / fluency prompts using real lesson transcripts (single-student test first).
-3. **Dashboard:** Live data wired; grammar errors with expandable rule explanations; lesson topic plaque (from `lesson_topic` or `weak_topics` fallback).
-4. **Student access:** Magic link or lookup by email (no auth today — anyone with UUID sees dashboard).
-5. **Lesson test:** Calendar event with **Google Meet** + student guest email → verify row in `reports`.
+## Next (Phase 2 — remaining)
 
-**Before a lesson:** follow `docs/LESSON_DAY.md`. See `docs/STATUS.md` for pitfalls.
+**Test student:** `kristina.vigovska@gmail.com` → Кристина, B2 goal (`services/student_profiles.py`).
+
+1. **Recall:** Connect school/test Google; calendar **English Lessons** only; recording preferences on.
+2. **Agent rubric:** Tune CEFR / fluency prompts on real lesson transcripts.
+3. **Student access:** Magic link or email lookup (no auth today — UUID in URL is public).
+4. **Lesson test:** Calendar event + Meet + guest email → verify `reports` row.
+5. **`lesson_topic`:** Wire from calendar event title to `lessons.lesson_topic`.
+
+**Before a lesson:** `docs/LESSON_DAY.md`. Pitfalls: `docs/STATUS.md`.
 
 ## Do not
 
 - Commit `.env` or `ngrok` binary
 - Use Vercel (BackgroundTasks + long Claude calls — use Render)
-- Re-connect personal `kristina.vigovska@gmail.com` without updating Google Cloud **Test users**
-- Claim `RECALL_WEBHOOK_SECRET` is unimplemented — see **Webhook signature** above
+- Re-connect personal Gmail without updating Google Cloud **Test users**
+- Suggest implementing webhook verification — it exists; fix env/config instead
 
 ## Commands
 
 ```bash
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
+
+# Migrations (see docs/MIGRATIONS.md)
+python scripts/run_supabase_migration.py 004_add_error_pattern_history.sql
+
+# Ops / debug
+python scripts/reprocess_lesson.py --help
+python scripts/test_webhook_sig.py
+
+# Tests (install pytest first: pip install pytest)
+python -m pytest tests/
 ```

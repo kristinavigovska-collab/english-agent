@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-06-07
+Last updated: 2026-06-20
 
 ## Decisions
 
@@ -21,12 +21,20 @@ Last updated: 2026-06-07
 - [x] `supabase>=2.16` for `sb_secret_` keys
 - [x] GitHub + Render Blueprint (`render.yaml`)
 - [x] Recall webhook endpoint updated from ngrok to Render
-- [x] Google OAuth app “Yappi Tutor” / consent “English Lesson Analyzer” for Calendar V1
-- [x] Recall webhook signature verification — **done** (`routers/webhook.py`, Svix HMAC-SHA256; see below)
+- [x] Google OAuth for Recall Calendar V1
+- [x] Recall webhook signature verification (`routers/webhook.py`)
 - [x] Full Recall transcript download via `recall_service.py`
-- [x] Live dashboard wired to reports API (`static/dashboard.js`)
+- [x] Live dashboard wired to reports API
 
 ## Phase 2 — in progress
+
+### Completed (June 2026)
+
+- [x] Goal + study plan (`goal_plan_service`, migrations 001–002)
+- [x] Daily progress tracker — modal UI, `POST /practice` (migration 003)
+- [x] Error pattern tracking — stuck/new badges, plan +10% multiplier (migration 004)
+- [x] Dashboard: goal strip above tabs, expandable grammar, stuck-topic block
+- [x] `PATCH /api/students/{id}/goal`
 
 ### P0 — test one real lesson
 
@@ -34,20 +42,17 @@ Last updated: 2026-06-07
 2. Google Calendar: calendar **English Lessons** only; event with **Meet link** + student guest email.
 3. Recall: **Recording preferences** not all `false`; `bot_name`: **Yappi Tutor**.
 4. Before lesson: open `https://english-agent.onrender.com/` (wake Render).
-5. After lesson: Supabase `reports` + Recall webhook logs.
+5. After lesson: Supabase `reports` + Recall webhook logs. Re-run if needed: `scripts/reprocess_lesson.py`.
 
-### P1 — student-facing
+### P1 — student-facing (remaining)
 
-- [x] Wire `static/dashboard.html` to API (`__STUDENT_ID__` + `fetch` reports)
-- [x] Map UI to Claude fields (grammar errors with `explanation`, CEFR, fluency, weak topics, recommendations)
-- [x] Lesson topic plaque above grammar card (demo `lesson_topic`; live fallback from `weak_topics`)
-- [ ] `lessons.lesson_topic` from school materials / calendar event title
+- [ ] `lessons.lesson_topic` from calendar event title / school materials (UI falls back to `weak_topics`)
 - [ ] Student login: email → magic link (no UUID in URL)
 
 ### P2 — school ops
 
-- `schools` table + school calendar account docs for teachers.
-- Auto-email “report ready” after webhook.
+- `schools` table + school calendar account docs for teachers
+- Auto-email “report ready” after webhook
 
 ## Webhook signature (`RECALL_WEBHOOK_SECRET`)
 
@@ -76,24 +81,26 @@ Last updated: 2026-06-07
 | Gap | Notes |
 |-----|--------|
 | Dashboard auth | `student_id` in URL is public — anyone with UUID sees reports |
-| Lesson topic (live) | UI ready; DB field `lessons.lesson_topic` not wired yet — falls back to `weak_topics` |
-| UI vs Claude | Demo blocks show pronunciation/wpm; API does not — hidden on live load |
+| Lesson topic (live) | UI ready; `lessons.lesson_topic` not wired — falls back to `weak_topics` |
+| UI vs Claude | Demo shows pronunciation/wpm; API does not — hidden on live load |
 | Render free | Cold start ~30–50 s; ping `/` before lessons |
 | Calendar filter | Use separate Google calendar; Recall UI limited |
+| pytest | Not in `requirements.txt` — `pip install pytest` for `tests/` |
 
 ## Pitfalls we hit
 
 - `supabase==2.10` rejects `sb_secret_` → use `>=2.16`
-- `meeting_id` in README vs `recall_bot_id` in DB — code uses `recall_bot_id`
+- `meeting_id` in old docs vs `recall_bot_id` in DB — code uses `recall_bot_id`
 - GCP OAuth **Test users** required while app in Testing
 - Calendar Connect needs **calendar.events.readonly** scope + Calendar API enabled
 - “No meeting link” on event → bot will not join
-- Removing Test users ≠ revoking Google access (also delete app in Google permissions)
-- Webhook may not persist if Render restarts mid-BackgroundTask — use `scripts/reprocess_lesson.py` to re-run analysis
+- Webhook may not persist if Render restarts mid-BackgroundTask — use `scripts/reprocess_lesson.py`
 - Agents often cite old docs saying webhook secret is “unused” — it is **implemented**; check env sync if webhooks fail
+- After editing `dashboard.js`, bump `?v=` in `dashboard.html` for cache bust on Render
 
 ## Links
 
 - **Lesson day checklist:** `docs/LESSON_DAY.md`
+- **Schema migrations:** `docs/MIGRATIONS.md`
 - Deploy: `docs/DEPLOY_RENDER.md`
 - Architecture: `docs/ARCHITECTURE.md`

@@ -53,16 +53,16 @@ cp .env.example .env
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
 | `SUPABASE_URL` | Settings → API → Project URL |
 | `SUPABASE_KEY` | Settings → API → service_role или anon key |
-| `RECALL_WEBHOOK_SECRET` | Recall dashboard → Webhooks; Svix-style secret (`whsec_…`). Verified in `routers/webhook.py`; if unset, requests are accepted with a warning |
+| `RECALL_WEBHOOK_SECRET` | Recall dashboard → Webhooks; `whsec_…`. Details: [`AGENTS.md`](AGENTS.md) |
 | `RECALL_API_KEY` | Recall dashboard → API keys (for full transcript download) |
 | `RECALL_REGION` | `eu-central-1` (EU workspace) |
+| `SUPABASE_ACCESS_TOKEN` | Optional — `sbp_…` for `scripts/run_supabase_migration.py` |
 
 ### 3. Создаём таблицы в Supabase
 
-Выполните следующий SQL в **Supabase SQL Editor**:
+**Базовая схема** — выполните в **Supabase SQL Editor** (один раз на новый проект):
 
 ```sql
--- Студенты
 CREATE TABLE students (
     id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name       TEXT NOT NULL,
@@ -70,16 +70,14 @@ CREATE TABLE students (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Уроки (сырой транскрипт)
 CREATE TABLE lessons (
-    id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    student_id UUID REFERENCES students(id) ON DELETE CASCADE NOT NULL,
+    id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    student_id    UUID REFERENCES students(id) ON DELETE CASCADE NOT NULL,
     recall_bot_id TEXT,
-    transcript TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    transcript    TEXT,
+    created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Отчёты Claude
 CREATE TABLE reports (
     id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     lesson_id        UUID REFERENCES lessons(id) ON DELETE CASCADE NOT NULL,
@@ -92,11 +90,19 @@ CREATE TABLE reports (
     created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Индексы для быстрых выборок по студенту
 CREATE INDEX ON lessons (student_id);
 CREATE INDEX ON reports (student_id);
 CREATE INDEX ON reports (lesson_id);
 ```
+
+**Расширения** (цель, план, трекер, паттерны ошибок) — миграции `001`–`004`:
+
+```bash
+python scripts/run_supabase_migration.py 001_add_student_goal.sql
+# … см. docs/MIGRATIONS.md
+```
+
+Полный список колонок и таблиц: [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md).
 
 ### 4. Запускаем сервер
 
@@ -167,36 +173,63 @@ uvicorn main:app --reload --port 8000
 
 ### `GET /api/students/{student_id}/reports`
 
-Возвращает все отчёты студента.
+Возвращает отчёты студента, цель, план обучения, трекер и паттерны ошибок.
 
-**Ответ:**
+**Ответ (сокращённо):**
 ```json
 {
   "student_id": "uuid",
   "student_name": "Ivan Petrov",
   "student_email": "ivan@example.com",
+  "target_cefr_level": "B2",
+  "target_duration_weeks": 6,
+  "study_plan": {
+    "hours_per_week": 4.5,
+    "progress_percent": 12.0,
+    "status": "on_track",
+    "status_message": "…"
+  },
+  "progress_tracker": {
+    "completed_days": 3,
+    "streak": 2,
+    "days": []
+  },
+  "error_tracking": {
+    "stuck_topics": [],
+    "patterns": []
+  },
   "reports": [
     {
       "id": "uuid",
-      "lesson_id": "uuid",
       "fluency_score": 6.5,
       "vocabulary_level": "B1",
       "grammar_errors": [
         {
           "error": "I have went to school",
           "correction": "I went to school",
-          "explanation": "Past Simple нужен для завершённого действия в прошлом; have + V3 здесь не используется."
+          "explanation": "Past Simple для завершённого действия в прошлом.",
+          "error_category": "past_tense"
         }
       ],
-      "weak_topics": ["past perfect", "article usage"],
-      "recommendations": [
-        "Practice past simple vs past perfect using daily diary writing"
-      ],
+      "weak_topics": ["past perfect"],
+      "recommendations": ["Practice past simple vs past perfect"],
       "lesson_date": "2025-01-15T10:00:00Z"
     }
   ]
 }
 ```
+
+---
+
+### `PATCH /api/students/{student_id}/goal`
+
+Задаёт или обновляет цель обучения (CEFR, срок, тип цели, расписание). Пересчитывает `study_plan` и `progress_tracker`.
+
+---
+
+### `POST /api/students/{student_id}/practice`
+
+Отмечает самостоятельную практику за день (`completed_minutes`, опционально `progress_date`).
 
 ---
 
@@ -250,20 +283,27 @@ english-agent/
 │   ├── recall_service.py         # Recall API (транскрипты)
 │   ├── supabase_service.py       # CRUD Supabase
 │   ├── transcript_service.py     # Парсинг и merge транскриптов
-│   └── student_profiles.py       # Профили студентов для Claude
+│   ├── student_profiles.py       # Профили студентов для Claude
+│   ├── goal_plan_service.py      # План обучения
+│   ├── daily_progress_service.py # Трекер дней
+│   └── error_pattern_service.py  # Паттерны ошибок
 │
 ├── routers/
 │   ├── webhook.py                # POST /webhook/recall (+ signature verify)
-│   └── reports.py                # GET /api/students/{id}/reports + дашборд
+│   └── reports.py                # Reports, goal, practice, dashboard
 │
 ├── scripts/
+│   ├── migrations/               # SQL 001–004
+│   ├── run_supabase_migration.py
 │   ├── reprocess_lesson.py       # CLI: перезапуск анализа по bot_id
-│   ├── test_webhook_sig.py       # Smoke-test верификации подписи
-│   └── setup-ngrok.sh            # Локальный ngrok
+│   └── test_webhook_sig.py       # Smoke-test верификации подписи
+│
+├── tests/                        # pytest (goal plan, error patterns)
 │
 ├── docs/
 │   ├── STATUS.md
 │   ├── ARCHITECTURE.md
+│   ├── MIGRATIONS.md
 │   ├── LESSON_DAY.md
 │   └── DEPLOY_RENDER.md
 │

@@ -896,35 +896,6 @@ body {
   }
 }
 
-/* legacy — removed inline tracker card */
-.progress-tracker-card {
-  display: none;
-}
-
-.progress-tracker-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.progress-tracker-title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.progress-tracker-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.15rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-align: right;
-}
-
 .pace-warning {
   font-size: 0.75rem;
   font-weight: 500;

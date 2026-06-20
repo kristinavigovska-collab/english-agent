@@ -1,35 +1,32 @@
-# Деплой на Render (шаг 1)
+# Деплой на Render
 
 ## 1. GitHub
 
-```bash
-cd /Users/kristina/english-agent
-git add render.yaml runtime.txt requirements.txt README.md .gitignore \
-  services/ routers/ models/ main.py static/ docs/
-git commit -m "Add Render deployment and Supabase schema alignment"
-```
-
-Создайте репозиторий на https://github.com/new (без README), затем:
+Репозиторий: `kristinavigovska-collab/english-agent` (или ваш fork).
 
 ```bash
-git remote add origin https://github.com/YOUR_USER/english-agent.git
-git push -u origin main
+git remote -v   # проверить origin
+git push origin main
 ```
+
+Render деплоит из `main` по `render.yaml` (auto-deploy on push).
 
 ## 2. Render
 
-1. https://dashboard.render.com → **New +** → **Blueprint**
+1. https://dashboard.render.com → **New +** → **Blueprint** (или подключить существующий сервис)
 2. Подключите GitHub → репозиторий `english-agent`
 3. Render прочитает `render.yaml`
-4. Введите секреты при создании:
+4. **Environment** — обязательные переменные:
    - `ANTHROPIC_API_KEY`
    - `SUPABASE_URL` — `https://esmtlsjbovkqtzrheijl.supabase.co`
-   - `SUPABASE_KEY` — ваш `sb_secret_...`
+   - `SUPABASE_KEY` — `sb_secret_…` (нужен `supabase>=2.16`)
+   - `RECALL_API_KEY`, `RECALL_REGION=eu-central-1`
+   - `RECALL_WEBHOOK_SECRET` — `whsec_…` (рекомендуется для prod)
 5. **Apply** → дождитесь **Live**
 
-Постоянный URL: `https://english-agent.onrender.com` (имя может отличаться).
+Постоянный URL: `https://english-agent.onrender.com`
 
-Проверка: откройте `https://ВАШ-URL.onrender.com/` → `{"status":"ok",...}`
+Проверка: откройте `/` → `{"status":"ok",...}`
 
 ## 3. Recall webhook
 
@@ -37,18 +34,27 @@ Recall Dashboard → **Webhooks** → Add / Edit:
 
 | Поле | Значение |
 |------|----------|
-| URL | `https://ВАШ-URL.onrender.com/webhook/recall` |
-| Events | `bot.transcription`, `bot.transcription_complete`, `bot.transcript` |
+| URL | `https://english-agent.onrender.com/webhook/recall` |
+| Signing secret | тот же `whsec_…`, что в Render `RECALL_WEBHOOK_SECRET` |
+| Events | `recording.done`, `transcript.data`, `transcript.done` (+ legacy: `bot.transcription`, `bot.transcription_complete`, `bot.transcript`) |
 
-Сохраните. Локальный ngrok больше не нужен.
+Сохраните. Локальный ngrok нужен только для dev.
 
-## 4. Перед уроком
+**403 на webhook:** см. `docs/STATUS.md` → Webhook signature.
 
-За 1–2 минуты откройте в браузере корень сайта — free tier «просыпается» (~30–50 с).
+## 4. Supabase migrations
 
-## 5. После урока
+На prod-проекте примените миграции 001–004 если ещё не применены: [`docs/MIGRATIONS.md`](MIGRATIONS.md).
+
+## 5. Перед уроком
+
+За 1–2 минуты откройте в браузере корень сайта — free tier «просыпается» (~30–50 с). Чеклист: [`LESSON_DAY.md`](LESSON_DAY.md).
+
+## 6. После урока
 
 Supabase → Table Editor → `reports` — новая строка.
 
-Студент: `https://ВАШ-URL.onrender.com/api/dashboard/{student_id}`  
+Студент: `https://english-agent.onrender.com/api/dashboard/{student_id}`  
 (`student_id` из таблицы `students`).
+
+Если webhook не дошёл: `python scripts/reprocess_lesson.py --bot-id …`
