@@ -5,7 +5,14 @@ Phase 3 (later): school Google Calendar — guest email identifies each student;
 profiles move to Supabase or are derived from calendar metadata.
 """
 
-from typing import NotRequired, TypedDict
+from __future__ import annotations
+
+from typing import TypedDict
+
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
 
 
 class StudentProfile(TypedDict):

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-1" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-3" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -20,6 +20,17 @@
         <button class="goal-close" type="button" id="btn-goal-close" aria-label="Закрыть">×</button>
       </div>
       <form id="goal-form" class="goal-form">
+        <fieldset class="goal-field goal-type-field">
+          <legend class="goal-field-label">Тип цели</legend>
+          <label class="goal-type-option">
+            <input type="radio" name="goal_type" value="general_level" checked />
+            <span>Общий уровень CEFR</span>
+          </label>
+          <label class="goal-type-option">
+            <input type="radio" name="goal_type" value="scenario_based" />
+            <span>Прикладная цель (собеседование, переговоры…)</span>
+          </label>
+        </fieldset>
         <label class="goal-field">
           <span class="goal-field-label">Целевой уровень CEFR</span>
           <select name="target_cefr_level" id="goal-cefr-select" required>
@@ -33,15 +44,36 @@
           </select>
         </label>
         <label class="goal-field">
-          <span class="goal-field-label">К какой дате хотите достичь?</span>
-          <input type="date" name="target_date" id="goal-date-input" required />
+          <span class="goal-field-label">Срок (недель)</span>
+          <input type="number" name="target_duration_weeks" id="goal-weeks-input" min="1" max="104" value="12" required />
+          <span class="goal-field-hint">Например, 12 недель = 3 месяца</span>
         </label>
+        <label class="goal-field goal-scenario-field" id="goal-scenario-field" hidden>
+          <span class="goal-field-label">Опишите прикладную цель</span>
+          <textarea
+            name="scenario_description"
+            id="goal-scenario-input"
+            rows="2"
+            maxlength="500"
+            placeholder="Например: собеседование на позицию менеджера"
+          ></textarea>
+        </label>
+        <div class="goal-field-row">
+          <label class="goal-field">
+            <span class="goal-field-label">Уроков с репетитором / нед</span>
+            <input type="number" name="tutor_lessons_per_week" min="0" max="14" value="2" />
+          </label>
+          <label class="goal-field">
+            <span class="goal-field-label">Минут на урок</span>
+            <input type="number" name="tutor_lesson_minutes" min="15" max="180" value="60" />
+          </label>
+        </div>
         <label class="goal-field">
           <span class="goal-field-label">Опишите цель своими словами <span class="goal-optional">(необязательно)</span></span>
           <textarea
             name="goal_label"
             id="goal-label-input"
-            rows="3"
+            rows="2"
             maxlength="500"
             placeholder="Например: уверенно проходить собеседования на английском"
           ></textarea>
@@ -138,6 +170,61 @@
 
       <!-- Tab: Current lesson -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
+
+        <section class="goal-progress-panel" id="goal-progress-panel" hidden>
+          <div class="study-plan-card" id="study-plan-card">
+            <div class="study-plan-header">
+              <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
+              <span class="plan-status-badge" id="plan-status-badge">—</span>
+            </div>
+            <p class="study-plan-headline" id="study-plan-headline">—</p>
+            <div class="study-plan-breakdown">
+              <p id="study-plan-tutor">—</p>
+              <p id="study-plan-self">—</p>
+            </div>
+            <div class="study-plan-progress">
+              <div class="study-plan-progress-labels">
+                <span id="study-plan-progress-text">—</span>
+                <span id="study-plan-weeks-left">—</span>
+              </div>
+              <div class="study-plan-progress-bar" aria-hidden="true">
+                <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
+              </div>
+            </div>
+            <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
+          </div>
+
+          <div class="progress-tracker-card" id="progress-tracker-card">
+            <div class="progress-tracker-header">
+              <h2 class="progress-tracker-title">Трекер прогресса к цели</h2>
+              <div class="progress-tracker-summary">
+                <span id="tracker-summary-days">—</span>
+                <span id="tracker-summary-streak">—</span>
+              </div>
+            </div>
+            <p class="pace-warning" id="pace-warning" hidden></p>
+            <div class="tracker-legend" aria-hidden="true">
+              <span><i class="dot dot-lesson"></i> урок</span>
+              <span><i class="dot dot-self"></i> практика</span>
+              <span><i class="dot dot-partial"></i> частично</span>
+              <span><i class="dot dot-missed"></i> пропуск</span>
+            </div>
+            <div class="tracker-grid" id="tracker-grid"></div>
+            <div class="tracker-actions">
+              <button class="btn btn-primary" type="button" id="btn-mark-practice" hidden>
+                Отметить практику сегодня
+              </button>
+              <div class="practice-minutes-form" id="practice-minutes-form" hidden>
+                <label>
+                  <span>Сколько минут позанимались?</span>
+                  <input type="number" id="practice-minutes-input" min="1" max="480" />
+                </label>
+                <button class="btn btn-primary" type="button" id="btn-save-practice">Сохранить</button>
+                <button class="btn" type="button" id="btn-cancel-practice">Отмена</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div class="lesson-topic-plaque">
           <span class="lesson-topic-icon" aria-hidden="true">📋</span>
@@ -600,7 +687,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260620-1" defer></script>
+  <script src="/static/dashboard.js?v=20260620-3" defer></script>
 
 </body>
 </html>

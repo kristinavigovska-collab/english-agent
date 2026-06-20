@@ -1,9 +1,11 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Any, Literal, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 CefrLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
 CEFR_LEVELS: tuple[str, ...] = ("A1", "A2", "B1", "B2", "C1", "C2")
+GoalType = Literal["general_level", "scenario_based"]
+PlanStatus = Literal["on_track", "behind", "ahead"]
 
 
 class GrammarError(BaseModel):
@@ -41,25 +43,84 @@ class ReportResponse(BaseModel):
     lesson_date: Optional[datetime] = None
 
 
+class StudyPlanResponse(BaseModel):
+    hours_per_week: float
+    minutes_per_day: float
+    tutor_hours_per_week: float
+    self_study_hours_per_week: float
+    total_hours: float
+    hours_completed: float
+    hours_remaining: float
+    weeks_total: int
+    weeks_elapsed: int
+    weeks_remaining: int
+    progress_percent: float
+    status: PlanStatus
+    status_message: str
+    disclaimer: str
+    goal_type: str
+    scenario_description: Optional[str] = None
+    current_cefr: str
+    target_cefr: str
+    start_cefr: str
+
+
+class DailyProgressDayResponse(BaseModel):
+    date: date
+    day_index: int
+    planned_minutes: int
+    completed: bool
+    completed_minutes: Optional[int] = None
+    source: Optional[str] = None
+    state: str
+
+
+class ProgressTrackerResponse(BaseModel):
+    days: list[DailyProgressDayResponse]
+    weeks: list[list[DailyProgressDayResponse]]
+    completed_days: int
+    planned_days_elapsed: int
+    streak: int
+    pace_warning: Optional[str] = None
+    can_mark_today: bool
+    today_planned_minutes: int
+    goal_start_date: date
+    goal_end_date: date
+
+
+class MarkPracticeRequest(BaseModel):
+    progress_date: Optional[date] = None
+    completed_minutes: Optional[int] = Field(default=None, ge=1, le=480)
+
+
 class StudentGoalUpdate(BaseModel):
+    goal_type: GoalType = "general_level"
     target_cefr_level: CefrLevel
-    target_date: date
+    target_duration_weeks: int = Field(ge=1, le=104)
+    target_date: Optional[date] = None
+    scenario_description: Optional[str] = Field(default=None, max_length=500)
     goal_label: Optional[str] = Field(default=None, max_length=500)
+    tutor_lessons_per_week: int = Field(default=2, ge=0, le=14)
+    tutor_lesson_minutes: int = Field(default=60, ge=15, le=180)
+    practice_days_per_week: int = Field(default=6, ge=1, le=7)
 
-    @field_validator("target_date")
+    @field_validator("scenario_description", "goal_label")
     @classmethod
-    def target_date_must_be_future(cls, value: date) -> date:
-        if value <= date.today():
-            raise ValueError("target_date must be in the future")
-        return value
-
-    @field_validator("goal_label")
-    @classmethod
-    def strip_goal_label(cls, value: Optional[str]) -> Optional[str]:
+    def strip_optional_text(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
         trimmed = value.strip()
         return trimmed or None
+
+    @model_validator(mode="after")
+    def scenario_requires_description(self) -> "StudentGoalUpdate":
+        if self.goal_type == "scenario_based":
+            text = self.scenario_description or self.goal_label
+            if not text:
+                raise ValueError(
+                    "scenario_description is required for scenario_based goals"
+                )
+        return self
 
 
 class StudentReportsResponse(BaseModel):
@@ -70,4 +131,13 @@ class StudentReportsResponse(BaseModel):
     target_date: Optional[date] = None
     goal_label: Optional[str] = None
     goal_set_date: Optional[date] = None
+    goal_type: Optional[str] = None
+    target_duration_weeks: Optional[int] = None
+    scenario_description: Optional[str] = None
+    goal_start_cefr_level: Optional[str] = None
+    tutor_lessons_per_week: Optional[int] = None
+    tutor_lesson_minutes: Optional[int] = None
+    practice_days_per_week: Optional[int] = None
+    study_plan: Optional[StudyPlanResponse] = None
+    progress_tracker: Optional[ProgressTrackerResponse] = None
     reports: list[ReportResponse]

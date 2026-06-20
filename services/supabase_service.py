@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -128,16 +128,31 @@ def get_student(student_id: str) -> Optional[dict]:
 
 def update_student_goal(
     student_id: str,
+    *,
+    goal_type: str,
     target_cefr_level: str,
+    target_duration_weeks: int,
     target_date: str,
+    goal_start_cefr_level: str,
+    scenario_description: Optional[str] = None,
     goal_label: Optional[str] = None,
+    tutor_lessons_per_week: int = 2,
+    tutor_lesson_minutes: int = 60,
+    practice_days_per_week: int = 6,
 ) -> dict:
     db = get_supabase()
     payload = {
+        "goal_type": goal_type,
         "target_cefr_level": target_cefr_level,
+        "target_duration_weeks": target_duration_weeks,
         "target_date": target_date,
+        "goal_start_cefr_level": goal_start_cefr_level,
+        "scenario_description": scenario_description,
         "goal_label": goal_label,
         "goal_set_date": date.today().isoformat(),
+        "tutor_lessons_per_week": tutor_lessons_per_week,
+        "tutor_lesson_minutes": tutor_lesson_minutes,
+        "practice_days_per_week": practice_days_per_week,
     }
     result = db.table("students").update(payload).eq("id", student_id).execute()
     if not result.data:
@@ -155,3 +170,65 @@ def get_student_reports(student_id: str) -> list[dict]:
         .execute()
     )
     return result.data
+
+
+def get_daily_progress(student_id: str, start_date: str, end_date: str) -> list[dict]:
+    db = get_supabase()
+    result = (
+        db.table("daily_progress")
+        .select("*")
+        .eq("student_id", student_id)
+        .gte("progress_date", start_date)
+        .lte("progress_date", end_date)
+        .order("progress_date")
+        .execute()
+    )
+    return result.data or []
+
+
+def upsert_daily_progress(student_id: str, rows: list[dict]) -> None:
+    if not rows:
+        return
+    db = get_supabase()
+    payload = [
+        {
+            "student_id": student_id,
+            "progress_date": row["progress_date"],
+            "planned_minutes": row["planned_minutes"],
+            "completed": row["completed"],
+            "completed_minutes": row.get("completed_minutes"),
+            "source": row.get("source"),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        for row in rows
+    ]
+    db.table("daily_progress").upsert(payload, on_conflict="student_id,progress_date").execute()
+
+
+def mark_self_practice(
+    student_id: str,
+    progress_date: str,
+    planned_minutes: int,
+    completed_minutes: int,
+) -> dict:
+    db = get_supabase()
+    payload = {
+        "student_id": student_id,
+        "progress_date": progress_date,
+        "planned_minutes": planned_minutes,
+        "completed": True,
+        "completed_minutes": completed_minutes,
+        "source": "self_practice",
+        "updated_at": date.today().isoformat(),
+    }
+    result = (
+        db.table("daily_progress")
+        .upsert(payload, on_conflict="student_id,progress_date")
+        .execute()
+    )
+    return result.data[0]
+
+
+def clear_daily_progress(student_id: str) -> None:
+    db = get_supabase()
+    db.table("daily_progress").delete().eq("student_id", student_id).execute()
