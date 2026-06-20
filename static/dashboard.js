@@ -63,6 +63,7 @@
     demoPractice: {},
     errorTracking: null,
     goalModalBound: false,
+    trackerModalBound: false,
   };
 
   var DEMO_GOAL = {
@@ -288,6 +289,7 @@
   initGrammarToggles();
   initGoalModal();
   initPracticeTracker();
+  initTrackerModal();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -882,17 +884,17 @@
   }
 
   function renderStudyPlan() {
-    var panel = document.getElementById("goal-progress-panel");
+    var strip = document.getElementById("dashboard-goal-strip");
     var card = document.getElementById("study-plan-card");
-    if (!panel || !card) return;
+    if (!strip || !card) return;
 
     var plan = state.studyPlan;
     if (!hasGoal() || !plan) {
-      panel.hidden = true;
+      strip.hidden = true;
       return;
     }
 
-    panel.hidden = false;
+    strip.hidden = false;
     setText("study-plan-title", "План на " + plan.weeks_total + " " + pluralize(plan.weeks_total, "неделю", "недели", "недель"));
 
     var badge = document.getElementById("plan-status-badge");
@@ -1048,42 +1050,30 @@
     };
   }
 
-  function renderProgressTracker() {
-    var tracker = state.progressTracker;
-    var grid = document.getElementById("tracker-grid");
-    var card = document.getElementById("progress-tracker-card");
-    if (!grid || !card) return;
+  function formatWeekRange(week) {
+    if (!week || !week.length) return "";
+    var first = week[0].date;
+    var last = week[week.length - 1].date;
+    if (first === last) return formatDateShort(first);
+    return formatDateShort(first) + " – " + formatDateShort(last);
+  }
 
-    if (!hasGoal() || !tracker) {
-      card.hidden = true;
-      return;
-    }
-
-    card.hidden = false;
-    setText(
-      "tracker-summary-days",
-      "Выполнено " + tracker.completed_days + " из " + tracker.planned_days_elapsed + " запланированных дней"
-    );
-    setText(
-      "tracker-summary-streak",
-      tracker.streak
-        ? "Серия: " + tracker.streak + " " + pluralize(tracker.streak, "день", "дня", "дней") + " подряд"
-        : "Серия: 0 дней"
-    );
-
-    var paceEl = document.getElementById("pace-warning");
-    if (paceEl) {
-      if (tracker.pace_warning) {
-        paceEl.textContent = tracker.pace_warning;
-        paceEl.hidden = false;
-      } else {
-        paceEl.hidden = true;
-      }
-    }
-
-    grid.innerHTML = (tracker.weeks || [])
-      .map(function (week) {
+  function buildTrackerGridHtml(tracker) {
+    var todayIso = todayIsoDate();
+    return (tracker.weeks || [])
+      .map(function (week, weekIndex) {
+        var hasToday = week.some(function (day) {
+          return day.date === todayIso;
+        });
         return (
+          '<div class="tracker-week-block' +
+          (hasToday ? " is-current-week" : "") +
+          '" data-week-index="' +
+          weekIndex +
+          '">' +
+          '<div class="tracker-week-label">' +
+          esc(formatWeekRange(week)) +
+          "</div>" +
           '<div class="tracker-week-row">' +
           week
             .map(function (day) {
@@ -1095,9 +1085,11 @@
                 (day.completed
                   ? " · " + (day.completed_minutes || day.planned_minutes) + " мин"
                   : "");
+              var todayClass = day.date === todayIso ? " is-today" : "";
               return (
                 '<button type="button" class="tracker-day ' +
                 esc(day.state) +
+                todayClass +
                 '" title="' +
                 esc(title) +
                 '" aria-label="' +
@@ -1106,16 +1098,158 @@
               );
             })
             .join("") +
-          "</div>"
+          "</div></div>"
         );
       })
       .join("");
+  }
+
+  function renderTrackerTeaser() {
+    var tracker = state.progressTracker;
+    var teaser = document.getElementById("tracker-teaser");
+    if (!teaser) return;
+
+    if (!hasGoal() || !tracker) {
+      teaser.hidden = true;
+      var strip = document.getElementById("dashboard-goal-strip");
+      if (strip) strip.classList.add("strip-plan-only");
+      return;
+    }
+
+    teaser.hidden = false;
+    var stripEl = document.getElementById("dashboard-goal-strip");
+    if (stripEl) stripEl.classList.remove("strip-plan-only");
+    var totalDays = (tracker.days || []).length || tracker.planned_days_elapsed;
+    var streakPart =
+      tracker.streak > 0
+        ? "серия " +
+          tracker.streak +
+          " " +
+          pluralize(tracker.streak, "день", "дня", "дней") +
+          " подряд"
+        : "серия 0 дней";
+    setText(
+      "tracker-teaser-summary",
+      "Выполнено " +
+        tracker.completed_days +
+        " из " +
+        totalDays +
+        " дней · " +
+        streakPart
+    );
+
+    var paceBadge = document.getElementById("tracker-teaser-pace");
+    if (paceBadge) paceBadge.hidden = !tracker.pace_warning;
+  }
+
+  function renderTrackerModalGrid() {
+    var tracker = state.progressTracker;
+    var grid = document.getElementById("tracker-grid");
+    if (!grid) return;
+
+    if (!tracker) {
+      grid.innerHTML = "";
+      return;
+    }
+
+    var streakPart =
+      tracker.streak > 0
+        ? "Серия: " +
+          tracker.streak +
+          " " +
+          pluralize(tracker.streak, "день", "дня", "дней") +
+          " подряд"
+        : "Серия: 0 дней";
+    setText(
+      "tracker-modal-summary",
+      "Выполнено " +
+        tracker.completed_days +
+        " из " +
+        ((tracker.days || []).length || tracker.planned_days_elapsed) +
+        " дней · " +
+        streakPart
+    );
+
+    var paceEl = document.getElementById("pace-warning-modal");
+    if (paceEl) {
+      if (tracker.pace_warning) {
+        paceEl.textContent = tracker.pace_warning;
+        paceEl.hidden = false;
+      } else {
+        paceEl.hidden = true;
+      }
+    }
+
+    grid.innerHTML = buildTrackerGridHtml(tracker);
 
     var markBtn = document.getElementById("btn-mark-practice");
     var form = document.getElementById("practice-minutes-form");
-    if (markBtn) markBtn.hidden = !tracker.can_mark_today;
+    var formOpen = form && !form.hidden;
+    if (markBtn) markBtn.hidden = !tracker.can_mark_today || formOpen;
+    if (form && !formOpen) form.hidden = true;
+  }
+
+  function scrollTrackerToToday() {
+    var grid = document.getElementById("tracker-grid");
+    if (!grid) return;
+    var target =
+      grid.querySelector(".tracker-week-block.is-current-week") ||
+      grid.querySelector(".tracker-day.is-today");
+    if (target) {
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+
+  function openTrackerModal() {
+    var overlay = document.getElementById("tracker-overlay");
+    if (!overlay || !state.progressTracker) return;
+    renderTrackerModalGrid();
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(function () {
+      scrollTrackerToToday();
+    });
+  }
+
+  function closeTrackerModal() {
+    var overlay = document.getElementById("tracker-overlay");
+    if (!overlay) return;
+    overlay.hidden = true;
+    document.body.style.overflow = "";
+    var form = document.getElementById("practice-minutes-form");
     if (form) form.hidden = true;
   }
+
+  function initTrackerModal() {
+    if (state.trackerModalBound) return;
+    state.trackerModalBound = true;
+
+    var teaser = document.getElementById("tracker-teaser");
+    var overlay = document.getElementById("tracker-overlay");
+    var closeBtn = document.getElementById("btn-tracker-close");
+
+    if (teaser) teaser.addEventListener("click", openTrackerModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeTrackerModal);
+    if (overlay) {
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeTrackerModal();
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (overlay && !overlay.hidden) closeTrackerModal();
+    });
+  }
+
+  function renderProgressTracker() {
+    renderTrackerTeaser();
+    var overlay = document.getElementById("tracker-overlay");
+    if (overlay && !overlay.hidden) {
+      renderTrackerModalGrid();
+    }
+  }
+
 
   function initPracticeTracker() {
     var markBtn = document.getElementById("btn-mark-practice");

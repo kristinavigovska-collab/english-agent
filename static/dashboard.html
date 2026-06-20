@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-7" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-8" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -134,6 +134,42 @@
     </div>
   </div>
 
+  <div class="tracker-overlay" id="tracker-overlay" hidden>
+    <div class="tracker-modal" role="dialog" aria-labelledby="tracker-modal-title" aria-modal="true">
+      <div class="tracker-modal-header">
+        <div>
+          <h2 id="tracker-modal-title">Трекер прогресса к цели</h2>
+          <p class="tracker-modal-summary" id="tracker-modal-summary">—</p>
+        </div>
+        <button class="tracker-modal-close" type="button" id="btn-tracker-close" aria-label="Закрыть">×</button>
+      </div>
+      <div class="tracker-modal-body">
+        <p class="pace-warning pace-warning-modal" id="pace-warning-modal" hidden></p>
+        <div class="tracker-legend" aria-hidden="true">
+          <span><i class="dot dot-lesson"></i> урок</span>
+          <span><i class="dot dot-self"></i> практика</span>
+          <span><i class="dot dot-partial"></i> частично</span>
+          <span><i class="dot dot-missed"></i> пропуск</span>
+          <span><i class="dot dot-today"></i> сегодня</span>
+        </div>
+        <div class="tracker-grid tracker-grid-modal" id="tracker-grid"></div>
+        <div class="tracker-actions">
+          <button class="btn btn-primary" type="button" id="btn-mark-practice" hidden>
+            Отметить практику сегодня
+          </button>
+          <div class="practice-minutes-form" id="practice-minutes-form" hidden>
+            <label>
+              <span>Сколько минут позанимались?</span>
+              <input type="number" id="practice-minutes-input" min="1" max="480" />
+            </label>
+            <button class="btn btn-primary" type="button" id="btn-save-practice">Сохранить</button>
+            <button class="btn" type="button" id="btn-cancel-practice">Отмена</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
 
     <!-- Left sidebar -->
@@ -199,6 +235,39 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">Последний урок</button>
       </div>
 
+      <section class="dashboard-goal-strip" id="dashboard-goal-strip" hidden>
+        <div class="study-plan-card" id="study-plan-card">
+          <div class="study-plan-header">
+            <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
+            <span class="plan-status-badge" id="plan-status-badge">—</span>
+          </div>
+          <p class="study-plan-headline" id="study-plan-headline">—</p>
+          <div class="study-plan-breakdown">
+            <p id="study-plan-tutor">—</p>
+            <p id="study-plan-self">—</p>
+          </div>
+          <div class="study-plan-progress">
+            <div class="study-plan-progress-labels">
+              <span id="study-plan-progress-text">—</span>
+              <span id="study-plan-weeks-left">—</span>
+            </div>
+            <div class="study-plan-progress-bar" aria-hidden="true">
+              <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
+            </div>
+          </div>
+          <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
+        </div>
+
+        <button type="button" class="tracker-teaser" id="tracker-teaser" hidden aria-haspopup="dialog">
+          <div class="tracker-teaser-top">
+            <h2 class="tracker-teaser-title">Трекер прогресса к цели</h2>
+            <span class="tracker-teaser-cta" aria-hidden="true">Открыть трекер →</span>
+          </div>
+          <p class="tracker-teaser-summary" id="tracker-teaser-summary">—</p>
+          <span class="tracker-teaser-pace-badge" id="tracker-teaser-pace" hidden>Темп ниже плана</span>
+        </button>
+      </section>
+
       <nav class="tabs" role="tablist">
         <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Текущий урок</button>
         <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
@@ -207,61 +276,6 @@
 
       <!-- Tab: Current lesson -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
-
-        <section class="goal-progress-panel" id="goal-progress-panel" hidden>
-          <div class="study-plan-card" id="study-plan-card">
-            <div class="study-plan-header">
-              <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
-              <span class="plan-status-badge" id="plan-status-badge">—</span>
-            </div>
-            <p class="study-plan-headline" id="study-plan-headline">—</p>
-            <div class="study-plan-breakdown">
-              <p id="study-plan-tutor">—</p>
-              <p id="study-plan-self">—</p>
-            </div>
-            <div class="study-plan-progress">
-              <div class="study-plan-progress-labels">
-                <span id="study-plan-progress-text">—</span>
-                <span id="study-plan-weeks-left">—</span>
-              </div>
-              <div class="study-plan-progress-bar" aria-hidden="true">
-                <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
-              </div>
-            </div>
-            <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
-          </div>
-
-          <div class="progress-tracker-card" id="progress-tracker-card">
-            <div class="progress-tracker-header">
-              <h2 class="progress-tracker-title">Трекер прогресса к цели</h2>
-              <div class="progress-tracker-summary">
-                <span id="tracker-summary-days">—</span>
-                <span id="tracker-summary-streak">—</span>
-              </div>
-            </div>
-            <p class="pace-warning" id="pace-warning" hidden></p>
-            <div class="tracker-legend" aria-hidden="true">
-              <span><i class="dot dot-lesson"></i> урок</span>
-              <span><i class="dot dot-self"></i> практика</span>
-              <span><i class="dot dot-partial"></i> частично</span>
-              <span><i class="dot dot-missed"></i> пропуск</span>
-            </div>
-            <div class="tracker-grid" id="tracker-grid"></div>
-            <div class="tracker-actions">
-              <button class="btn btn-primary" type="button" id="btn-mark-practice" hidden>
-                Отметить практику сегодня
-              </button>
-              <div class="practice-minutes-form" id="practice-minutes-form" hidden>
-                <label>
-                  <span>Сколько минут позанимались?</span>
-                  <input type="number" id="practice-minutes-input" min="1" max="480" />
-                </label>
-                <button class="btn btn-primary" type="button" id="btn-save-practice">Сохранить</button>
-                <button class="btn" type="button" id="btn-cancel-practice">Отмена</button>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <div class="lesson-topic-plaque">
           <span class="lesson-topic-icon" aria-hidden="true">📋</span>
@@ -734,7 +748,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260620-7" defer></script>
+  <script src="/static/dashboard.js?v=20260620-8" defer></script>
 
 </body>
 </html>
