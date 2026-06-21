@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-3" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-9" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -86,6 +86,15 @@
             <p class="duration-summary" id="goal-duration-summary">≈ 3 месяца · цель к —</p>
           </div>
         </div>
+        <div class="goal-field goal-intensity-field">
+          <span class="goal-field-label">Интенсивность занятий <span class="goal-optional">(необязательно)</span></span>
+          <div class="intensity-presets" id="goal-intensity-presets" role="group" aria-label="Интенсивность занятий">
+            <button type="button" class="intensity-preset" data-intensity="once_week" aria-pressed="false">1 раз в неделю</button>
+            <button type="button" class="intensity-preset" data-intensity="few_times_week" aria-pressed="false">2–3 раза в неделю</button>
+            <button type="button" class="intensity-preset" data-intensity="daily" aria-pressed="false">Каждый день</button>
+          </div>
+          <p class="goal-field-hint intensity-projection" id="goal-intensity-projection" hidden></p>
+        </div>
         <label class="goal-field goal-scenario-field" id="goal-scenario-field" hidden>
           <span class="goal-field-label">Опишите прикладную цель</span>
           <textarea
@@ -96,7 +105,7 @@
             placeholder="Например: собеседование на позицию менеджера"
           ></textarea>
         </label>
-        <div class="goal-field-row">
+        <div class="goal-field-row goal-tutor-row" id="goal-tutor-row">
           <label class="goal-field">
             <span class="goal-field-label">Уроков с репетитором / нед</span>
             <input type="number" name="tutor_lessons_per_week" min="0" max="14" value="2" />
@@ -125,13 +134,38 @@
     </div>
   </div>
 
-  <div class="history-overlay" id="lesson-history-overlay" hidden>
-    <div class="history-panel" role="dialog" aria-labelledby="history-title" aria-modal="true">
-      <div class="history-header">
-        <h2 id="history-title">История уроков</h2>
-        <button class="history-close" type="button" id="btn-history-close" aria-label="Закрыть">×</button>
+  <!-- STUB: replace with school scheduling integration (calendar / booking system). -->
+  <div class="curriculum-stub-overlay" id="book-class-overlay" hidden>
+    <div class="curriculum-stub-panel" role="dialog" aria-labelledby="book-class-title" aria-modal="true">
+      <div class="curriculum-stub-header">
+        <h2 id="book-class-title">Book Class</h2>
+        <button class="curriculum-stub-close" type="button" id="btn-book-class-close" aria-label="Закрыть">×</button>
       </div>
-      <ul class="lesson-history-list" id="lesson-history-list"></ul>
+      <p class="curriculum-stub-lead">Переход к бронированию занятия с преподавателем.</p>
+      <p class="curriculum-stub-topic" id="book-class-topic"></p>
+      <p class="curriculum-stub-note">Заглушка — здесь будет интеграция с расписанием школы.</p>
+      <div class="curriculum-stub-actions">
+        <button class="btn" type="button" id="btn-book-class-cancel">Отмена</button>
+        <button class="btn btn-primary" type="button" id="btn-book-class-confirm">Подтвердить бронирование</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUB: replace with school materials library integration. -->
+  <div class="curriculum-stub-overlay" id="self-study-overlay" hidden>
+    <div class="curriculum-stub-panel" role="dialog" aria-labelledby="self-study-title" aria-modal="true">
+      <div class="curriculum-stub-header">
+        <h2 id="self-study-title">Self-study</h2>
+        <button class="curriculum-stub-close" type="button" id="btn-self-study-close" aria-label="Закрыть">×</button>
+      </div>
+      <p class="curriculum-stub-lead">Материалы для самостоятельной работы по теме:</p>
+      <p class="curriculum-stub-topic" id="self-study-topic"></p>
+      <p class="curriculum-stub-material" id="self-study-material">Упражнения, карточки и задания появятся здесь после подключения библиотеки материалов школы.</p>
+      <p class="curriculum-stub-note">Заглушка — здесь будет ссылка на реальные учебные материалы.</p>
+      <div class="curriculum-stub-actions">
+        <button class="btn" type="button" id="btn-self-study-cancel">Закрыть</button>
+        <button class="btn btn-primary" type="button" id="btn-self-study-confirm">Отметить выполненным</button>
+      </div>
     </div>
   </div>
 
@@ -141,12 +175,11 @@
     <!-- Left sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
-        <div class="avatar" id="dash-avatar">А</div>
-        <h1 class="sidebar-name" id="dash-name">Анна Петрова</h1>
+        <div class="avatar" id="dash-avatar">КВ</div>
+        <h1 class="sidebar-name" id="dash-name">Кристина Виговская</h1>
       </div>
 
       <section class="sidebar-goal-section cefr-journey" aria-label="Цель обучения">
-        <div class="cefr-journey-caption">Уровень CEFR (международная шкала A1–C2)</div>
         <div class="cefr-journey-levels">
           <div class="cefr-level-block">
             <span class="cefr-level-caption">Сейчас</span>
@@ -158,20 +191,12 @@
             <span class="cefr-level-value cefr-level-value-target" id="dash-cefr-target">—</span>
           </div>
         </div>
-        <div class="goal-details" id="goal-details" hidden>
-          <div class="goal-scenario-banner" id="goal-scenario-banner" hidden>
-            <span class="goal-scenario-banner-icon" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.25"/>
-                <path d="M7 6.25V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-                <circle cx="7" cy="4.25" r="0.75" fill="currentColor"/>
-              </svg>
-            </span>
-            <p class="goal-scenario-banner-text" id="goal-scenario-banner-text"></p>
+        <div class="goal-info-card" id="goal-details" hidden>
+          <div class="goal-deadline-row">
+            <span class="goal-deadline" id="goal-deadline"></span>
+            <span class="goal-remaining" id="goal-remaining"></span>
           </div>
-          <p class="goal-deadline" id="goal-deadline"></p>
-          <p class="goal-remaining" id="goal-remaining"></p>
-          <p class="goal-label-text" id="goal-label-text" hidden></p>
+          <p class="goal-info-desc" id="goal-info-desc"></p>
           <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
         </div>
       </section>
@@ -192,11 +217,19 @@
             <span class="study-plan-mobile-hint" aria-hidden="true">Подробнее →</span>
           </button>
           <div class="study-plan-body" id="study-plan-body">
-            <p class="study-plan-headline" id="study-plan-headline">—</p>
-            <div class="study-plan-breakdown">
-              <p id="study-plan-tutor">—</p>
-              <p id="study-plan-self">—</p>
+            <div class="study-plan-intensity" id="study-plan-intensity">
+              <div class="study-plan-intensity-row">
+                <span class="study-plan-intensity-label">Интенсивность</span>
+                <div class="segment-control segment-control-compact" id="sidebar-intensity-presets" role="group" aria-label="Интенсивность занятий">
+                  <button type="button" class="segment-btn intensity-preset" data-intensity="once_week" aria-pressed="false">1×/нед</button>
+                  <button type="button" class="segment-btn intensity-preset" data-intensity="few_times_week" aria-pressed="false">2–3×/нед</button>
+                  <button type="button" class="segment-btn intensity-preset" data-intensity="daily" aria-pressed="false">Каждый день</button>
+                </div>
+              </div>
+              <p class="intensity-projection" id="sidebar-intensity-projection" hidden></p>
             </div>
+            <p class="study-plan-headline" id="study-plan-headline">—</p>
+            <p class="study-plan-breakdown" id="study-plan-breakdown">—</p>
             <div class="study-plan-progress">
               <div class="study-plan-progress-labels">
                 <span id="study-plan-progress-text">—</span>
@@ -206,7 +239,7 @@
                 <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
               </div>
             </div>
-            <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
+            <p class="study-plan-disclaimer" id="study-plan-disclaimer" title=""></p>
           </div>
         </div>
       </section>
@@ -216,6 +249,16 @@
           <div class="curriculum-header">
             <h2 class="curriculum-title">Программа обучения</h2>
             <p class="curriculum-summary" id="curriculum-summary">—</p>
+            <div class="curriculum-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="curriculum-progress" aria-label="Прогресс программы обучения">
+              <div class="curriculum-progress-bar">
+                <div class="curriculum-progress-fill" id="curriculum-progress-fill"></div>
+              </div>
+            </div>
+            <div class="curriculum-filter" role="tablist" aria-label="Фильтр программы">
+              <button type="button" class="curriculum-filter-btn is-active" data-filter="all" role="tab" aria-selected="true">Все</button>
+              <button type="button" class="curriculum-filter-btn" data-filter="completed" role="tab" aria-selected="false">Пройденные</button>
+              <button type="button" class="curriculum-filter-btn" data-filter="upcoming" role="tab" aria-selected="false">Предстоящие</button>
+            </div>
           </div>
           <div class="curriculum-list-scroll" id="curriculum-list-scroll">
             <ul class="curriculum-list" id="curriculum-list"></ul>
@@ -224,12 +267,6 @@
       </section>
 
       <button class="goal-cta" type="button" id="btn-set-goal-cta" hidden>Задать цель обучения</button>
-
-      <div class="divider"></div>
-
-      <div class="sidebar-actions">
-        <button class="btn" type="button" id="btn-lesson-history">📅 История уроков</button>
-      </div>
 
       <div class="divider"></div>
 
@@ -547,7 +584,7 @@
               <div class="summary-score-ring-inner" id="summary-score-ring">7</div>
             </div>
             <p class="summary-text" id="summary-text">
-              Анна уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
+              Кристина уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
               Основные зоны роста — грамматика времен (Past Simple vs Present Perfect) и произношение
               звуков /θ/ и /iː/. Словарный запас на уровне B1, заметен прогресс за последний месяц (+1.2 балла).
             </p>
@@ -748,7 +785,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260621-3" defer></script>
+  <script src="/static/dashboard.js?v=20260621-9" defer></script>
 
 </body>
 </html>

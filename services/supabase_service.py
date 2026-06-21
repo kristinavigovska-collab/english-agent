@@ -162,6 +162,7 @@ def update_student_goal(
     tutor_lessons_per_week: int = 2,
     tutor_lesson_minutes: int = 60,
     practice_days_per_week: int = 6,
+    study_intensity_preset: Optional[str] = None,
 ) -> dict:
     db = get_supabase()
     payload = {
@@ -176,6 +177,7 @@ def update_student_goal(
         "tutor_lessons_per_week": tutor_lessons_per_week,
         "tutor_lesson_minutes": tutor_lesson_minutes,
         "practice_days_per_week": practice_days_per_week,
+        "study_intensity_preset": study_intensity_preset,
     }
     result = db.table("students").update(payload).eq("id", student_id).execute()
     if not result.data:

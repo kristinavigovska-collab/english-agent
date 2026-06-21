@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Literal, Optional
@@ -17,6 +18,7 @@ from services.goal_plan_config import (
     STUCK_LOAD_MIN_CATEGORIES,
     STUCK_LOAD_MULTIPLIER,
 )
+from services.intensity_config import INTENSITY_PRESETS, normalize_intensity_preset
 
 PlanStatus = Literal["on_track", "behind", "ahead"]
 
@@ -168,14 +170,29 @@ def compute_study_plan(
     total_hours = total_distance * HOURS_PER_CEFR_LEVEL * type_coeff
 
     weeks_elapsed = max(0, (today - goal_set_date).days // 7)
-    weeks_remaining = max(1, duration_weeks - weeks_elapsed)
 
     hours_remaining = remaining_distance * HOURS_PER_CEFR_LEVEL * type_coeff
+
+    intensity_key = normalize_intensity_preset(student.get("study_intensity_preset"))
+    target_date = _parse_date(student.get("target_date"))
+    plan_weeks_total = duration_weeks
+
+    if intensity_key and target_date and target_date > goal_set_date:
+        plan_weeks_total = max(1, math.ceil((target_date - goal_set_date).days / 7))
+        weeks_remaining = max(1, math.ceil((target_date - today).days / 7))
+    else:
+        weeks_remaining = max(1, duration_weeks - weeks_elapsed)
+
     hours_per_week = hours_remaining / weeks_remaining
 
-    tutor_lessons = int(student.get("tutor_lessons_per_week") or DEFAULT_TUTOR_LESSONS_PER_WEEK)
+    if intensity_key:
+        cfg = INTENSITY_PRESETS[intensity_key]
+        tutor_lessons = int(cfg["tutor_lessons_per_week"])
+        practice_days = int(cfg["practice_days_per_week"])
+    else:
+        tutor_lessons = int(student.get("tutor_lessons_per_week") or DEFAULT_TUTOR_LESSONS_PER_WEEK)
+        practice_days = int(student.get("practice_days_per_week") or DEFAULT_PRACTICE_DAYS_PER_WEEK)
     tutor_minutes = int(student.get("tutor_lesson_minutes") or DEFAULT_TUTOR_LESSON_MINUTES)
-    practice_days = int(student.get("practice_days_per_week") or DEFAULT_PRACTICE_DAYS_PER_WEEK)
 
     tutor_hours_per_week = tutor_lessons * tutor_minutes / 60.0
     self_study_hours_per_week = max(0.0, hours_per_week - tutor_hours_per_week)
@@ -187,7 +204,7 @@ def compute_study_plan(
     ]
     tutor_hours_completed = len(reports_since_goal) * tutor_minutes / 60.0
 
-    time_progress = min(1.0, weeks_elapsed / duration_weeks) if duration_weeks else 0.0
+    time_progress = min(1.0, weeks_elapsed / plan_weeks_total) if plan_weeks_total else 0.0
     level_progress = (
         (current_score - start_score) / total_distance if total_distance > 0 else 0.0
     )
@@ -229,7 +246,7 @@ def compute_study_plan(
         total_hours=_round_hours(total_hours),
         hours_completed=_round_hours(hours_completed),
         hours_remaining=_round_hours(max(0.0, total_hours - hours_completed)),
-        weeks_total=duration_weeks,
+        weeks_total=plan_weeks_total,
         weeks_elapsed=weeks_elapsed,
         weeks_remaining=weeks_remaining,
         progress_percent=round(progress_percent, 1),

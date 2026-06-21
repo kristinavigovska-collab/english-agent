@@ -20,6 +20,7 @@ from services import (
     goal_plan_service,
     supabase_service,
 )
+from services.intensity_config import INTENSITY_PRESETS, normalize_intensity_preset
 
 router = APIRouter()
 
@@ -51,6 +52,7 @@ def _student_goal_fields(student: dict) -> dict:
         "tutor_lessons_per_week": student.get("tutor_lessons_per_week"),
         "tutor_lesson_minutes": student.get("tutor_lesson_minutes"),
         "practice_days_per_week": student.get("practice_days_per_week"),
+        "study_intensity_preset": student.get("study_intensity_preset"),
     }
 
 
@@ -283,6 +285,14 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
 
     scenario_text = body.scenario_description or body.goal_label
 
+    intensity = normalize_intensity_preset(body.study_intensity_preset)
+    tutor_lessons = body.tutor_lessons_per_week
+    practice_days = body.practice_days_per_week
+    if intensity:
+        cfg = INTENSITY_PRESETS[intensity]
+        tutor_lessons = cfg["tutor_lessons_per_week"]
+        practice_days = cfg["practice_days_per_week"]
+
     try:
         supabase_service.clear_daily_progress(student_id)
         supabase_service.update_student_goal(
@@ -294,9 +304,10 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
             goal_start_cefr_level=current_cefr,
             scenario_description=scenario_text if body.goal_type == "scenario_based" else None,
             goal_label=body.goal_label or scenario_text,
-            tutor_lessons_per_week=body.tutor_lessons_per_week,
+            tutor_lessons_per_week=tutor_lessons,
             tutor_lesson_minutes=body.tutor_lesson_minutes,
-            practice_days_per_week=body.practice_days_per_week,
+            practice_days_per_week=practice_days,
+            study_intensity_preset=body.study_intensity_preset,
         )
     except RuntimeError:
         raise HTTPException(status_code=404, detail="Student not found")

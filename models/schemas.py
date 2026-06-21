@@ -7,6 +7,7 @@ from services.error_category_config import normalize_category
 CefrLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
 CEFR_LEVELS: tuple[str, ...] = ("A1", "A2", "B1", "B2", "C1", "C2")
 GoalType = Literal["general_level", "scenario_based"]
+StudyIntensityPreset = Literal["once_week", "few_times_week", "daily"]
 PlanStatus = Literal["on_track", "behind", "ahead"]
 
 
@@ -155,6 +156,7 @@ class StudentGoalUpdate(BaseModel):
     tutor_lessons_per_week: int = Field(default=2, ge=0, le=14)
     tutor_lesson_minutes: int = Field(default=60, ge=15, le=180)
     practice_days_per_week: int = Field(default=6, ge=1, le=7)
+    study_intensity_preset: Optional[StudyIntensityPreset] = None
 
     @field_validator("scenario_description", "goal_label")
     @classmethod
@@ -190,6 +192,7 @@ class StudentReportsResponse(BaseModel):
     tutor_lessons_per_week: Optional[int] = None
     tutor_lesson_minutes: Optional[int] = None
     practice_days_per_week: Optional[int] = None
+    study_intensity_preset: Optional[str] = None
     study_plan: Optional[StudyPlanResponse] = None
     progress_tracker: Optional[ProgressTrackerResponse] = None
     error_tracking: Optional[ErrorTrackingResponse] = None
