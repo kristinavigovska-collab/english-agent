@@ -55,6 +55,7 @@ class ReportResponse(BaseModel):
     created_at: Optional[datetime]
     meeting_id: Optional[str] = None
     lesson_date: Optional[datetime] = None
+    lesson_topic: Optional[str] = None
     prioritized_weak_topics: list[PrioritizedTopicResponse] = []
 
 

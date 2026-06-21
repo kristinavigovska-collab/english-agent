@@ -1,6 +1,6 @@
 import os
 from datetime import date, datetime
-from typing import Optional
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from supabase import Client, create_client
@@ -46,12 +46,22 @@ def get_lesson_by_bot_id(recall_bot_id: str) -> Optional[dict]:
 
 
 def get_or_create_lesson_for_bot(
-    student_id: str, recall_bot_id: str, transcript: str = ""
+    student_id: str,
+    recall_bot_id: str,
+    transcript: str = "",
+    lesson_topic: Optional[str] = None,
 ) -> dict:
     existing = get_lesson_by_bot_id(recall_bot_id)
     if existing:
+        if lesson_topic and not (existing.get("lesson_topic") or "").strip():
+            return update_lesson_topic(existing["id"], lesson_topic)
         return existing
-    return create_lesson(student_id, recall_bot_id, transcript)
+    return create_lesson(
+        student_id,
+        recall_bot_id,
+        transcript,
+        lesson_topic=lesson_topic,
+    )
 
 
 def update_lesson_transcript(lesson_id: str, transcript: str) -> dict:
@@ -65,19 +75,32 @@ def update_lesson_transcript(lesson_id: str, transcript: str) -> dict:
     return result.data[0]
 
 
-def create_lesson(student_id: str, meeting_id: str, transcript: str) -> dict:
+def update_lesson_topic(lesson_id: str, lesson_topic: str) -> dict:
     db = get_supabase()
     result = (
         db.table("lessons")
-        .insert(
-            {
-                "student_id": student_id,
-                "recall_bot_id": meeting_id,
-                "transcript": transcript,
-            }
-        )
+        .update({"lesson_topic": lesson_topic})
+        .eq("id", lesson_id)
         .execute()
     )
+    return result.data[0]
+
+
+def create_lesson(
+    student_id: str,
+    meeting_id: str,
+    transcript: str = "",
+    lesson_topic: Optional[str] = None,
+) -> dict:
+    db = get_supabase()
+    payload: dict[str, Any] = {
+        "student_id": student_id,
+        "recall_bot_id": meeting_id,
+        "transcript": transcript,
+    }
+    if lesson_topic:
+        payload["lesson_topic"] = lesson_topic
+    result = db.table("lessons").insert(payload).execute()
     return result.data[0]
 
 
@@ -164,7 +187,7 @@ def get_student_reports(student_id: str) -> list[dict]:
     db = get_supabase()
     result = (
         db.table("reports")
-        .select("*, lessons(recall_bot_id, created_at)")
+        .select("*, lessons(recall_bot_id, created_at, lesson_topic)")
         .eq("student_id", student_id)
         .order("created_at", desc=True)
         .execute()

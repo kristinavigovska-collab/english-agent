@@ -40,6 +40,11 @@ def main() -> None:
         print("No transcript returned from Recall API")
         sys.exit(1)
 
+    topic = recall_service.fetch_lesson_topic(args.bot_id)
+    if topic and not (lesson.get("lesson_topic") or "").strip():
+        supabase_service.update_lesson_topic(lesson["id"], topic)
+        print(f"Lesson topic saved: {topic}")
+
     merged = pick_longer_transcript(lesson.get("transcript") or "", transcript)
     supabase_service.update_lesson_transcript(lesson["id"], merged)
     print(f"Transcript saved ({len(merged)} chars)")

@@ -93,6 +93,7 @@ def _report_models(
                 created_at=row.get("created_at"),
                 meeting_id=lesson_data.get("recall_bot_id"),
                 lesson_date=lesson_data.get("created_at"),
+                lesson_topic=lesson_data.get("lesson_topic"),
                 prioritized_weak_topics=[
                     PrioritizedTopicResponse(**item) for item in report_prioritized
                 ],

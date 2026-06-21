@@ -199,11 +199,30 @@ def _analyze_and_save(
     )
 
 
-def _ensure_lesson(student: dict, bot_id: str, transcript: str = "") -> dict:
+def _resolve_lesson_topic(bot_id: str, data: dict) -> str:
+    topic = recall_service.extract_lesson_topic_from_webhook(data)
+    if topic:
+        return topic
+    if not recall_service.is_configured() or bot_id == "unknown":
+        return ""
+    try:
+        return recall_service.fetch_lesson_topic(bot_id)
+    except Exception:
+        logger.exception("Failed to resolve lesson topic for bot %s", bot_id)
+        return ""
+
+
+def _ensure_lesson(
+    student: dict,
+    bot_id: str,
+    transcript: str = "",
+    lesson_topic: str = "",
+) -> dict:
     return supabase_service.get_or_create_lesson_for_bot(
         student_id=student["id"],
         recall_bot_id=bot_id,
         transcript=transcript,
+        lesson_topic=lesson_topic or None,
     )
 
 
@@ -215,7 +234,8 @@ def _finalize_lesson(bot_id: str, data: dict, transcript: str) -> None:
 
     name, email = _extract_student_info(data)
     student = supabase_service.get_or_create_student(name, email)
-    lesson = _ensure_lesson(student, bot_id)
+    lesson_topic = _resolve_lesson_topic(bot_id, data)
+    lesson = _ensure_lesson(student, bot_id, lesson_topic=lesson_topic)
 
     existing = (lesson.get("transcript") or "").strip()
     merged = pick_longer_transcript(existing, transcript)

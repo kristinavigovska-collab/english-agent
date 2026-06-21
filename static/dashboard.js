@@ -26,6 +26,58 @@
   var SIDEBAR_WIDTH_MAX = 480;
   var SIDEBAR_WIDTH_MAX_RATIO = 0.4;
 
+  // PLACEHOLDER curriculum — replace with school program / textbook API when available.
+  var PLACEHOLDER_CEFR_CURRICULUM = {
+    A1: [
+      "Знакомство и приветствия",
+      "Числа, даты и время",
+      "Present Simple: базовые глаголы",
+      "Семья и описание людей",
+      "Еда и заказ в кафе",
+      "Мой день (рутина)",
+    ],
+    A2: [
+      "Past Simple: правила и исключения",
+      "Future: going to и will",
+      "Путешествия и транспорт",
+      "Покупки и деньги",
+      "Здоровье и у врача",
+      "Hobbies and free time",
+    ],
+    B1: [
+      "Travel & Past Tenses",
+      "Present Perfect vs Past Simple",
+      "Conditionals (zero, first, second)",
+      "Passive voice",
+      "Reported speech",
+      "Modals of deduction",
+      "Relative clauses",
+      "Phrasal verbs (common)",
+    ],
+    B2: [
+      "Advanced conditionals and mixed",
+      "Inversion and emphasis",
+      "Discourse markers",
+      "Formal vs informal register",
+      "Essay structure and linking",
+      "Professional meetings",
+    ],
+    C1: [
+      "Nuance in modals and hedging",
+      "Academic writing style",
+      "Idioms in business context",
+      "Complex nominalisation",
+      "Media and critical analysis",
+      "Interview preparation",
+    ],
+    C2: [
+      "Near-native fluency refinements",
+      "Stylistic variation",
+      "Subtle register shifts",
+      "Advanced collocations",
+    ],
+  };
+
   var ERROR_CATEGORY_LABELS = {
     third_person_singular: "Согласование 3-го лица ед.ч.",
     noun_plural: "Множественное число существительных",
@@ -64,11 +116,8 @@
       practice_days_per_week: 6,
     },
     studyPlan: null,
-    progressTracker: null,
-    demoPractice: {},
     errorTracking: null,
     goalModalBound: false,
-    trackerModalBound: false,
     studyPlanCollapseBound: false,
   };
 
@@ -295,9 +344,7 @@
   initSidebarResize();
   initGrammarToggles();
   initGoalModal();
-  initPracticeTracker();
   initStudyPlanCollapse();
-  initTrackerModal();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -315,12 +362,6 @@
     state.studentName = "Анна Петрова";
     state.goal = DEMO_GOAL;
     state.studyPlan = computeStudyPlanClient(DEMO_GOAL, state.reports, state.errorTracking);
-    state.progressTracker = computeProgressTrackerClient(
-      DEMO_GOAL,
-      state.reports,
-      state.studyPlan,
-      state.demoPractice
-    );
     renderStudentOverview();
     renderHistoryList();
     if (state.reports.length) {
@@ -364,7 +405,6 @@
         practice_days_per_week: data.practice_days_per_week || 6,
       };
       state.studyPlan = data.study_plan || null;
-      state.progressTracker = data.progress_tracker || null;
       state.errorTracking = data.error_tracking || null;
       renderStudentOverview();
       renderHistoryList();
@@ -513,7 +553,7 @@
     setText("dash-stat-cefr", latest ? latest.vocabulary_level || "—" : "—");
     renderStudentGoal();
     renderStudyPlan();
-    renderProgressTracker();
+    renderCurriculumProgram();
   }
 
   function hasGoal() {
@@ -952,12 +992,38 @@
     var ctaEl = document.getElementById("btn-set-goal-cta");
     var targetEl = document.getElementById("dash-cefr-target");
     var targetBlock = document.getElementById("cefr-target-block");
+    var captionEl = document.getElementById("cefr-target-caption");
+    var scenarioBanner = document.getElementById("goal-scenario-banner");
+    var scenarioBannerText = document.getElementById("goal-scenario-banner-text");
 
     if (!detailsEl || !ctaEl || !targetEl) return;
 
     if (hasGoal()) {
       targetEl.textContent = state.goal.target_cefr_level;
       if (targetBlock) targetBlock.classList.add("has-goal");
+
+      var scenarioText = String(state.goal.scenario_description || "").trim();
+      var isScenarioWithDescription =
+        state.goal.goal_type === "scenario_based" && scenarioText;
+
+      if (captionEl) {
+        captionEl.textContent = isScenarioWithDescription ? "Потолок цели" : "Цель";
+      }
+
+      if (scenarioBanner && scenarioBannerText) {
+        if (isScenarioWithDescription) {
+          scenarioBannerText.innerHTML =
+            "Прикладная цель: «" +
+            esc(scenarioText) +
+            "». План рассчитан под эту задачу, не под полный " +
+            esc(state.goal.target_cefr_level) +
+            ".";
+          scenarioBanner.hidden = false;
+        } else {
+          scenarioBannerText.textContent = "";
+          scenarioBanner.hidden = true;
+        }
+      }
 
       setText("goal-deadline", "к " + formatDateLocal(state.goal.target_date));
       setText("goal-remaining", formatRemainingTime(state.goal.target_date));
@@ -977,6 +1043,8 @@
     } else {
       targetEl.textContent = "—";
       if (targetBlock) targetBlock.classList.remove("has-goal");
+      if (captionEl) captionEl.textContent = "Цель";
+      if (scenarioBanner) scenarioBanner.hidden = true;
       detailsEl.hidden = true;
       ctaEl.hidden = false;
     }
@@ -1167,412 +1235,145 @@
     syncStudyPlanCollapse();
   }
 
-  function computeProgressTrackerClient(goal, reports, plan, demoPractice) {
-    if (!goal || !plan || !goal.goal_set_date) return null;
+  function normalizeCurriculumTopic(text) {
+    return String(text || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
 
-    var start = parseIsoDate(goal.goal_set_date);
-    var weeks = Number(goal.target_duration_weeks) || 12;
-    var end = parseIsoDate(goal.target_date);
-    if (!end && start) {
-      end = new Date(start.getTime());
-      end.setDate(end.getDate() + weeks * 7);
-    }
-    if (!start || !end) return null;
+  function buildCurriculumTopicPool(startLevel, targetLevel) {
+    var startIdx = Math.max(0, cefrIndex(startLevel));
+    var targetIdx = Math.max(startIdx, cefrIndex(targetLevel));
+    var pool = [];
 
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    var lessonDates = {};
-    sortReports(reports).forEach(function (r) {
-      var d = parseIsoDate(r.lesson_date || r.created_at);
-      if (d && d >= start && d <= end) {
-        lessonDates[isoDateOnly(d)] = Number(goal.tutor_lesson_minutes || 60);
-      }
-    });
-
-    var days = [];
-    var cursor = new Date(start.getTime());
-    var index = 0;
-    while (cursor <= end) {
-      index += 1;
-      var iso = isoDateOnly(cursor);
-      var planned = Number(plan.minutes_per_day) || 0;
-      var completed = false;
-      var completedMinutes = null;
-      var source = null;
-
-      if (lessonDates[iso]) {
-        completed = true;
-        completedMinutes = lessonDates[iso];
-        source = "lesson";
-      } else if (demoPractice[iso]) {
-        completed = true;
-        completedMinutes = demoPractice[iso];
-        source = "self_practice";
-      }
-
-      var stateName = "future";
-      if (cursor <= today) {
-        if (source === "lesson") stateName = "lesson";
-        else if (completed && completedMinutes < planned) stateName = "partial";
-        else if (completed) stateName = "completed";
-        else stateName = "missed";
-      }
-
-      days.push({
-        date: iso,
-        day_index: index,
-        planned_minutes: planned,
-        completed: completed,
-        completed_minutes: completedMinutes,
-        source: source,
-        state: stateName,
+    for (var i = startIdx; i <= targetIdx; i += 1) {
+      var level = CEFR_LEVELS[i];
+      var topics = PLACEHOLDER_CEFR_CURRICULUM[level] || [];
+      topics.forEach(function (title) {
+        pool.push({ level: level, title: title });
       });
-      cursor.setDate(cursor.getDate() + 1);
     }
 
-    var elapsed = days.filter(function (d) {
-      return parseIsoDate(d.date) <= today && d.planned_minutes > 0;
-    });
-    var completedDays = elapsed.filter(function (d) { return d.completed; }).length;
+    if (!pool.length) {
+      pool.push({ level: targetLevel || "B1", title: "Общая практика" });
+    }
+    return pool;
+  }
 
-    var streak = 0;
-    var streakCursor = new Date(today.getTime());
-    while (true) {
-      var iso = isoDateOnly(streakCursor);
-      var day = days.find(function (d) { return d.date === iso; });
-      if (!day) break;
-      if (!day.completed) {
-        if (streak === 0 && streakCursor.getTime() === today.getTime()) {
-          streakCursor.setDate(streakCursor.getDate() - 1);
-          continue;
-        }
+  function buildPlaceholderCurriculum(goal, plan) {
+    var weeks = Number(goal.target_duration_weeks || (plan && plan.weeks_total)) || 12;
+    var latest = getLatestReport();
+    var startLevel =
+      goal.goal_start_cefr_level || (latest && latest.vocabulary_level) || "A1";
+    var targetLevel = goal.target_cefr_level || "B2";
+    var pool = buildCurriculumTopicPool(startLevel, targetLevel);
+    var items = [];
+
+    for (var w = 1; w <= weeks; w += 1) {
+      var entry = pool[(w - 1) % pool.length];
+      items.push({
+        week: w,
+        title: entry.title,
+        level: entry.level,
+        completed: false,
+        isCurrent: false,
+      });
+    }
+    return items;
+  }
+
+  function collectCompletedLessonTopics(reports) {
+    var seen = {};
+    (reports || []).forEach(function (report) {
+      var topic = formatLessonTopic(report);
+      if (!topic || topic === "—") return;
+      seen[normalizeCurriculumTopic(topic)] = true;
+    });
+    return seen;
+  }
+
+  function applyCurriculumCompletions(items, reports) {
+    var completedTopics = collectCompletedLessonTopics(reports);
+    items.forEach(function (item) {
+      item.completed = !!completedTopics[normalizeCurriculumTopic(item.title)];
+    });
+
+    var currentIdx = -1;
+    for (var i = 0; i < items.length; i += 1) {
+      if (!items[i].completed) {
+        currentIdx = i;
         break;
       }
-      streak += 1;
-      streakCursor.setDate(streakCursor.getDate() - 1);
     }
-
-    var recent = days.filter(function (d) {
-      var dDate = parseIsoDate(d.date);
-      var windowStart = new Date(today.getTime());
-      windowStart.setDate(windowStart.getDate() - 13);
-      return dDate >= windowStart && dDate <= today && d.planned_minutes > 0;
+    if (currentIdx < 0 && items.length) currentIdx = items.length - 1;
+    items.forEach(function (item, idx) {
+      item.isCurrent = idx === currentIdx;
     });
-    var rate = recent.length ? recent.filter(function (d) { return d.completed; }).length / recent.length : null;
+    return items;
+  }
 
-    var todayIso = isoDateOnly(today);
-    var todayHasLesson = !!lessonDates[todayIso];
-    var todayCompleted = !!demoPractice[todayIso] || todayHasLesson;
+  function renderCurriculumProgram() {
+    var section = document.getElementById("sidebar-curriculum-section");
+    var listEl = document.getElementById("curriculum-list");
+    var summaryEl = document.getElementById("curriculum-summary");
+    if (!section || !listEl) return;
 
-    var weeksGrid = [];
-    for (var i = 0; i < days.length; i += 7) {
-      weeksGrid.push(days.slice(i, i + 7));
+    if (!hasGoal()) {
+      section.hidden = true;
+      listEl.innerHTML = "";
+      return;
     }
 
-    return {
-      days: days,
-      weeks: weeksGrid,
-      completed_days: completedDays,
-      planned_days_elapsed: elapsed.length,
-      streak: streak,
-      pace_warning:
-        rate !== null && rate < 0.7
-          ? "Темп ниже плана — выполнено " + Math.round(rate * 100) + "% дней за последние 14 дней"
-          : null,
-      can_mark_today: start <= today && today <= end && !todayCompleted && !todayHasLesson,
-      today_planned_minutes: Number(plan.minutes_per_day) || 0,
-      goal_start_date: isoDateOnly(start),
-      goal_end_date: isoDateOnly(end),
-    };
-  }
+    var items = applyCurriculumCompletions(
+      buildPlaceholderCurriculum(state.goal, state.studyPlan),
+      state.reports
+    );
+    var completedCount = items.filter(function (item) {
+      return item.completed;
+    }).length;
 
-  function formatWeekRange(week) {
-    if (!week || !week.length) return "";
-    var first = week[0].date;
-    var last = week[week.length - 1].date;
-    if (first === last) return formatDateShort(first);
-    return formatDateShort(first) + " – " + formatDateShort(last);
-  }
+    section.hidden = false;
+    if (summaryEl) {
+      summaryEl.textContent =
+        "Пройдено " +
+        completedCount +
+        " из " +
+        items.length +
+        " " +
+        pluralize(items.length, "темы", "тем", "тем");
+    }
 
-  function buildTrackerGridHtml(tracker) {
-    var todayIso = todayIsoDate();
-    return (tracker.weeks || [])
-      .map(function (week, weekIndex) {
-        var hasToday = week.some(function (day) {
-          return day.date === todayIso;
-        });
+    listEl.innerHTML = items
+      .map(function (item) {
+        var statusClass = item.completed ? "is-completed" : "is-pending";
+        var currentClass = item.isCurrent ? " is-current" : "";
+        var statusLabel = item.completed ? "Пройдено" : "Не пройдено";
         return (
-          '<div class="tracker-week-block' +
-          (hasToday ? " is-current-week" : "") +
-          '" data-week-index="' +
-          weekIndex +
+          '<li class="curriculum-item ' +
+          statusClass +
+          currentClass +
           '">' +
-          '<div class="tracker-week-label">' +
-          esc(formatWeekRange(week)) +
+          '<span class="curriculum-status" aria-hidden="true">' +
+          (item.completed
+            ? '<svg class="curriculum-check" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.25"/><path d="M5 8.25L7.25 10.5L11.25 6.25" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            : '<span class="curriculum-circle"></span>') +
+          "</span>" +
+          '<div class="curriculum-item-body">' +
+          '<span class="curriculum-week">Нед. ' +
+          item.week +
+          "</span>" +
+          '<span class="curriculum-topic">' +
+          esc(item.title) +
+          "</span>" +
           "</div>" +
-          '<div class="tracker-week-row">' +
-          week
-            .map(function (day) {
-              var title =
-                "День " +
-                day.day_index +
-                " · " +
-                formatDateLocal(day.date) +
-                (day.completed
-                  ? " · " + (day.completed_minutes || day.planned_minutes) + " мин"
-                  : "");
-              var todayClass = day.date === todayIso ? " is-today" : "";
-              return (
-                '<button type="button" class="tracker-day ' +
-                esc(day.state) +
-                todayClass +
-                '" title="' +
-                esc(title) +
-                '" aria-label="' +
-                esc(title) +
-                '"></button>'
-              );
-            })
-            .join("") +
-          "</div></div>"
+          '<span class="sr-only">' +
+          esc(statusLabel) +
+          "</span>" +
+          "</li>"
         );
       })
       .join("");
-  }
-
-  function renderTrackerTeaser() {
-    var tracker = state.progressTracker;
-    var teaser = document.getElementById("tracker-teaser");
-    var strip = document.getElementById("main-tracker-strip");
-    if (!teaser) return;
-
-    if (!hasGoal() || !tracker) {
-      teaser.hidden = true;
-      if (strip) strip.hidden = true;
-      return;
-    }
-
-    teaser.hidden = false;
-    if (strip) strip.hidden = false;
-    var totalDays = (tracker.days || []).length || tracker.planned_days_elapsed;
-    var streakPart =
-      tracker.streak > 0
-        ? "серия " +
-          tracker.streak +
-          " " +
-          pluralize(tracker.streak, "день", "дня", "дней") +
-          " подряд"
-        : "серия 0 дней";
-    setText(
-      "tracker-teaser-summary",
-      "Выполнено " +
-        tracker.completed_days +
-        " из " +
-        totalDays +
-        " дней · " +
-        streakPart
-    );
-
-    var paceBadge = document.getElementById("tracker-teaser-pace");
-    if (paceBadge) paceBadge.hidden = !tracker.pace_warning;
-  }
-
-  function renderTrackerModalGrid() {
-    var tracker = state.progressTracker;
-    var grid = document.getElementById("tracker-grid");
-    if (!grid) return;
-
-    if (!tracker) {
-      grid.innerHTML = "";
-      return;
-    }
-
-    var streakPart =
-      tracker.streak > 0
-        ? "Серия: " +
-          tracker.streak +
-          " " +
-          pluralize(tracker.streak, "день", "дня", "дней") +
-          " подряд"
-        : "Серия: 0 дней";
-    setText(
-      "tracker-modal-summary",
-      "Выполнено " +
-        tracker.completed_days +
-        " из " +
-        ((tracker.days || []).length || tracker.planned_days_elapsed) +
-        " дней · " +
-        streakPart
-    );
-
-    var paceEl = document.getElementById("pace-warning-modal");
-    if (paceEl) {
-      if (tracker.pace_warning) {
-        paceEl.textContent = tracker.pace_warning;
-        paceEl.hidden = false;
-      } else {
-        paceEl.hidden = true;
-      }
-    }
-
-    grid.innerHTML = buildTrackerGridHtml(tracker);
-
-    var markBtn = document.getElementById("btn-mark-practice");
-    var form = document.getElementById("practice-minutes-form");
-    var formOpen = form && !form.hidden;
-    if (markBtn) markBtn.hidden = !tracker.can_mark_today || formOpen;
-    if (form && !formOpen) form.hidden = true;
-  }
-
-  function scrollTrackerToToday() {
-    var grid = document.getElementById("tracker-grid");
-    if (!grid) return;
-    var target =
-      grid.querySelector(".tracker-week-block.is-current-week") ||
-      grid.querySelector(".tracker-day.is-today");
-    if (target) {
-      target.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }
-
-  function openTrackerModal() {
-    var overlay = document.getElementById("tracker-overlay");
-    if (!overlay || !state.progressTracker) return;
-    renderTrackerModalGrid();
-    overlay.hidden = false;
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(function () {
-      scrollTrackerToToday();
-    });
-  }
-
-  function closeTrackerModal() {
-    var overlay = document.getElementById("tracker-overlay");
-    if (!overlay) return;
-    overlay.hidden = true;
-    document.body.style.overflow = "";
-    var form = document.getElementById("practice-minutes-form");
-    if (form) form.hidden = true;
-  }
-
-  function initTrackerModal() {
-    if (state.trackerModalBound) return;
-    state.trackerModalBound = true;
-
-    var teaser = document.getElementById("tracker-teaser");
-    var overlay = document.getElementById("tracker-overlay");
-    var closeBtn = document.getElementById("btn-tracker-close");
-
-    if (teaser) teaser.addEventListener("click", openTrackerModal);
-    if (closeBtn) closeBtn.addEventListener("click", closeTrackerModal);
-    if (overlay) {
-      overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) closeTrackerModal();
-      });
-    }
-
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      if (overlay && !overlay.hidden) closeTrackerModal();
-    });
-  }
-
-  function renderProgressTracker() {
-    renderTrackerTeaser();
-    var overlay = document.getElementById("tracker-overlay");
-    if (overlay && !overlay.hidden) {
-      renderTrackerModalGrid();
-    }
-  }
-
-
-  function initPracticeTracker() {
-    var markBtn = document.getElementById("btn-mark-practice");
-    var saveBtn = document.getElementById("btn-save-practice");
-    var cancelBtn = document.getElementById("btn-cancel-practice");
-    var form = document.getElementById("practice-minutes-form");
-    var input = document.getElementById("practice-minutes-input");
-
-    if (markBtn) {
-      markBtn.addEventListener("click", function () {
-        if (!state.progressTracker) return;
-        if (markBtn) markBtn.hidden = true;
-        if (form) form.hidden = false;
-        if (input) input.value = String(state.progressTracker.today_planned_minutes || 30);
-      });
-    }
-
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", function () {
-        if (form) form.hidden = true;
-        if (markBtn && state.progressTracker && state.progressTracker.can_mark_today) {
-          markBtn.hidden = false;
-        }
-      });
-    }
-
-    if (saveBtn) {
-      saveBtn.addEventListener("click", function () {
-        var minutes = input ? Number(input.value) : 0;
-        if (!minutes || minutes < 1) return;
-        savePractice(minutes);
-      });
-    }
-  }
-
-  function savePractice(minutes) {
-    if (isDemo) {
-      var todayIso = todayIsoDate();
-      state.demoPractice[todayIso] = minutes;
-      state.progressTracker = computeProgressTrackerClient(
-        state.goal,
-        state.reports,
-        state.studyPlan,
-        state.demoPractice
-      );
-      state.studyPlan = computeStudyPlanClient(state.goal, state.reports);
-      var form = document.getElementById("practice-minutes-form");
-      if (form) form.hidden = true;
-      renderStudyPlan();
-      renderProgressTracker();
-      return;
-    }
-
-    var saveBtn = document.getElementById("btn-save-practice");
-    if (saveBtn) {
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Сохранение…";
-    }
-
-    fetch("/api/students/" + encodeURIComponent(STUDENT_ID) + "/practice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed_minutes: minutes }),
-    })
-      .then(function (res) {
-        if (!res.ok) {
-          return res.json().then(function (body) {
-            throw new Error(body.detail || res.statusText);
-          });
-        }
-        return res.json();
-      })
-      .then(function (data) {
-        state.studyPlan = data.study_plan || null;
-        state.progressTracker = data.progress_tracker || null;
-        renderStudyPlan();
-        renderProgressTracker();
-      })
-      .catch(function (err) {
-        alert(err.message || "Не удалось сохранить практику");
-      })
-      .finally(function () {
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.textContent = "Сохранить";
-        }
-      });
   }
 
   function clampDurationWeeks(value) {
@@ -1791,12 +1592,6 @@
         goal_start_cefr_level: getLatestReport() ? getLatestReport().vocabulary_level : "B1",
       });
       state.studyPlan = computeStudyPlanClient(state.goal, state.reports);
-      state.progressTracker = computeProgressTrackerClient(
-        state.goal,
-        state.reports,
-        state.studyPlan,
-        state.demoPractice
-      );
       renderStudentOverview();
       closeGoalModal();
       return;
@@ -1839,7 +1634,6 @@
           practice_days_per_week: data.practice_days_per_week || 6,
         };
         state.studyPlan = data.study_plan || null;
-        state.progressTracker = data.progress_tracker || null;
         renderStudentOverview();
         closeGoalModal();
       })

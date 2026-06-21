@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-18" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-3" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -135,42 +135,6 @@
     </div>
   </div>
 
-  <div class="tracker-overlay" id="tracker-overlay" hidden>
-    <div class="tracker-modal" role="dialog" aria-labelledby="tracker-modal-title" aria-modal="true">
-      <div class="tracker-modal-header">
-        <div>
-          <h2 id="tracker-modal-title">Трекер прогресса к цели</h2>
-          <p class="tracker-modal-summary" id="tracker-modal-summary">—</p>
-        </div>
-        <button class="tracker-modal-close" type="button" id="btn-tracker-close" aria-label="Закрыть">×</button>
-      </div>
-      <div class="tracker-modal-body">
-        <p class="pace-warning pace-warning-modal" id="pace-warning-modal" hidden></p>
-        <div class="tracker-legend" aria-hidden="true">
-          <span><i class="dot dot-lesson"></i> урок</span>
-          <span><i class="dot dot-self"></i> практика</span>
-          <span><i class="dot dot-partial"></i> частично</span>
-          <span><i class="dot dot-missed"></i> пропуск</span>
-          <span><i class="dot dot-today"></i> сегодня</span>
-        </div>
-        <div class="tracker-grid tracker-grid-modal" id="tracker-grid"></div>
-        <div class="tracker-actions">
-          <button class="btn btn-primary" type="button" id="btn-mark-practice" hidden>
-            Отметить практику сегодня
-          </button>
-          <div class="practice-minutes-form" id="practice-minutes-form" hidden>
-            <label>
-              <span>Сколько минут позанимались?</span>
-              <input type="number" id="practice-minutes-input" min="1" max="480" />
-            </label>
-            <button class="btn btn-primary" type="button" id="btn-save-practice">Сохранить</button>
-            <button class="btn" type="button" id="btn-cancel-practice">Отмена</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="app">
 
     <div class="sidebar-shell" id="sidebar-shell">
@@ -190,11 +154,21 @@
           </div>
           <div class="cefr-journey-arrow" aria-hidden="true">→</div>
           <div class="cefr-level-block cefr-level-target" id="cefr-target-block">
-            <span class="cefr-level-caption">Цель</span>
+            <span class="cefr-level-caption" id="cefr-target-caption">Цель</span>
             <span class="cefr-level-value cefr-level-value-target" id="dash-cefr-target">—</span>
           </div>
         </div>
         <div class="goal-details" id="goal-details" hidden>
+          <div class="goal-scenario-banner" id="goal-scenario-banner" hidden>
+            <span class="goal-scenario-banner-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.25"/>
+                <path d="M7 6.25V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                <circle cx="7" cy="4.25" r="0.75" fill="currentColor"/>
+              </svg>
+            </span>
+            <p class="goal-scenario-banner-text" id="goal-scenario-banner-text"></p>
+          </div>
           <p class="goal-deadline" id="goal-deadline"></p>
           <p class="goal-remaining" id="goal-remaining"></p>
           <p class="goal-label-text" id="goal-label-text" hidden></p>
@@ -233,6 +207,18 @@
               </div>
             </div>
             <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sidebar-curriculum-section" id="sidebar-curriculum-section" hidden aria-label="Программа обучения">
+        <div class="curriculum-card">
+          <div class="curriculum-header">
+            <h2 class="curriculum-title">Программа обучения</h2>
+            <p class="curriculum-summary" id="curriculum-summary">—</p>
+          </div>
+          <div class="curriculum-list-scroll" id="curriculum-list-scroll">
+            <ul class="curriculum-list" id="curriculum-list"></ul>
           </div>
         </div>
       </section>
@@ -280,17 +266,6 @@
       <div class="lesson-context-bar" id="lesson-context-bar" hidden>
         <span id="lesson-context-label">Просмотр урока</span>
         <button class="btn-link" type="button" id="btn-lesson-latest">Последний урок</button>
-      </div>
-
-      <div class="main-tracker-strip" id="main-tracker-strip" hidden>
-        <button type="button" class="tracker-teaser" id="tracker-teaser" hidden aria-haspopup="dialog">
-          <div class="tracker-teaser-top">
-            <h2 class="tracker-teaser-title">Трекер прогресса к цели</h2>
-            <span class="tracker-teaser-cta" aria-hidden="true">Открыть трекер →</span>
-          </div>
-          <p class="tracker-teaser-summary" id="tracker-teaser-summary">—</p>
-          <span class="tracker-teaser-pace-badge" id="tracker-teaser-pace" hidden>Темп ниже плана</span>
-        </button>
       </div>
 
       <nav class="tabs" role="tablist">
@@ -773,7 +748,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260620-18" defer></script>
+  <script src="/static/dashboard.js?v=20260621-3" defer></script>
 
 </body>
 </html>
