@@ -1316,7 +1316,9 @@
     var items = [];
 
     for (var w = 1; w <= weeks; w += 1) {
-      var entry = pool[(w - 1) % pool.length];
+      var poolIdx = w - 1;
+      var entry =
+        poolIdx < pool.length ? pool[poolIdx] : pool[poolIdx % pool.length];
       items.push({
         classNum: w,
         title: entry.title,
@@ -1415,6 +1417,8 @@
       item.hasProgress = item.lessonCompleted || item.selfStudyCompleted;
     });
 
+    applySequentialCurriculumBackfill(items);
+
     var currentIdx = -1;
     for (var j = 0; j < items.length; j += 1) {
       if (!items[j].lessonCompleted || !items[j].selfStudyCompleted) {
@@ -1427,6 +1431,34 @@
       item.isCurrent = idx === currentIdx;
     });
     return items;
+  }
+
+  /** If Class N has a completed lesson, mark 1…N−1 as done (sequential program). */
+  function applySequentialCurriculumBackfill(items) {
+    var anchorItem = null;
+    items.forEach(function (item) {
+      if (item.lessonCompleted && (!anchorItem || item.classNum > anchorItem.classNum)) {
+        anchorItem = item;
+      }
+    });
+    if (!anchorItem || anchorItem.classNum <= 1) return;
+
+    var anchorDate = parseIsoDate(anchorItem.lessonDateIso) || new Date();
+    anchorDate.setHours(0, 0, 0, 0);
+
+    items.forEach(function (item) {
+      if (item.classNum >= anchorItem.classNum) return;
+      item.lessonCompleted = true;
+      item.selfStudyCompleted = true;
+      item.completed = true;
+      item.hasProgress = true;
+      if (!item.lessonReportId) {
+        var weeksBefore = anchorItem.classNum - item.classNum;
+        var lessonDate = new Date(anchorDate);
+        lessonDate.setDate(lessonDate.getDate() - weeksBefore * 7);
+        item.lessonDateIso = isoDateOnly(lessonDate);
+      }
+    });
   }
 
   function getClassRowPhase(item) {
@@ -1556,7 +1588,101 @@
     return items;
   }
 
+  function sortCurriculumForDisplay(items) {
+    if (!items.length) return items;
+
+    var currentItem = null;
+    var rest = [];
+    items.forEach(function (item) {
+      if (item.isCurrent) currentItem = item;
+      else rest.push(item);
+    });
+
+    rest.sort(function (a, b) {
+      return a.classNum - b.classNum;
+    });
+
+    if (!currentItem) return rest;
+
+    var currentNum = currentItem.classNum;
+    var future = rest.filter(function (item) {
+      return item.classNum > currentNum;
+    });
+    var passed = rest.filter(function (item) {
+      return item.classNum < currentNum;
+    });
+
+    return [currentItem].concat(future).concat(passed);
+  }
+
+  function sortCurriculumSequential(items) {
+    return items.slice().sort(function (a, b) {
+      return a.classNum - b.classNum;
+    });
+  }
+
+  function scrollCurriculumToCurrent(scrollEl, listEl) {
+    if (!scrollEl || !listEl) return;
+    requestAnimationFrame(function () {
+      var currentEl = listEl.querySelector(".curriculum-item.is-current");
+      scrollEl.scrollTop = currentEl ? Math.max(0, currentEl.offsetTop) : 0;
+    });
+  }
+
+  function renderCurriculumItemHtml(item) {
+    var phase = getClassRowPhase(item);
+    var phaseClass =
+      phase === "passed" ? "is-passed" : phase === "current" ? "is-current" : "is-future";
+    var reportLink =
+      item.lessonCompleted && item.lessonReportId
+        ? '<button type="button" class="curriculum-report-link' +
+          (item.lessonReportId === state.selectedId ? " is-active" : "") +
+          '" data-report-id="' +
+          esc(item.lessonReportId) +
+          '">Отчёт по уроку →</button>'
+        : "";
+    return (
+      '<li class="curriculum-item ' +
+      phaseClass +
+      '">' +
+      '<div class="curriculum-item-body">' +
+      '<span class="curriculum-class-num">' +
+      esc(formatCurriculumClassLabel(item)) +
+      "</span>" +
+      '<span class="curriculum-topic">' +
+      esc(item.title) +
+      "</span>" +
+      renderCurriculumActions(item) +
+      (item.lessonCompleted && item.lessonReportId ? reportLink : "") +
+      "</div>" +
+      "</li>"
+    );
+  }
+
+  function bindCurriculumListInteractions(rootEl) {
+    if (!rootEl) return;
+    rootEl.querySelectorAll(".curriculum-report-link").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectLesson(btn.dataset.reportId);
+      });
+    });
+    rootEl.querySelectorAll(".class-action-btn:not([disabled])").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var classNum = Number(btn.dataset.classNum);
+        var topic = btn.dataset.topic || "";
+        if (btn.dataset.action === "lesson") {
+          openBookClassStub(classNum, topic);
+        } else {
+          openSelfStudyStub(classNum, topic);
+        }
+      });
+    });
+  }
+
   function formatCurriculumClassLabel(item) {
+    if (item.isCurrent) {
+      return "Class " + item.classNum + " · Текущий";
+    }
     var label = "Class " + item.classNum;
     if (item.lessonCompleted && item.lessonDateIso) {
       label += " · " + formatDateLocal(item.lessonDateIso);
@@ -1567,9 +1693,9 @@
   function renderCurriculumProgram() {
     var section = document.getElementById("sidebar-curriculum-section");
     var listEl = document.getElementById("curriculum-list");
+    var scrollEl = document.getElementById("curriculum-list-scroll");
     var summaryEl = document.getElementById("curriculum-summary");
     var progressFill = document.getElementById("curriculum-progress-fill");
-    var scrollEl = document.getElementById("curriculum-list-scroll");
     if (!section || !listEl) return;
 
     if (!hasGoal()) {
@@ -1588,7 +1714,8 @@
     }).length;
     var progressPercent =
       items.length > 0 ? Math.min(100, Math.round((completedCount / items.length) * 100)) : 0;
-    var visibleItems = filterCurriculumItems(items, state.curriculumFilter || "all");
+    var filter = state.curriculumFilter || "all";
+    var filteredItems = filterCurriculumItems(items, filter);
 
     section.hidden = false;
     if (summaryEl) {
@@ -1603,67 +1730,25 @@
       progressBar.setAttribute("aria-valuenow", String(progressPercent));
     }
 
-    if (!visibleItems.length) {
+    if (!filteredItems.length) {
       listEl.innerHTML =
         '<li class="curriculum-empty">Нет Class в этой категории</li>';
+      if (scrollEl) scrollEl.scrollTop = 0;
       return;
     }
 
-    listEl.innerHTML = visibleItems
-      .map(function (item) {
-        var statusClass = item.completed ? "is-completed" : "is-pending";
-        var currentClass = item.isCurrent ? " is-current" : "";
-        var reportLink =
-          item.lessonCompleted && item.lessonReportId
-            ? '<button type="button" class="curriculum-report-link' +
-              (item.lessonReportId === state.selectedId ? " is-active" : "") +
-              '" data-report-id="' +
-              esc(item.lessonReportId) +
-              '">Отчёт по уроку →</button>'
-            : "";
-        return (
-          '<li class="curriculum-item ' +
-          statusClass +
-          currentClass +
-          '">' +
-          '<div class="curriculum-item-body">' +
-          '<span class="curriculum-class-num">' +
-          esc(formatCurriculumClassLabel(item)) +
-          "</span>" +
-          '<span class="curriculum-topic">' +
-          esc(item.title) +
-          "</span>" +
-          renderCurriculumActions(item) +
-          (item.lessonCompleted && item.lessonReportId ? reportLink : "") +
-          "</div>" +
-          "</li>"
-        );
-      })
-      .join("");
+    var visibleItems =
+      filter === "all"
+        ? sortCurriculumSequential(filteredItems)
+        : sortCurriculumForDisplay(filteredItems);
 
-    listEl.querySelectorAll(".curriculum-report-link").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        selectLesson(btn.dataset.reportId);
-      });
-    });
+    listEl.innerHTML = visibleItems.map(renderCurriculumItemHtml).join("");
+    bindCurriculumListInteractions(listEl);
 
-    listEl.querySelectorAll(".class-action-btn:not([disabled])").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var classNum = Number(btn.dataset.classNum);
-        var topic = btn.dataset.topic || "";
-        if (btn.dataset.action === "lesson") {
-          openBookClassStub(classNum, topic);
-        } else {
-          openSelfStudyStub(classNum, topic);
-        }
-      });
-    });
-
-    if (scrollEl && state.curriculumFilter === "all") {
-      var currentEl = scrollEl.querySelector(".curriculum-item.is-current");
-      if (currentEl) {
-        currentEl.scrollIntoView({ block: "nearest" });
-      }
+    if (filter === "all") {
+      scrollCurriculumToCurrent(scrollEl, listEl);
+    } else if (scrollEl) {
+      scrollEl.scrollTop = 0;
     }
   }
 

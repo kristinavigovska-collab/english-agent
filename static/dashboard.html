@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-9" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-14" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -260,8 +260,10 @@
               <button type="button" class="curriculum-filter-btn" data-filter="upcoming" role="tab" aria-selected="false">Предстоящие</button>
             </div>
           </div>
-          <div class="curriculum-list-scroll" id="curriculum-list-scroll">
-            <ul class="curriculum-list" id="curriculum-list"></ul>
+          <div class="curriculum-lists" id="curriculum-lists">
+            <div class="curriculum-list-scroll" id="curriculum-list-scroll">
+              <ul class="curriculum-list" id="curriculum-list"></ul>
+            </div>
           </div>
         </div>
       </section>
@@ -785,7 +787,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260621-9" defer></script>
+  <script src="/static/dashboard.js?v=20260621-14" defer></script>
 
 </body>
 </html>
