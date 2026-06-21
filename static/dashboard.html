@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-8" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260620-18" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -42,6 +42,7 @@
             <option value="C1">C1</option>
             <option value="C2">C2</option>
           </select>
+          <p class="goal-field-hint" id="goal-cefr-hint" hidden></p>
         </label>
         <div class="goal-field goal-duration-field">
           <span class="goal-field-label">Срок обучения</span>
@@ -172,30 +173,15 @@
 
   <div class="app">
 
+    <div class="sidebar-shell" id="sidebar-shell">
     <!-- Left sidebar -->
     <aside class="sidebar">
-      <div class="avatar" id="dash-avatar">А</div>
-      <h1 class="sidebar-name" id="dash-name">Анна Петрова</h1>
-
-      <div class="sidebar-actions">
-        <button class="btn" type="button" id="btn-lesson-history">📅 История уроков</button>
-        <button class="btn btn-primary" type="button">⬇ Скачать PDF</button>
+      <div class="sidebar-profile">
+        <div class="avatar" id="dash-avatar">А</div>
+        <h1 class="sidebar-name" id="dash-name">Анна Петрова</h1>
       </div>
 
-      <div class="divider"></div>
-
-      <div class="sidebar-stats">
-        <div class="stat-row">
-          <span class="label">Всего уроков</span>
-          <span class="value" id="dash-stat-lessons">7</span>
-        </div>
-        <div class="stat-row">
-          <span class="label">Средний балл</span>
-          <span class="value" id="dash-stat-avg">6.2 / 10</span>
-        </div>
-      </div>
-
-      <div class="cefr-journey">
+      <section class="sidebar-goal-section cefr-journey" aria-label="Цель обучения">
         <div class="cefr-journey-caption">Уровень CEFR (международная шкала A1–C2)</div>
         <div class="cefr-journey-levels">
           <div class="cefr-level-block">
@@ -214,7 +200,66 @@
           <p class="goal-label-text" id="goal-label-text" hidden></p>
           <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
         </div>
-        <button class="goal-cta" type="button" id="btn-set-goal-cta" hidden>Задать цель обучения</button>
+      </section>
+
+      <section class="sidebar-plan-section" id="sidebar-plan-section" hidden aria-label="План обучения">
+        <div class="study-plan-card is-collapsed" id="study-plan-card">
+          <button
+            type="button"
+            class="study-plan-mobile-toggle"
+            id="study-plan-mobile-toggle"
+            aria-expanded="false"
+            aria-controls="study-plan-body"
+          >
+            <div class="study-plan-header">
+              <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
+              <span class="plan-status-badge" id="plan-status-badge">—</span>
+            </div>
+            <span class="study-plan-mobile-hint" aria-hidden="true">Подробнее →</span>
+          </button>
+          <div class="study-plan-body" id="study-plan-body">
+            <p class="study-plan-headline" id="study-plan-headline">—</p>
+            <div class="study-plan-breakdown">
+              <p id="study-plan-tutor">—</p>
+              <p id="study-plan-self">—</p>
+            </div>
+            <div class="study-plan-progress">
+              <div class="study-plan-progress-labels">
+                <span id="study-plan-progress-text">—</span>
+                <span id="study-plan-weeks-left">—</span>
+              </div>
+              <div class="study-plan-progress-bar" aria-hidden="true">
+                <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
+              </div>
+            </div>
+            <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
+          </div>
+        </div>
+      </section>
+
+      <button class="goal-cta" type="button" id="btn-set-goal-cta" hidden>Задать цель обучения</button>
+
+      <div class="divider"></div>
+
+      <div class="sidebar-actions">
+        <button class="btn" type="button" id="btn-lesson-history">📅 История уроков</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sidebar-stats">
+        <div class="stat-row">
+          <span class="label">Всего уроков</span>
+          <span class="value" id="dash-stat-lessons">7</span>
+        </div>
+        <div class="stat-row">
+          <span class="label">Средний балл</span>
+          <span class="value" id="dash-stat-avg">6.2 / 10</span>
+        </div>
+        <div class="stat-row">
+          <span class="label">Уровень CEFR</span>
+          <span class="value cefr" id="dash-stat-cefr">B1</span>
+        </div>
       </div>
 
       <div class="divider"></div>
@@ -226,6 +271,8 @@
         </div>
       </div>
     </aside>
+    <div class="sidebar-resize-edge" id="sidebar-resize-edge" aria-hidden="true"></div>
+    </div>
 
     <!-- Right main content -->
     <div class="main">
@@ -235,29 +282,7 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">Последний урок</button>
       </div>
 
-      <section class="dashboard-goal-strip" id="dashboard-goal-strip" hidden>
-        <div class="study-plan-card" id="study-plan-card">
-          <div class="study-plan-header">
-            <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
-            <span class="plan-status-badge" id="plan-status-badge">—</span>
-          </div>
-          <p class="study-plan-headline" id="study-plan-headline">—</p>
-          <div class="study-plan-breakdown">
-            <p id="study-plan-tutor">—</p>
-            <p id="study-plan-self">—</p>
-          </div>
-          <div class="study-plan-progress">
-            <div class="study-plan-progress-labels">
-              <span id="study-plan-progress-text">—</span>
-              <span id="study-plan-weeks-left">—</span>
-            </div>
-            <div class="study-plan-progress-bar" aria-hidden="true">
-              <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
-            </div>
-          </div>
-          <p class="study-plan-disclaimer" id="study-plan-disclaimer"></p>
-        </div>
-
+      <div class="main-tracker-strip" id="main-tracker-strip" hidden>
         <button type="button" class="tracker-teaser" id="tracker-teaser" hidden aria-haspopup="dialog">
           <div class="tracker-teaser-top">
             <h2 class="tracker-teaser-title">Трекер прогресса к цели</h2>
@@ -266,7 +291,7 @@
           <p class="tracker-teaser-summary" id="tracker-teaser-summary">—</p>
           <span class="tracker-teaser-pace-badge" id="tracker-teaser-pace" hidden>Темп ниже плана</span>
         </button>
-      </section>
+      </div>
 
       <nav class="tabs" role="tablist">
         <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Текущий урок</button>
@@ -748,7 +773,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260620-8" defer></script>
+  <script src="/static/dashboard.js?v=20260620-18" defer></script>
 
 </body>
 </html>

@@ -24,6 +24,20 @@ from services import (
 router = APIRouter()
 
 
+CEFR_LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
+
+
+def _next_cefr_level(current: str) -> str | None:
+    normalized = (current or "").upper()
+    try:
+        idx = CEFR_LEVELS.index(normalized)
+    except ValueError:
+        return None
+    if idx >= len(CEFR_LEVELS) - 1:
+        return None
+    return CEFR_LEVELS[idx + 1]
+
+
 def _student_goal_fields(student: dict) -> dict:
     return {
         "target_cefr_level": student.get("target_cefr_level"),
@@ -245,6 +259,18 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
         raise HTTPException(
             status_code=400,
             detail="Cannot set a goal without at least one lesson report",
+        )
+
+    next_cefr = _next_cefr_level(current_cefr)
+    if next_cefr is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Student is already at the maximum CEFR level (C2)",
+        )
+    if body.target_cefr_level != next_cefr:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Target level must be the next CEFR step after {current_cefr}: {next_cefr}",
         )
 
     goal_set = date.today()

@@ -20,6 +20,11 @@
   var RESOLVED_ABSENCE_LESSONS = 2;
   var STUCK_LOAD_MULTIPLIER = 1.1;
   var STUCK_LOAD_MIN_CATEGORIES = 2;
+  var SIDEBAR_WIDTH_KEY = "sidebar_width";
+  var SIDEBAR_WIDTH_DEFAULT = 280;
+  var SIDEBAR_WIDTH_MIN = 240;
+  var SIDEBAR_WIDTH_MAX = 480;
+  var SIDEBAR_WIDTH_MAX_RATIO = 0.4;
 
   var ERROR_CATEGORY_LABELS = {
     third_person_singular: "Согласование 3-го лица ед.ч.",
@@ -64,6 +69,7 @@
     errorTracking: null,
     goalModalBound: false,
     trackerModalBound: false,
+    studyPlanCollapseBound: false,
   };
 
   var DEMO_GOAL = {
@@ -286,9 +292,11 @@
     },
   ];
 
+  initSidebarResize();
   initGrammarToggles();
   initGoalModal();
   initPracticeTracker();
+  initStudyPlanCollapse();
   initTrackerModal();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
@@ -502,6 +510,7 @@
         : "—"
     );
     setText("dash-cefr-current", latest ? latest.vocabulary_level || "—" : "—");
+    setText("dash-stat-cefr", latest ? latest.vocabulary_level || "—" : "—");
     renderStudentGoal();
     renderStudyPlan();
     renderProgressTracker();
@@ -848,6 +857,96 @@
     return String(v).replace(".0", "");
   }
 
+  function getCurrentStudentCefr() {
+    var latest = getLatestReport();
+    if (!latest || !latest.vocabulary_level) return null;
+    var level = String(latest.vocabulary_level).toUpperCase();
+    return cefrIndex(level) >= 0 ? level : null;
+  }
+
+  function getNextCefrLevel(current) {
+    var idx = cefrIndex(current);
+    if (idx < 0 || idx >= CEFR_LEVELS.length - 1) return null;
+    return CEFR_LEVELS[idx + 1];
+  }
+
+  function populateGoalCefrSelect(preselected) {
+    var select = document.getElementById("goal-cefr-select");
+    var hintEl = document.getElementById("goal-cefr-hint");
+    if (!select) return;
+
+    var current = getCurrentStudentCefr();
+    var next = current ? getNextCefrLevel(current) : null;
+    var selected = preselected || "";
+
+    select.innerHTML = "";
+    select.disabled = false;
+
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Выберите уровень";
+    select.appendChild(placeholder);
+
+    if (!current) {
+      CEFR_LEVELS.forEach(function (level) {
+        var opt = document.createElement("option");
+        opt.value = level;
+        opt.textContent = level;
+        select.appendChild(opt);
+      });
+      if (hintEl) hintEl.hidden = true;
+    } else if (!next) {
+      select.disabled = true;
+      placeholder.textContent = "Достигнут максимальный уровень C2";
+      if (hintEl) {
+        hintEl.textContent = "Новая цель по уровню недоступна — вы уже на C2.";
+        hintEl.hidden = false;
+      }
+    } else {
+      CEFR_LEVELS.forEach(function (level) {
+        var levelIdx = cefrIndex(level);
+        var currentIdx = cefrIndex(current);
+        if (levelIdx <= currentIdx) return;
+
+        var opt = document.createElement("option");
+        opt.value = level;
+        if (level === next) {
+          opt.textContent = level;
+        } else {
+          opt.textContent = level + " — сначала достигните " + next;
+          opt.disabled = true;
+        }
+        select.appendChild(opt);
+      });
+      if (hintEl) {
+        hintEl.textContent =
+          "Сейчас " + current + " — можно выбрать только " + next + ".";
+        hintEl.hidden = false;
+      }
+    }
+
+    if (current && next) {
+      selected = next;
+    }
+
+    if (selected && select.querySelector('option[value="' + selected + '"]:not([disabled])')) {
+      select.value = selected;
+    }
+  }
+
+  function validateGoalCefrChoice(cefr) {
+    var current = getCurrentStudentCefr();
+    if (!current) return null;
+    var next = getNextCefrLevel(current);
+    if (!next) {
+      return "Вы уже на максимальном уровне CEFR — новую цель по уровню задать нельзя.";
+    }
+    if (cefr !== next) {
+      return "Целевой уровень должен быть следующим: " + next + ".";
+    }
+    return null;
+  }
+
   function renderStudentGoal() {
     var detailsEl = document.getElementById("goal-details");
     var ctaEl = document.getElementById("btn-set-goal-cta");
@@ -884,17 +983,17 @@
   }
 
   function renderStudyPlan() {
-    var strip = document.getElementById("dashboard-goal-strip");
+    var section = document.getElementById("sidebar-plan-section");
     var card = document.getElementById("study-plan-card");
-    if (!strip || !card) return;
+    if (!section || !card) return;
 
     var plan = state.studyPlan;
     if (!hasGoal() || !plan) {
-      strip.hidden = true;
+      section.hidden = true;
       return;
     }
 
-    strip.hidden = false;
+    section.hidden = false;
     setText("study-plan-title", "План на " + plan.weeks_total + " " + pluralize(plan.weeks_total, "неделю", "недели", "недель"));
 
     var badge = document.getElementById("plan-status-badge");
@@ -921,13 +1020,151 @@
     );
     setText(
       "study-plan-weeks-left",
-      "Осталось " + plan.weeks_remaining + " " + pluralize(plan.weeks_remaining, "неделя", "недели", "недель")
+      "При текущем темпе: ещё ~" +
+        plan.weeks_remaining +
+        " " +
+        pluralize(plan.weeks_remaining, "неделя", "недели", "недель")
     );
 
     var fill = document.getElementById("study-plan-progress-fill");
     if (fill) fill.style.width = Math.min(100, plan.progress_percent) + "%";
 
     setText("study-plan-disclaimer", plan.disclaimer || PLAN_DISCLAIMER);
+
+    syncStudyPlanCollapse();
+  }
+
+  function isMobileLayout() {
+    return window.matchMedia("(max-width: 900px)").matches;
+  }
+
+  function getSidebarMaxWidth() {
+    var app = document.querySelector(".app");
+    if (!app) return SIDEBAR_WIDTH_MAX;
+    var byRatio = app.getBoundingClientRect().width * SIDEBAR_WIDTH_MAX_RATIO;
+    return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, byRatio));
+  }
+
+  function clampSidebarWidth(width) {
+    return Math.round(
+      Math.min(getSidebarMaxWidth(), Math.max(SIDEBAR_WIDTH_MIN, width))
+    );
+  }
+
+  function applySidebarWidth(width) {
+    document.documentElement.style.setProperty("--sidebar-width", width + "px");
+  }
+
+  function readStoredSidebarWidth() {
+    try {
+      var raw = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+      if (!raw) return SIDEBAR_WIDTH_DEFAULT;
+      var parsed = parseInt(raw, 10);
+      if (!isFinite(parsed)) return SIDEBAR_WIDTH_DEFAULT;
+      return clampSidebarWidth(parsed);
+    } catch (err) {
+      return SIDEBAR_WIDTH_DEFAULT;
+    }
+  }
+
+  function saveSidebarWidth(width) {
+    try {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clampSidebarWidth(width)));
+    } catch (err) {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function resetSidebarWidthForMobile() {
+    document.documentElement.style.removeProperty("--sidebar-width");
+  }
+
+  function syncSidebarWidthLayout() {
+    if (isMobileLayout()) {
+      resetSidebarWidthForMobile();
+      return;
+    }
+    applySidebarWidth(readStoredSidebarWidth());
+  }
+
+  function initSidebarResize() {
+    var edge = document.getElementById("sidebar-resize-edge");
+    var shell = document.getElementById("sidebar-shell");
+    if (!edge || !shell) return;
+
+    syncSidebarWidthLayout();
+
+    var dragging = false;
+    var startX = 0;
+    var startWidth = 0;
+
+    function stopDragging() {
+      if (!dragging) return;
+      dragging = false;
+      shell.classList.remove("is-resize-active");
+      document.body.classList.remove("sidebar-resizing");
+      if (isMobileLayout()) return;
+      saveSidebarWidth(shell.getBoundingClientRect().width);
+    }
+
+    edge.addEventListener("mousedown", function (e) {
+      if (isMobileLayout() || e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startWidth = shell.getBoundingClientRect().width;
+      shell.classList.add("is-resize-active");
+      document.body.classList.add("sidebar-resizing");
+    });
+
+    document.addEventListener("mousemove", function (e) {
+      if (!dragging || isMobileLayout()) return;
+      e.preventDefault();
+      applySidebarWidth(clampSidebarWidth(startWidth + (e.clientX - startX)));
+    });
+
+    document.addEventListener("mouseup", stopDragging);
+    window.addEventListener("blur", stopDragging);
+
+    window.addEventListener("resize", function () {
+      if (isMobileLayout()) {
+        resetSidebarWidthForMobile();
+        return;
+      }
+      applySidebarWidth(readStoredSidebarWidth());
+    });
+  }
+
+  function syncStudyPlanCollapse() {
+    var card = document.getElementById("study-plan-card");
+    var toggle = document.getElementById("study-plan-mobile-toggle");
+    if (!card || !toggle) return;
+
+    if (isMobileLayout() && hasGoal() && state.studyPlan) {
+      card.classList.add("is-collapsed");
+      toggle.setAttribute("aria-expanded", "false");
+    } else {
+      card.classList.remove("is-collapsed");
+      toggle.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function initStudyPlanCollapse() {
+    if (state.studyPlanCollapseBound) return;
+    state.studyPlanCollapseBound = true;
+
+    var toggle = document.getElementById("study-plan-mobile-toggle");
+    var card = document.getElementById("study-plan-card");
+    if (!toggle || !card) return;
+
+    toggle.addEventListener("click", function () {
+      if (!isMobileLayout()) return;
+      var collapsed = card.classList.toggle("is-collapsed");
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    });
+
+    window.addEventListener("resize", syncStudyPlanCollapse);
+    syncStudyPlanCollapse();
   }
 
   function computeProgressTrackerClient(goal, reports, plan, demoPractice) {
@@ -1107,18 +1344,17 @@
   function renderTrackerTeaser() {
     var tracker = state.progressTracker;
     var teaser = document.getElementById("tracker-teaser");
+    var strip = document.getElementById("main-tracker-strip");
     if (!teaser) return;
 
     if (!hasGoal() || !tracker) {
       teaser.hidden = true;
-      var strip = document.getElementById("dashboard-goal-strip");
-      if (strip) strip.classList.add("strip-plan-only");
+      if (strip) strip.hidden = true;
       return;
     }
 
     teaser.hidden = false;
-    var stripEl = document.getElementById("dashboard-goal-strip");
-    if (stripEl) stripEl.classList.remove("strip-plan-only");
+    if (strip) strip.hidden = false;
     var totalDays = (tracker.days || []).length || tracker.planned_days_elapsed;
     var streakPart =
       tracker.streak > 0
@@ -1497,6 +1733,7 @@
     syncDurationPicker(
       hasGoal() ? state.goal.target_duration_weeks || 12 : Number(form.target_duration_weeks.value) || 12
     );
+    populateGoalCefrSelect(hasGoal() ? state.goal.target_cefr_level : "");
     overlay.hidden = false;
   }
 
@@ -1519,6 +1756,12 @@
 
     if (!cefr || !weeks) {
       showGoalError("Выберите целевой уровень и срок в неделях.");
+      return;
+    }
+
+    var cefrError = validateGoalCefrChoice(cefr);
+    if (cefrError) {
+      showGoalError(cefrError);
       return;
     }
 
@@ -1633,27 +1876,15 @@
       return "Срок цели прошёл";
     }
     if (days === 0) {
-      return "Последний день до цели";
+      return "Последний день до дедлайна";
     }
 
-    var weeks = Math.floor(days / 7);
     var dayPart =
       days +
       " " +
       pluralize(days, "день", "дня", "дней");
 
-    if (weeks >= 1) {
-      return (
-        "осталось " +
-        dayPart +
-        " (" +
-        weeks +
-        " " +
-        pluralize(weeks, "неделя", "недели", "недель") +
-        ")"
-      );
-    }
-    return "осталось " + dayPart;
+    return "до дедлайна: " + dayPart;
   }
 
   function todayIsoDate() {
