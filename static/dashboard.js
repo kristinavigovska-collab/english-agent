@@ -146,6 +146,8 @@
     curriculumActionsBound: false,
     curriculumStubProgress: {},
     curriculumStubPending: null,
+    curriculumItems: [],
+    reportClassMap: {},
     goal: {
       target_cefr_level: null,
       target_date: null,
@@ -392,12 +394,16 @@
     },
   ];
 
+  var NAV_VIEW_KEY = "app_nav_view";
+  var NAV_COLLAPSED_KEY = "app_nav_collapsed";
+
   initSidebarResize();
   initGrammarToggles();
   initGoalModal();
   initGoalPlanCollapse();
   initStudyPlanCollapse();
   initActivityHeatmapPopover();
+  initAppNav();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -483,6 +489,83 @@
       if (loadingEl) loadingEl.hidden = true;
       if (mainEl) mainEl.style.visibility = "";
     });
+
+  function initAppNav() {
+    var shell = document.querySelector(".app-shell");
+    var toggle = document.getElementById("app-nav-toggle");
+    if (toggle && shell) {
+      toggle.addEventListener("click", function () {
+        setAppNavCollapsed(!shell.classList.contains("is-nav-collapsed"));
+      });
+    }
+
+    var collapsed = false;
+    try {
+      collapsed = localStorage.getItem(NAV_COLLAPSED_KEY) === "1";
+    } catch (e) {
+      collapsed = false;
+    }
+    setAppNavCollapsed(collapsed, { persist: false });
+
+    document.querySelectorAll(".app-nav-item").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        setAppNavView(btn.dataset.navView);
+      });
+    });
+
+    var saved = "home";
+    try {
+      saved = localStorage.getItem(NAV_VIEW_KEY) || "home";
+    } catch (e) {
+      saved = "home";
+    }
+    setAppNavView(saved);
+  }
+
+  function setAppNavCollapsed(collapsed, options) {
+    options = options || {};
+    var shell = document.querySelector(".app-shell");
+    var toggle = document.getElementById("app-nav-toggle");
+    if (!shell) return;
+
+    shell.classList.toggle("is-nav-collapsed", !!collapsed);
+
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      toggle.setAttribute(
+        "aria-label",
+        collapsed ? "Развернуть меню" : "Свернуть меню"
+      );
+    }
+
+    if (options.persist !== false) {
+      try {
+        localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? "1" : "0");
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }
+
+  function setAppNavView(view) {
+    view = view === "analytics" ? "analytics" : "home";
+    document.querySelectorAll(".app-nav-item").forEach(function (btn) {
+      var active = btn.dataset.navView === view;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-current", active ? "page" : "false");
+    });
+
+    var homeView = document.getElementById("view-home");
+    var analyticsView = document.getElementById("view-analytics");
+    if (homeView) homeView.hidden = view !== "home";
+    if (analyticsView) analyticsView.hidden = view !== "analytics";
+
+    try {
+      localStorage.setItem(NAV_VIEW_KEY, view);
+    } catch (e) {
+      /* ignore */
+    }
+  }
 
   function initLessonNavigation() {
     if (state.historyBound) return;
@@ -1993,6 +2076,102 @@
     return map;
   }
 
+  function getCurriculumItems() {
+    if (!hasGoal()) return [];
+    return applyCurriculumCompletions(
+      buildPlaceholderCurriculum(state.goal, state.studyPlan),
+      state.reports,
+      state.progressTracker
+    );
+  }
+
+  function buildReportClassMap(items, reports) {
+    var map = {};
+    var usedClasses = {};
+
+    items.forEach(function (item) {
+      if (!item.lessonReportId) return;
+      map[item.lessonReportId] = item.classNum;
+      usedClasses[item.classNum] = true;
+    });
+
+    (reports || []).forEach(function (report) {
+      if (map[report.id]) return;
+      var topicKey = normalizeCurriculumTopic(formatLessonTopic(report));
+      var match = null;
+      items.forEach(function (item) {
+        if (normalizeCurriculumTopic(item.title) !== topicKey) return;
+        if (usedClasses[item.classNum] && map[report.id] !== item.classNum) return;
+        if (!match || item.classNum > match) match = item.classNum;
+      });
+      if (match) {
+        map[report.id] = match;
+        usedClasses[match] = true;
+      }
+    });
+
+    var unmappedReports = (reports || [])
+      .filter(function (report) {
+        return !map[report.id];
+      })
+      .sort(function (a, b) {
+        return (
+          new Date(a.lesson_date || a.created_at || 0) -
+          new Date(b.lesson_date || b.created_at || 0)
+        );
+      });
+    var availableClasses = items
+      .filter(function (item) {
+        return item.lessonCompleted && !usedClasses[item.classNum];
+      })
+      .sort(function (a, b) {
+        return a.classNum - b.classNum;
+      });
+
+    unmappedReports.forEach(function (report, idx) {
+      if (idx >= availableClasses.length) return;
+      var classNum = availableClasses[idx].classNum;
+      map[report.id] = classNum;
+      usedClasses[classNum] = true;
+    });
+
+    return map;
+  }
+
+  function enrichCurriculumWithReportIds(items, reportClassMap) {
+    var classToReport = {};
+    Object.keys(reportClassMap || {}).forEach(function (reportId) {
+      classToReport[reportClassMap[reportId]] = reportId;
+    });
+    items.forEach(function (item) {
+      if (!item.lessonReportId && classToReport[item.classNum]) {
+        item.lessonReportId = classToReport[item.classNum];
+      }
+    });
+    return items;
+  }
+
+  function refreshCurriculumState() {
+    if (!hasGoal()) {
+      state.curriculumItems = [];
+      state.reportClassMap = {};
+      return;
+    }
+    var items = getCurriculumItems();
+    state.reportClassMap = buildReportClassMap(items, state.reports);
+    state.curriculumItems = enrichCurriculumWithReportIds(items, state.reportClassMap);
+  }
+
+  function findClassNumForReport(report) {
+    if (!report) return null;
+    return state.reportClassMap[report.id] || null;
+  }
+
+  function formatReportClassLabel(classNum) {
+    if (!classNum) return "";
+    return "Класс " + classNum;
+  }
+
   function applyCurriculumCompletions(items, reports, progressTracker) {
     var completedTopics = collectCompletedLessonTopics(reports);
     var lessonMetaByTopic = buildLessonMetaByTopic(reports);
@@ -2116,13 +2295,13 @@
 
   function renderCurriculumStatusPill(kind, done) {
     var label =
-      kind === "lesson"
+      kind === "selfStudy"
         ? done
-          ? "Урок пройден"
-          : "Урок не пройден"
-        : done
           ? "Self-study готово"
-          : "Self-study не выполнено";
+          : "Self-study не выполнено"
+        : done
+          ? "Урок пройден"
+          : "Урок не пройден";
     return (
       '<span class="curriculum-status-pill ' +
       (done ? "is-done" : "is-pending") +
@@ -2130,6 +2309,42 @@
       classActionCheckIcon() +
       esc(label) +
       "</span>"
+    );
+  }
+
+  function curriculumReportArrow() {
+    return '<span class="curriculum-status-arrow" aria-hidden="true">→</span>';
+  }
+
+  function renderCurriculumLessonStatus(item) {
+    var done = item.lessonCompleted;
+    var pendingLabel = "Урок не пройден";
+    var doneLabel = "Урок пройден";
+    var reportLabel = "Class summary";
+    var className = "curriculum-status-pill " + (done ? "is-done" : "is-pending");
+
+    if (done && item.lessonReportId) {
+      var active = item.lessonReportId === state.selectedId ? " is-active" : "";
+      return (
+        '<button type="button" class="' +
+        className +
+        " curriculum-status-pill--report" +
+        active +
+        '" data-report-id="' +
+        esc(item.lessonReportId) +
+        '">' +
+        classActionCheckIcon() +
+        '<span class="curriculum-status-text">' +
+        esc(reportLabel) +
+        "</span>" +
+        curriculumReportArrow() +
+        "</button>"
+      );
+    }
+
+    var label = done ? doneLabel : pendingLabel;
+    return (
+      '<span class="' + className + '">' + classActionCheckIcon() + esc(label) + "</span>"
     );
   }
 
@@ -2162,7 +2377,7 @@
     var parts = [];
 
     if (phase === "passed") {
-      parts.push(renderCurriculumStatusPill("lesson", item.lessonCompleted));
+      parts.push(renderCurriculumLessonStatus(item));
       parts.push(renderCurriculumStatusPill("selfStudy", item.selfStudyCompleted));
       return (
         '<div class="curriculum-actions curriculum-actions--status">' + parts.join("") + "</div>"
@@ -2179,7 +2394,7 @@
     }
 
     if (item.lessonCompleted) {
-      parts.push(renderCurriculumStatusPill("lesson", true));
+      parts.push(renderCurriculumLessonStatus(item));
     } else {
       parts.push(renderCurriculumActionBtn("lesson", item.classNum, item.title, false));
     }
@@ -2269,14 +2484,6 @@
     var phase = getClassRowPhase(item);
     var phaseClass =
       phase === "passed" ? "is-passed" : phase === "current" ? "is-current" : "is-future";
-    var reportLink =
-      item.lessonCompleted && item.lessonReportId
-        ? '<button type="button" class="curriculum-report-link' +
-          (item.lessonReportId === state.selectedId ? " is-active" : "") +
-          '" data-report-id="' +
-          esc(item.lessonReportId) +
-          '">Отчёт по уроку →</button>'
-        : "";
     return (
       '<li class="curriculum-item ' +
       phaseClass +
@@ -2289,7 +2496,6 @@
       esc(item.title) +
       "</span>" +
       renderCurriculumActions(item) +
-      (item.lessonCompleted && item.lessonReportId ? reportLink : "") +
       "</div>" +
       "</li>"
     );
@@ -2297,7 +2503,7 @@
 
   function bindCurriculumListInteractions(rootEl) {
     if (!rootEl) return;
-    rootEl.querySelectorAll(".curriculum-report-link").forEach(function (btn) {
+    rootEl.querySelectorAll(".curriculum-status-pill--report").forEach(function (btn) {
       btn.addEventListener("click", function () {
         selectLesson(btn.dataset.reportId);
       });
@@ -2340,11 +2546,8 @@
       return;
     }
 
-    var items = applyCurriculumCompletions(
-      buildPlaceholderCurriculum(state.goal, state.studyPlan),
-      state.reports,
-      state.progressTracker
-    );
+    refreshCurriculumState();
+    var items = state.curriculumItems;
     var completedCount = items.filter(function (item) {
       return item.completed;
     }).length;
@@ -2389,7 +2592,7 @@
   }
 
   function updateCurriculumReportLinks() {
-    document.querySelectorAll(".curriculum-report-link").forEach(function (btn) {
+    document.querySelectorAll(".curriculum-status-pill--report").forEach(function (btn) {
       btn.classList.toggle("is-active", btn.dataset.reportId === state.selectedId);
     });
   }
@@ -3128,11 +3331,23 @@
   }
 
   function renderLessonReport(report, isLatest) {
+    if (!state.curriculumItems.length && hasGoal()) {
+      refreshCurriculumState();
+    }
+
     var lessonDate = report.lesson_date || report.created_at;
+    var classNum = findClassNumForReport(report);
+    var topic = formatLessonTopic(report);
 
     setText("dash-date-label", isLatest ? "Дата последнего урока" : "Дата урока");
     setText("dash-last-date", formatDate(lessonDate));
-    setText("lesson-topic-current", formatLessonTopic(report));
+    setText("lesson-report-class", classNum ? formatReportClassLabel(classNum) : "Класс —");
+    setText("lesson-report-topic", topic);
+    var heading = document.getElementById("lesson-report-heading");
+    if (heading) {
+      var sep = heading.querySelector(".lesson-report-sep");
+      if (sep) sep.hidden = !classNum || !topic || topic === "—";
+    }
 
     renderGrammarList("grammar-list-current", report.grammar_errors);
     renderGrammarList("grammar-list-detailed", report.grammar_errors);
@@ -3194,8 +3409,10 @@
     }
 
     var lessonDate = report.lesson_date || report.created_at;
+    var classNum = findClassNumForReport(report);
+    var classPart = classNum ? formatReportClassLabel(classNum) + " · " : "";
     label.textContent =
-      "Просмотр урока от " + formatDate(lessonDate) + " — не последний";
+      "Просмотр отчёта · " + classPart + formatDate(lessonDate) + " — не последний";
     bar.hidden = false;
   }
 

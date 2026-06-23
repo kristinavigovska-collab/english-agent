@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-06-20
+Last updated: 2026-06-21
 
 ## Decisions
 
@@ -12,6 +12,8 @@ Last updated: 2026-06-20
 | Student ID | Email from calendar guest or metadata; upsert `students` |
 | DB column | `lessons.recall_bot_id` (code matches DB) |
 | Personal Gmail | Disconnected from Recall; removed from GCP test users |
+| Lesson topic | Calendar event title / Recall metadata → `lessons.lesson_topic` via webhook |
+| Study intensity | Presets `once_week` / `few_times_week` / `daily` on `students`; drives plan + curriculum pacing |
 
 ## Phase 0–1 — completed
 
@@ -31,9 +33,14 @@ Last updated: 2026-06-20
 ### Completed (June 2026)
 
 - [x] Goal + study plan (`goal_plan_service`, migrations 001–002)
-- [x] Daily progress tracker — modal UI, `POST /practice` (migration 003)
+- [x] Study intensity presets (`intensity_config`, migration 006, `PATCH /goal`)
+- [x] Daily progress backend — `daily_progress`, `POST /practice` (migration 003)
 - [x] Error pattern tracking — stuck/new badges, plan +10% multiplier (migration 004)
-- [x] Dashboard: goal strip above tabs, expandable grammar, stuck-topic block
+- [x] `lessons.lesson_topic` column + webhook wiring (migration 005)
+- [x] Dashboard sidebar: CEFR levels, collapsible **«Цель и план»** card (`sidebar_goal_collapsed` in `localStorage`)
+- [x] Curriculum program UI — filters, single-scroll «Все» list anchored on current Class (placeholder data in JS)
+- [x] Main tabs: current lesson, summary, detailed report, **«Активность»** (metrics, breakdown, 16-week heatmap, day popover)
+- [x] Expandable grammar, stuck-topic block, lesson topic plaque
 - [x] `PATCH /api/students/{id}/goal`
 
 ### P0 — test one real lesson
@@ -42,17 +49,21 @@ Last updated: 2026-06-20
 2. Google Calendar: calendar **English Lessons** only; event with **Meet link** + student guest email.
 3. Recall: **Recording preferences** not all `false`; `bot_name`: **Yappi Tutor**.
 4. Before lesson: open `https://english-agent.onrender.com/` (wake Render).
-5. After lesson: Supabase `reports` + Recall webhook logs. Re-run if needed: `scripts/reprocess_lesson.py`.
+5. After lesson: Supabase `reports` + `lessons.lesson_topic` + Recall webhook logs. Re-run if needed: `scripts/reprocess_lesson.py`.
+6. Apply migrations **005** and **006** on Supabase if columns missing.
 
 ### P1 — student-facing (remaining)
 
-- [ ] `lessons.lesson_topic` from calendar event title / school materials (UI falls back to `weak_topics`)
+- [ ] Replace curriculum placeholder with school program / materials API
 - [ ] Student login: email → magic link (no UUID in URL)
+- [ ] UI to mark self-study (`POST /practice` exists; no dashboard button yet)
+- [ ] Real platform session time (heatmap «время на платформе» = sum of recorded lesson/self-study minutes today)
 
 ### P2 — school ops
 
 - `schools` table + school calendar account docs for teachers
 - Auto-email “report ready” after webhook
+- Wire book-class / self-study curriculum overlays to scheduling + materials
 
 ## Webhook signature (`RECALL_WEBHOOK_SECRET`)
 
@@ -81,11 +92,14 @@ Last updated: 2026-06-20
 | Gap | Notes |
 |-----|--------|
 | Dashboard auth | `student_id` in URL is public — anyone with UUID sees reports |
-| Lesson topic (live) | UI ready; `lessons.lesson_topic` not wired — falls back to `weak_topics` |
+| Curriculum data | UI complete; program list is hardcoded placeholder in `dashboard.js` |
+| Activity data model | `daily_progress` = one row per day, one `source` (`lesson` \| `self_practice`); popover shows three metrics but a day is usually lesson **or** self-study |
+| Mark practice UI | `POST /practice` API works; no student-facing button in dashboard yet |
 | UI vs Claude | Demo shows pronunciation/wpm; API does not — hidden on live load |
 | Render free | Cold start ~30–50 s; ping `/` before lessons |
 | Calendar filter | Use separate Google calendar; Recall UI limited |
 | pytest | Not in `requirements.txt` — `pip install pytest` for `tests/` |
+| Migrations 005–006 | SQL files exist; confirm applied on Supabase prod |
 
 ## Pitfalls we hit
 
@@ -96,7 +110,9 @@ Last updated: 2026-06-20
 - “No meeting link” on event → bot will not join
 - Webhook may not persist if Render restarts mid-BackgroundTask — use `scripts/reprocess_lesson.py`
 - Agents often cite old docs saying webhook secret is “unused” — it is **implemented**; check env sync if webhooks fail
-- After editing `dashboard.js`, bump `?v=` in `dashboard.html` for cache bust on Render
+- After editing `dashboard.js` / `dashboard.css`, bump `?v=` in `dashboard.html` for cache bust on Render
+- Curriculum scroll anchor: use layout-settled scroll (`rAF` + short delay) after goal/plan collapse toggles
+- `.cefr-journey { margin-bottom: 0 }` can swallow sidebar spacing — goal/plan section needs explicit margin
 
 ## Links
 

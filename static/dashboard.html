@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-23" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-41" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -169,6 +169,63 @@
     </div>
   </div>
 
+  <div class="app-shell">
+    <nav class="app-nav" aria-label="Основное меню">
+      <button
+        type="button"
+        class="app-nav-toggle"
+        id="app-nav-toggle"
+        aria-expanded="true"
+        aria-label="Свернуть меню"
+      >
+        <span class="app-nav-toggle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="5" width="16" height="14" rx="2.25" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M9 5v14" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </span>
+      </button>
+      <div class="app-nav-brand">
+        <span class="app-nav-logo" aria-hidden="true">Y</span>
+        <span class="app-nav-brand-text">Yappi</span>
+      </div>
+      <ul class="app-nav-list">
+        <li>
+          <button
+            type="button"
+            class="app-nav-item is-active"
+            data-nav-view="home"
+            aria-current="page"
+            title="Home"
+          >
+            <span class="app-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4.25" y="4.25" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="13.25" y="4.25" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="4.25" y="13.25" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="13.25" y="13.25" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </span>
+            <span class="app-nav-label">Home</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="app-nav-item" data-nav-view="analytics" title="Аналитика">
+            <span class="app-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.5 19.5V5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M5.5 19.5H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <rect x="9" y="12" width="3.5" height="7.5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="14.5" y="8" width="3.5" height="11.5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </span>
+            <span class="app-nav-label">Аналитика</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="app-view" id="view-home">
   <div class="app">
 
     <div class="sidebar-shell" id="sidebar-shell">
@@ -342,20 +399,24 @@
       </div>
 
       <nav class="tabs" role="tablist">
-        <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Текущий урок</button>
+        <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Class summary</button>
         <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
         <button class="tab" type="button" role="tab" data-tab="detailed" aria-selected="false">Детальный отчёт</button>
         <button class="tab" type="button" role="tab" data-tab="activity" aria-selected="false">Активность</button>
       </nav>
 
-      <!-- Tab: Current lesson -->
+      <!-- Tab: Lesson report -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
 
         <div class="lesson-topic-plaque">
           <span class="lesson-topic-icon" aria-hidden="true">📋</span>
           <div class="lesson-topic-content">
-            <span class="lesson-topic-label">Topic</span>
-            <p class="lesson-topic-value" id="lesson-topic-current">Travel &amp; Past Tenses</p>
+            <span class="lesson-topic-label">Class summary</span>
+            <p class="lesson-topic-value" id="lesson-report-heading">
+              <span class="lesson-report-class" id="lesson-report-class">Класс 13</span>
+              <span class="lesson-report-sep" aria-hidden="true"> · </span>
+              <span class="lesson-report-topic" id="lesson-report-topic">Travel &amp; Past Tenses</span>
+            </p>
           </div>
         </div>
 
@@ -911,9 +972,27 @@
 
     </div>
   </div>
+    </div>
+
+    <div class="app-view" id="view-analytics" hidden>
+      <div class="analytics-page">
+        <header class="analytics-page-header">
+          <h1 class="analytics-page-title">Аналитика</h1>
+          <p class="analytics-page-lead">
+            Сводка по прогрессу, занятиям и ошибкам — раздел в разработке.
+          </p>
+        </header>
+        <section class="card analytics-placeholder-card">
+          <p class="analytics-placeholder-text">
+            Здесь появятся графики CEFR, динамика ошибок и сравнение с планом обучения.
+          </p>
+        </section>
+      </div>
+    </div>
+  </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260621-23" defer></script>
+  <script src="/static/dashboard.js?v=20260621-40" defer></script>
 
 </body>
 </html>

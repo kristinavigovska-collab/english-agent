@@ -8,6 +8,8 @@ SQL files live in `scripts/migrations/`. Apply **in numeric order** on a project
 | `002_add_study_plan_fields.sql` | Goal type, duration, scenario, tutor/practice schedule |
 | `003_add_daily_progress.sql` | `daily_progress` table for habit grid |
 | `004_add_error_pattern_history.sql` | `error_pattern_history` for cross-lesson error tracking |
+| `005_add_lesson_topic.sql` | `lessons.lesson_topic` from calendar event title / Recall metadata |
+| `006_add_study_intensity_preset.sql` | `students.study_intensity_preset` (`once_week` \| `few_times_week` \| `daily`) |
 
 ## Apply via CLI
 
@@ -21,6 +23,8 @@ python scripts/run_supabase_migration.py 001_add_student_goal.sql
 python scripts/run_supabase_migration.py 002_add_study_plan_fields.sql
 python scripts/run_supabase_migration.py 003_add_daily_progress.sql
 python scripts/run_supabase_migration.py 004_add_error_pattern_history.sql
+python scripts/run_supabase_migration.py 005_add_lesson_topic.sql
+python scripts/run_supabase_migration.py 006_add_study_intensity_preset.sql
 ```
 
 Default (no argument) runs `001_add_student_goal.sql`.
@@ -31,8 +35,10 @@ Paste each file into **Supabase → SQL Editor** and run. Migrations use `IF NOT
 
 ## Verify
 
-After all four:
+After all six:
 
-- `students` has goal + plan columns
+- `students` has goal + plan columns and `study_intensity_preset`
+- `lessons` has `lesson_topic`
 - Tables `daily_progress`, `error_pattern_history` exist
-- `GET /api/students/{id}/reports` returns `study_plan`, `progress_tracker`, `error_tracking` when goal is set
+- `GET /api/students/{id}/reports` returns `study_plan`, `progress_tracker`, `error_tracking`, and `study_intensity_preset` when goal is set
+- Reports payload includes `lesson_topic` per lesson when populated by webhook
