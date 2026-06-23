@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-14" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-23" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -191,55 +191,89 @@
             <span class="cefr-level-value cefr-level-value-target" id="dash-cefr-target">—</span>
           </div>
         </div>
-        <div class="goal-info-card" id="goal-details" hidden>
-          <div class="goal-deadline-row">
-            <span class="goal-deadline" id="goal-deadline"></span>
-            <span class="goal-remaining" id="goal-remaining"></span>
-          </div>
-          <p class="goal-info-desc" id="goal-info-desc"></p>
-          <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
-        </div>
       </section>
 
-      <section class="sidebar-plan-section" id="sidebar-plan-section" hidden aria-label="План обучения">
-        <div class="study-plan-card is-collapsed" id="study-plan-card">
+      <section
+        class="sidebar-goal-plan-section"
+        id="sidebar-goal-plan-section"
+        hidden
+        aria-label="Цель и план обучения"
+      >
+        <div class="goal-plan-card">
           <button
             type="button"
-            class="study-plan-mobile-toggle"
-            id="study-plan-mobile-toggle"
-            aria-expanded="false"
-            aria-controls="study-plan-body"
+            class="goal-plan-toggle"
+            id="goal-plan-toggle"
+            aria-expanded="true"
+            aria-controls="goal-plan-panel"
           >
-            <div class="study-plan-header">
-              <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
-              <span class="plan-status-badge" id="plan-status-badge">—</span>
-            </div>
-            <span class="study-plan-mobile-hint" aria-hidden="true">Подробнее →</span>
+            <span class="goal-plan-toggle-label">Цель и план</span>
+            <span class="goal-plan-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
           </button>
-          <div class="study-plan-body" id="study-plan-body">
-            <div class="study-plan-intensity" id="study-plan-intensity">
-              <div class="study-plan-intensity-row">
-                <span class="study-plan-intensity-label">Интенсивность</span>
-                <div class="segment-control segment-control-compact" id="sidebar-intensity-presets" role="group" aria-label="Интенсивность занятий">
-                  <button type="button" class="segment-btn intensity-preset" data-intensity="once_week" aria-pressed="false">1×/нед</button>
-                  <button type="button" class="segment-btn intensity-preset" data-intensity="few_times_week" aria-pressed="false">2–3×/нед</button>
-                  <button type="button" class="segment-btn intensity-preset" data-intensity="daily" aria-pressed="false">Каждый день</button>
+
+          <p class="goal-plan-summary-expanded" id="goal-plan-summary-expanded"></p>
+
+          <div class="goal-plan-collapsed-chip" id="goal-plan-collapsed-chip" hidden>
+            <span class="goal-plan-chip-text" id="goal-plan-chip-text"></span>
+            <span class="plan-status-badge" id="goal-plan-chip-badge"></span>
+          </div>
+
+          <div class="goal-plan-panel" id="goal-plan-panel">
+            <div class="goal-plan-panel-inner" id="goal-plan-panel-inner">
+              <div class="goal-info-card" id="goal-details">
+                <div class="goal-deadline-row">
+                  <span class="goal-deadline" id="goal-deadline"></span>
+                  <span class="goal-remaining" id="goal-remaining"></span>
+                </div>
+                <p class="goal-info-desc" id="goal-info-desc"></p>
+                <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
+              </div>
+
+              <div class="study-plan-card is-collapsed" id="study-plan-card">
+                <button
+                  type="button"
+                  class="study-plan-mobile-toggle"
+                  id="study-plan-mobile-toggle"
+                  aria-expanded="false"
+                  aria-controls="study-plan-body"
+                >
+                  <div class="study-plan-header">
+                    <h2 class="study-plan-title" id="study-plan-title">План на 12 недель</h2>
+                    <span class="plan-status-badge" id="plan-status-badge">—</span>
+                  </div>
+                  <span class="study-plan-mobile-hint" aria-hidden="true">Подробнее →</span>
+                </button>
+                <div class="study-plan-body" id="study-plan-body">
+                  <div class="study-plan-intensity" id="study-plan-intensity">
+                    <div class="study-plan-intensity-row">
+                      <span class="study-plan-intensity-label">Интенсивность</span>
+                      <div class="segment-control segment-control-compact" id="sidebar-intensity-presets" role="group" aria-label="Интенсивность занятий">
+                        <button type="button" class="segment-btn intensity-preset" data-intensity="once_week" aria-pressed="false">1×/нед</button>
+                        <button type="button" class="segment-btn intensity-preset" data-intensity="few_times_week" aria-pressed="false">2–3×/нед</button>
+                        <button type="button" class="segment-btn intensity-preset" data-intensity="daily" aria-pressed="false">Каждый день</button>
+                      </div>
+                    </div>
+                    <p class="intensity-projection" id="sidebar-intensity-projection" hidden></p>
+                  </div>
+                  <p class="study-plan-headline" id="study-plan-headline">—</p>
+                  <p class="study-plan-breakdown" id="study-plan-breakdown">—</p>
+                  <div class="study-plan-progress">
+                    <div class="study-plan-progress-labels">
+                      <span id="study-plan-progress-text">—</span>
+                      <span id="study-plan-weeks-left">—</span>
+                    </div>
+                    <div class="study-plan-progress-bar" aria-hidden="true">
+                      <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
+                    </div>
+                  </div>
+                  <p class="study-plan-disclaimer" id="study-plan-disclaimer" title=""></p>
                 </div>
               </div>
-              <p class="intensity-projection" id="sidebar-intensity-projection" hidden></p>
             </div>
-            <p class="study-plan-headline" id="study-plan-headline">—</p>
-            <p class="study-plan-breakdown" id="study-plan-breakdown">—</p>
-            <div class="study-plan-progress">
-              <div class="study-plan-progress-labels">
-                <span id="study-plan-progress-text">—</span>
-                <span id="study-plan-weeks-left">—</span>
-              </div>
-              <div class="study-plan-progress-bar" aria-hidden="true">
-                <div class="study-plan-progress-fill" id="study-plan-progress-fill"></div>
-              </div>
-            </div>
-            <p class="study-plan-disclaimer" id="study-plan-disclaimer" title=""></p>
           </div>
         </div>
       </section>
@@ -311,6 +345,7 @@
         <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Текущий урок</button>
         <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
         <button class="tab" type="button" role="tab" data-tab="detailed" aria-selected="false">Детальный отчёт</button>
+        <button class="tab" type="button" role="tab" data-tab="activity" aria-selected="false">Активность</button>
       </nav>
 
       <!-- Tab: Current lesson -->
@@ -783,11 +818,102 @@
 
       </div>
 
+      <!-- Tab: Activity -->
+      <div class="tab-panel" id="panel-activity" role="tabpanel">
+        <p class="activity-empty" id="activity-empty" hidden>
+          Задайте цель обучения, чтобы видеть календарь активности и статистику занятий.
+        </p>
+
+        <div id="activity-content" hidden>
+          <div class="activity-board">
+            <div class="activity-top-row">
+              <article class="activity-tile activity-tile--gauge">
+                <div class="activity-tile-metric">
+                  <div class="activity-tile-value" id="activity-metric-minutes">—</div>
+                  <div class="activity-tile-label">минут за период</div>
+                </div>
+                <div class="activity-gauge" id="activity-plan-gauge" aria-hidden="true"></div>
+              </article>
+
+              <article class="activity-tile activity-tile--compact">
+                <div class="activity-tile-value" id="activity-metric-lessons">—</div>
+                <div class="activity-tile-label">уроков с агентом</div>
+                <div class="activity-tile-divider" aria-hidden="true"></div>
+                <p class="activity-tile-detail" id="activity-lesson-minutes">—</p>
+              </article>
+
+              <article class="activity-tile activity-tile--study">
+                <div class="activity-tile-split">
+                  <div>
+                    <div class="activity-tile-value" id="activity-metric-self-study">—</div>
+                    <div class="activity-tile-label">дней self-study</div>
+                  </div>
+                  <div class="activity-streak-badge">
+                    <div class="activity-tile-value activity-tile-value--sm" id="activity-metric-streak">—</div>
+                    <div class="activity-tile-label">серия дней</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="activity-bottom-row">
+              <article class="activity-tile activity-tile--breakdown">
+                <div class="activity-tile-head">
+                  <h3 class="activity-tile-title">Как вы учитесь</h3>
+                  <span class="activity-tile-kicker" id="activity-total-kicker">—</span>
+                </div>
+                <div class="activity-breakdown" id="activity-breakdown"></div>
+              </article>
+
+              <article class="activity-tile activity-tile--heatmap">
+                <div class="activity-tile-head">
+                  <h3 class="activity-tile-title" id="activity-heatmap-streak">—</h3>
+                  <span class="activity-tile-kicker" id="activity-heatmap-longest">—</span>
+                </div>
+                <div class="activity-heatmap-wrap" id="activity-heatmap" aria-label="Календарь активности"></div>
+                <div
+                  class="activity-day-popover"
+                  id="activity-day-popover"
+                  role="dialog"
+                  aria-labelledby="activity-day-popover-date"
+                  hidden
+                >
+                  <p class="activity-day-popover-date" id="activity-day-popover-date"></p>
+                  <dl class="activity-day-popover-rows">
+                    <div class="activity-day-popover-row">
+                      <dt>Время на платформе</dt>
+                      <dd id="activity-day-platform">—</dd>
+                    </div>
+                    <div class="activity-day-popover-row">
+                      <dt>Работа с агентом</dt>
+                      <dd id="activity-day-agent">—</dd>
+                    </div>
+                    <div class="activity-day-popover-row">
+                      <dt>Урок с преподавателем</dt>
+                      <dd id="activity-day-teacher">—</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="activity-heatmap-legend" aria-hidden="true">
+                  <span class="activity-heatmap-legend-label">Меньше</span>
+                  <span class="activity-heatmap-legend-cell level-0"></span>
+                  <span class="activity-heatmap-legend-cell level-1"></span>
+                  <span class="activity-heatmap-legend-cell level-2"></span>
+                  <span class="activity-heatmap-legend-cell level-3"></span>
+                  <span class="activity-heatmap-legend-cell level-4"></span>
+                  <span class="activity-heatmap-legend-label">Больше</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260621-14" defer></script>
+  <script src="/static/dashboard.js?v=20260621-23" defer></script>
 
 </body>
 </html>

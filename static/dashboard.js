@@ -26,6 +26,22 @@
   var SIDEBAR_WIDTH_MIN = 240;
   var SIDEBAR_WIDTH_MAX = 480;
   var SIDEBAR_WIDTH_MAX_RATIO = 0.4;
+  var GOAL_PLAN_COLLAPSED_KEY = "sidebar_goal_collapsed";
+  var ACTIVITY_HEATMAP_WEEKS = 16;
+  var MONTH_SHORT_RU = [
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "май",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек",
+  ];
 
   // PLACEHOLDER curriculum — replace with school program / textbook API when available.
   var PLACEHOLDER_CEFR_CURRICULUM = {
@@ -149,6 +165,10 @@
     goalModalBound: false,
     intensityPickerBound: false,
     studyPlanCollapseBound: false,
+    goalPlanCollapsed: false,
+    goalPlanCollapseBound: false,
+    activityPopoverBound: false,
+    activityPopoverDate: null,
   };
 
   var DEMO_GOAL = {
@@ -375,7 +395,9 @@
   initSidebarResize();
   initGrammarToggles();
   initGoalModal();
+  initGoalPlanCollapse();
   initStudyPlanCollapse();
+  initActivityHeatmapPopover();
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -395,15 +417,7 @@
     state.studentName = "Кристина Виговская";
     state.goal = DEMO_GOAL;
     state.studyPlan = computeStudyPlanClient(DEMO_GOAL, state.reports, state.errorTracking);
-    state.progressTracker = {
-      days: [
-        {
-          date: "2026-05-29",
-          source: "self_practice",
-          completed: true,
-        },
-      ],
-    };
+    state.progressTracker = buildDemoProgressTracker(DEMO_GOAL, state.reports);
     renderStudentOverview();
     if (state.reports.length) {
       selectLesson(state.reports[0].id, { switchTab: false });
@@ -575,6 +589,7 @@
     renderStudentGoal();
     renderStudyPlan();
     renderCurriculumProgram();
+    renderActivity();
   }
 
   function hasGoal() {
@@ -1023,9 +1038,523 @@
     return null;
   }
 
+  function buildDemoProgressTracker(goal, reports) {
+    var start = parseIsoDate(goal.goal_set_date);
+    var end = parseIsoDate(goal.target_date);
+    if (!start || !end) return null;
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var lessonByDate = {};
+    (reports || []).forEach(function (report) {
+      var lessonDate = parseIsoDate(report.lesson_date || report.created_at);
+      if (!lessonDate) return;
+      lessonByDate[isoDateOnly(lessonDate)] = 60;
+    });
+
+    var days = [];
+    var cursor = new Date(start);
+    var index = 0;
+    var planned = 30;
+
+    while (cursor <= end) {
+      index += 1;
+      var iso = isoDateOnly(cursor);
+      var isPast = cursor <= today;
+      var dow = cursor.getDay();
+
+      if (lessonByDate[iso]) {
+        days.push({
+          date: iso,
+          day_index: index,
+          planned_minutes: planned,
+          completed: true,
+          completed_minutes: lessonByDate[iso],
+          source: "lesson",
+          state: "lesson",
+        });
+      } else if (isPast && (dow === 0 || dow === 2 || dow === 4) && index % 6 !== 0) {
+        days.push({
+          date: iso,
+          day_index: index,
+          planned_minutes: planned,
+          completed: true,
+          completed_minutes: dow === 0 ? 20 : 25,
+          source: "self_practice",
+          state: "completed",
+        });
+      } else if (!isPast) {
+        days.push({
+          date: iso,
+          day_index: index,
+          planned_minutes: planned,
+          completed: false,
+          completed_minutes: null,
+          source: null,
+          state: "future",
+        });
+      } else {
+        days.push({
+          date: iso,
+          day_index: index,
+          planned_minutes: planned,
+          completed: false,
+          completed_minutes: null,
+          source: null,
+          state: "missed",
+        });
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    var elapsed = days.filter(function (day) {
+      var dayDate = parseIsoDate(day.date);
+      return dayDate && dayDate <= today && day.planned_minutes > 0;
+    });
+
+    return {
+      days: days,
+      completed_days: elapsed.filter(function (day) {
+        return day.completed;
+      }).length,
+      planned_days_elapsed: elapsed.length,
+      streak: computeActivityStreak(days, today),
+      goal_start_date: isoDateOnly(start),
+      goal_end_date: isoDateOnly(end),
+      can_mark_today: false,
+      today_planned_minutes: planned,
+    };
+  }
+
+  function buildActivityDayMap(tracker) {
+    var map = {};
+    if (!tracker || !tracker.days) return map;
+    tracker.days.forEach(function (day) {
+      map[day.date] = day;
+    });
+    return map;
+  }
+
+  function activityIntensityLevel(day) {
+    if (!day || !day.completed) return 0;
+    if (day.source === "lesson") return 4;
+    var mins = day.completed_minutes || day.planned_minutes || 0;
+    if (mins >= 45) return 4;
+    if (mins >= 30) return 3;
+    if (mins >= 15) return 2;
+    return 1;
+  }
+
+  function computeActivityStreak(days, today) {
+    var byDate = {};
+    days.forEach(function (day) {
+      byDate[day.date] = day;
+    });
+    var streak = 0;
+    var cursor = new Date(today);
+    cursor.setHours(0, 0, 0, 0);
+    while (true) {
+      var iso = isoDateOnly(cursor);
+      var row = byDate[iso];
+      if (!row) break;
+      if (!row.completed) {
+        if (streak === 0 && iso === isoDateOnly(today)) {
+          cursor.setDate(cursor.getDate() - 1);
+          continue;
+        }
+        break;
+      }
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+
+  function computeLongestActivityStreak(days, today) {
+    var sorted = days
+      .slice()
+      .filter(function (day) {
+        var dayDate = parseIsoDate(day.date);
+        return dayDate && dayDate <= today;
+      })
+      .sort(function (a, b) {
+        return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      });
+
+    var longest = 0;
+    var current = 0;
+    sorted.forEach(function (day) {
+      if (day.completed) {
+        current += 1;
+        if (current > longest) longest = current;
+      } else {
+        current = 0;
+      }
+    });
+    return longest;
+  }
+
+  function buildActivityStats(tracker, reports) {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var totalMinutes = 0;
+    var lessonMinutes = 0;
+    var selfMinutes = 0;
+    var selfStudyDays = 0;
+
+    (tracker.days || []).forEach(function (day) {
+      var dayDate = parseIsoDate(day.date);
+      if (!dayDate || dayDate > today || !day.completed) return;
+      var mins = day.completed_minutes || day.planned_minutes || 0;
+      totalMinutes += mins;
+      if (day.source === "lesson") {
+        lessonMinutes += mins;
+      } else if (day.source === "self_practice") {
+        selfMinutes += mins;
+        selfStudyDays += 1;
+      }
+    });
+
+    return {
+      totalMinutes: totalMinutes,
+      lessonMinutes: lessonMinutes,
+      selfMinutes: selfMinutes,
+      lessonCount: (reports || []).length,
+      selfStudyDays: selfStudyDays,
+      streak: tracker.streak || 0,
+      longestStreak: computeLongestActivityStreak(tracker.days || [], today),
+    };
+  }
+
+  function formatDurationHoursMinutes(totalMinutes) {
+    var mins = Math.max(0, Math.round(totalMinutes || 0));
+    if (!mins) return "0 мин";
+    var hours = Math.floor(mins / 60);
+    var rest = mins % 60;
+    if (hours > 0 && rest > 0) return hours + " ч " + rest + " мин";
+    if (hours > 0) return hours + " ч";
+    return rest + " мин";
+  }
+
+  function formatDurationMinutes(totalMinutes) {
+    return Math.max(0, Math.round(totalMinutes || 0)) + " мин";
+  }
+
+  function buildActivityDaySummary(iso, tracker) {
+    var day = buildActivityDayMap(tracker)[iso];
+    var teacherMinutes = 0;
+    var agentMinutes = 0;
+
+    if (day && day.completed) {
+      var mins = day.completed_minutes || day.planned_minutes || 0;
+      if (day.source === "lesson") teacherMinutes = mins;
+      else if (day.source === "self_practice") agentMinutes = mins;
+    }
+
+    return {
+      platformMinutes: teacherMinutes + agentMinutes,
+      agentMinutes: agentMinutes,
+      teacherMinutes: teacherMinutes,
+      hasActivity: !!(day && day.completed),
+    };
+  }
+
+  function formatActivityDayPopoverDate(iso) {
+    var date = parseIsoDate(iso);
+    if (!date) return "—";
+    return date.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  function closeActivityDayPopover() {
+    var popover = document.getElementById("activity-day-popover");
+    if (popover) popover.hidden = true;
+    state.activityPopoverDate = null;
+    document.querySelectorAll(".activity-heatmap-cell.is-selected").forEach(function (cell) {
+      cell.classList.remove("is-selected");
+    });
+  }
+
+  function showActivityDayPopover(anchorEl, iso) {
+    var popover = document.getElementById("activity-day-popover");
+    var tile = document.querySelector(".activity-tile--heatmap");
+    if (!popover || !tile || !anchorEl || !state.progressTracker) return;
+
+    if (state.activityPopoverDate === iso && !popover.hidden) {
+      closeActivityDayPopover();
+      return;
+    }
+
+    var summary = buildActivityDaySummary(iso, state.progressTracker);
+    setText("activity-day-popover-date", formatActivityDayPopoverDate(iso));
+    setText("activity-day-platform", formatDurationHoursMinutes(summary.platformMinutes));
+    setText("activity-day-agent", formatDurationMinutes(summary.agentMinutes));
+    setText("activity-day-teacher", formatDurationMinutes(summary.teacherMinutes));
+
+    document.querySelectorAll(".activity-heatmap-cell.is-selected").forEach(function (cell) {
+      cell.classList.remove("is-selected");
+    });
+    anchorEl.classList.add("is-selected");
+    state.activityPopoverDate = iso;
+
+    popover.hidden = false;
+    popover.style.visibility = "hidden";
+    popover.style.left = "0px";
+    popover.style.top = "0px";
+    popover.style.transform = "none";
+
+    var tileRect = tile.getBoundingClientRect();
+    var anchorRect = anchorEl.getBoundingClientRect();
+    var popRect = popover.getBoundingClientRect();
+    var left = anchorRect.left - tileRect.left + anchorRect.width / 2;
+    var top = anchorRect.top - tileRect.top - 8;
+
+    var minLeft = popRect.width / 2 + 8;
+    var maxLeft = tileRect.width - popRect.width / 2 - 8;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+
+    var minTop = popRect.height + 8;
+    if (top < minTop) {
+      top = anchorRect.bottom - tileRect.top + 8;
+      popover.style.transform = "translate(-50%, 0)";
+    } else {
+      popover.style.transform = "translate(-50%, -100%)";
+    }
+
+    popover.style.left = left + "px";
+    popover.style.top = top + "px";
+    popover.style.visibility = "visible";
+  }
+
+  function bindActivityHeatmapInteractions(container) {
+    if (!container) return;
+    container.querySelectorAll(".activity-heatmap-cell[data-date]").forEach(function (cell) {
+      cell.addEventListener("click", function (event) {
+        event.stopPropagation();
+        showActivityDayPopover(cell, cell.dataset.date);
+      });
+    });
+  }
+
+  function initActivityHeatmapPopover() {
+    if (state.activityPopoverBound) return;
+    state.activityPopoverBound = true;
+
+    document.addEventListener("click", function (event) {
+      var popover = document.getElementById("activity-day-popover");
+      if (!popover || popover.hidden) return;
+      if (
+        event.target.closest("#activity-day-popover") ||
+        event.target.closest(".activity-heatmap-cell[data-date]")
+      ) {
+        return;
+      }
+      closeActivityDayPopover();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeActivityDayPopover();
+    });
+  }
+
+  function formatHeatmapCellLabel(cellDate, day) {
+    var label = formatActivityDayPopoverDate(isoDateOnly(cellDate));
+    if (!day || !day.completed) return label + " — нет занятий";
+    var mins = day.completed_minutes || day.planned_minutes || 0;
+    return label + " — на платформе " + formatDurationHoursMinutes(mins);
+  }
+
+  function renderActivityPlanGauge(pct) {
+    var el = document.getElementById("activity-plan-gauge");
+    if (!el) return;
+    var clamped = Math.min(100, Math.max(0, Math.round(pct)));
+    var arcLen = 132;
+    var offset = arcLen - (arcLen * clamped) / 100;
+    el.innerHTML =
+      '<svg class="activity-gauge-svg" viewBox="0 0 100 56" aria-hidden="true">' +
+      '<path class="activity-gauge-track" d="M10 46 A40 40 0 0 1 90 46" pathLength="132" />' +
+      '<path class="activity-gauge-fill" d="M10 46 A40 40 0 0 1 90 46" pathLength="132" stroke-dasharray="132" stroke-dashoffset="' +
+      offset +
+      '" />' +
+      "</svg>" +
+      '<span class="activity-gauge-text">' +
+      clamped +
+      "% плана</span>";
+  }
+
+  function renderActivityBreakdown(stats) {
+    var el = document.getElementById("activity-breakdown");
+    if (!el) return;
+
+    var total = stats.lessonMinutes + stats.selfMinutes;
+    if (!total) {
+      el.innerHTML = '<p class="activity-tile-detail">Пока нет данных о занятиях.</p>';
+      return;
+    }
+
+    var lessonPct = Math.round((stats.lessonMinutes / total) * 100);
+    var selfPct = 100 - lessonPct;
+
+    function barRow(pct, label, kind) {
+      return (
+        '<div class="activity-bar activity-bar--' +
+        kind +
+        '">' +
+        '<div class="activity-bar-inner" style="width:' +
+        Math.max(18, pct) +
+        '%">' +
+        '<span class="activity-bar-pct">' +
+        pct +
+        "%</span>" +
+        '<span class="activity-bar-label">' +
+        esc(label) +
+        "</span>" +
+        "</div></div>"
+      );
+    }
+
+    el.innerHTML =
+      barRow(lessonPct, "Уроки · " + stats.lessonMinutes + " мин", "lesson") +
+      barRow(selfPct, "Self-study · " + stats.selfMinutes + " мин", "self");
+  }
+
+  function renderActivityHeatmap(container, tracker) {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var endSunday = new Date(today);
+    endSunday.setDate(endSunday.getDate() - endSunday.getDay());
+    var startSunday = new Date(endSunday);
+    startSunday.setDate(startSunday.getDate() - (ACTIVITY_HEATMAP_WEEKS - 1) * 7);
+
+    var dayMap = buildActivityDayMap(tracker);
+    var monthCells = ["<span></span>"];
+    var monthSeen = {};
+    var week;
+    for (week = 0; week < ACTIVITY_HEATMAP_WEEKS; week += 1) {
+      var weekStart = new Date(startSunday);
+      weekStart.setDate(weekStart.getDate() + week * 7);
+      var monthKey = weekStart.getFullYear() + "-" + weekStart.getMonth();
+      var monthLabel = "";
+      if (!monthSeen[monthKey]) {
+        monthSeen[monthKey] = true;
+        monthLabel = MONTH_SHORT_RU[weekStart.getMonth()];
+      }
+      monthCells.push("<span>" + esc(monthLabel) + "</span>");
+    }
+
+    var cells = [];
+    var dow;
+    for (dow = 0; dow < 7; dow += 1) {
+      for (week = 0; week < ACTIVITY_HEATMAP_WEEKS; week += 1) {
+        var cellDate = new Date(startSunday);
+        cellDate.setDate(cellDate.getDate() + week * 7 + dow);
+        var iso = isoDateOnly(cellDate);
+        var day = dayMap[iso];
+        var level = activityIntensityLevel(day);
+        var classes = "activity-heatmap-cell level-" + level;
+        var isFuture = cellDate > today;
+        if (isFuture) classes += " is-future";
+        if (day && day.source === "lesson") classes += " is-lesson";
+        if (isFuture) {
+          cells.push('<span class="' + classes + '" aria-hidden="true"></span>');
+        } else {
+          cells.push(
+            '<button type="button" class="' +
+              classes +
+              '" data-date="' +
+              esc(iso) +
+              '" aria-label="' +
+              esc(formatHeatmapCellLabel(cellDate, day)) +
+              '" aria-haspopup="dialog"></button>'
+          );
+        }
+      }
+    }
+
+    var dowLabels = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    var dowHtml = dowLabels
+      .map(function (label) {
+        return "<span>" + label + "</span>";
+      })
+      .join("");
+
+    container.innerHTML =
+      '<div class="activity-heatmap">' +
+      '<div class="activity-heatmap-months">' +
+      monthCells.join("") +
+      "</div>" +
+      '<div class="activity-heatmap-body">' +
+      '<div class="activity-heatmap-dows">' +
+      dowHtml +
+      "</div>" +
+      '<div class="activity-heatmap-cells">' +
+      cells.join("") +
+      "</div>" +
+      "</div>" +
+      "</div>";
+    bindActivityHeatmapInteractions(container);
+    closeActivityDayPopover();
+  }
+
+  function renderActivity() {
+    var emptyEl = document.getElementById("activity-empty");
+    var contentEl = document.getElementById("activity-content");
+    if (!emptyEl || !contentEl) return;
+
+    if (!hasGoal() || !state.progressTracker) {
+      emptyEl.hidden = false;
+      contentEl.hidden = true;
+      return;
+    }
+
+    emptyEl.hidden = true;
+    contentEl.hidden = false;
+
+    var stats = buildActivityStats(state.progressTracker, state.reports);
+    var planTotalMinutes =
+      state.studyPlan && state.studyPlan.total_hours
+        ? Math.round(state.studyPlan.total_hours * 60)
+        : 0;
+    var planPct =
+      planTotalMinutes > 0
+        ? Math.min(100, Math.round((stats.totalMinutes / planTotalMinutes) * 100))
+        : 0;
+
+    setText("activity-metric-minutes", String(stats.totalMinutes));
+    setText("activity-metric-lessons", String(stats.lessonCount));
+    setText("activity-metric-self-study", String(stats.selfStudyDays));
+    setText("activity-metric-streak", String(stats.streak));
+    setText("activity-lesson-minutes", stats.lessonMinutes + " мин на уроках");
+    setText("activity-total-kicker", "Всего мин | " + stats.totalMinutes);
+    renderActivityPlanGauge(planPct);
+    setText(
+      "activity-heatmap-streak",
+      stats.streak +
+        " " +
+        pluralize(stats.streak, "день", "дня", "дней") +
+        " подряд"
+    );
+    setText(
+      "activity-heatmap-longest",
+      "Лучшая серия | " +
+        stats.longestStreak +
+        " " +
+        pluralize(stats.longestStreak, "день", "дня", "дней")
+    );
+
+    renderActivityBreakdown(stats);
+    var heatmapEl = document.getElementById("activity-heatmap");
+    if (heatmapEl) renderActivityHeatmap(heatmapEl, state.progressTracker);
+  }
+
   function renderStudentGoal() {
     var detailsEl = document.getElementById("goal-details");
     var ctaEl = document.getElementById("btn-set-goal-cta");
+    var goalPlanSection = document.getElementById("sidebar-goal-plan-section");
     var targetEl = document.getElementById("dash-cefr-target");
     var targetBlock = document.getElementById("cefr-target-block");
     var captionEl = document.getElementById("cefr-target-caption");
@@ -1063,16 +1592,106 @@
         }
       }
 
-      detailsEl.hidden = false;
+      if (goalPlanSection) goalPlanSection.hidden = false;
       ctaEl.hidden = true;
     } else {
       targetEl.textContent = "—";
       if (targetBlock) targetBlock.classList.remove("has-goal");
       if (captionEl) captionEl.textContent = "Цель";
       if (descEl) descEl.textContent = "";
-      detailsEl.hidden = true;
+      if (goalPlanSection) goalPlanSection.hidden = true;
       ctaEl.hidden = false;
     }
+  }
+
+  function formatGoalPlanDate(iso) {
+    var d = parseIsoDate(iso);
+    if (!d) return "—";
+    return d.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function shortPlanStatusMessage(plan) {
+    if (!plan) return "—";
+    if (plan.status === "ahead") return "Опережаете";
+    if (plan.status === "on_track") return "По плану";
+    if (plan.status === "behind") return "Отстаёте";
+    return "—";
+  }
+
+  function buildGoalPlanSummaryParts() {
+    if (!hasGoal() || !state.studyPlan) return null;
+    var plan = state.studyPlan;
+    var date = formatGoalPlanDate(state.goal.target_date);
+    var hours = formatHours(plan.hours_per_week) + " ч/нед";
+    return {
+      expanded: date + " · " + hours + " · " + compactPlanStatusMessage(plan),
+      chipText: date + " · " + hours,
+      chipBadge: shortPlanStatusMessage(plan),
+      chipBadgeClass: plan.status || "on_track",
+    };
+  }
+
+  function renderGoalPlanSummary() {
+    var parts = buildGoalPlanSummaryParts();
+    var expandedEl = document.getElementById("goal-plan-summary-expanded");
+    var chipTextEl = document.getElementById("goal-plan-chip-text");
+    var chipBadgeEl = document.getElementById("goal-plan-chip-badge");
+    if (!parts) return;
+    if (expandedEl) expandedEl.textContent = parts.expanded;
+    if (chipTextEl) chipTextEl.textContent = parts.chipText;
+    if (chipBadgeEl) {
+      chipBadgeEl.textContent = parts.chipBadge;
+      chipBadgeEl.className = "plan-status-badge " + parts.chipBadgeClass;
+    }
+  }
+
+  function syncGoalPlanCollapse() {
+    var section = document.getElementById("sidebar-goal-plan-section");
+    var toggle = document.getElementById("goal-plan-toggle");
+    var expandedSummary = document.getElementById("goal-plan-summary-expanded");
+    var chip = document.getElementById("goal-plan-collapsed-chip");
+    var panel = document.getElementById("goal-plan-panel");
+    var sidebar = document.querySelector(".sidebar");
+    if (!section || !hasGoal()) return;
+
+    var collapsed = state.goalPlanCollapsed;
+    section.classList.toggle("is-collapsed", collapsed);
+    if (sidebar) sidebar.classList.toggle("is-goal-plan-collapsed", collapsed);
+    if (toggle) toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    if (expandedSummary) expandedSummary.hidden = collapsed;
+    if (chip) chip.hidden = !collapsed;
+    if (panel) panel.setAttribute("aria-hidden", collapsed ? "true" : "false");
+  }
+
+  function initGoalPlanCollapse() {
+    if (state.goalPlanCollapseBound) return;
+    state.goalPlanCollapseBound = true;
+
+    try {
+      state.goalPlanCollapsed = localStorage.getItem(GOAL_PLAN_COLLAPSED_KEY) === "true";
+    } catch (err) {
+      state.goalPlanCollapsed = false;
+    }
+
+    var toggle = document.getElementById("goal-plan-toggle");
+    if (!toggle) return;
+
+    toggle.addEventListener("click", function () {
+      state.goalPlanCollapsed = !state.goalPlanCollapsed;
+      try {
+        localStorage.setItem(
+          GOAL_PLAN_COLLAPSED_KEY,
+          state.goalPlanCollapsed ? "true" : "false"
+        );
+      } catch (err) {
+        /* ignore quota / private mode */
+      }
+      syncGoalPlanCollapse();
+    });
   }
 
   function compactPlanStatusMessage(plan) {
@@ -1085,7 +1704,7 @@
   }
 
   function renderStudyPlan() {
-    var section = document.getElementById("sidebar-plan-section");
+    var section = document.getElementById("sidebar-goal-plan-section");
     var card = document.getElementById("study-plan-card");
     if (!section || !card) return;
 
@@ -1144,6 +1763,8 @@
     }
 
     syncIntensityUi("sidebar");
+    renderGoalPlanSummary();
+    syncGoalPlanCollapse();
     syncStudyPlanCollapse();
   }
 
@@ -1623,10 +2244,25 @@
 
   function scrollCurriculumToCurrent(scrollEl, listEl) {
     if (!scrollEl || !listEl) return;
-    requestAnimationFrame(function () {
+
+    function applyScroll() {
       var currentEl = listEl.querySelector(".curriculum-item.is-current");
-      scrollEl.scrollTop = currentEl ? Math.max(0, currentEl.offsetTop) : 0;
+      if (!currentEl) {
+        scrollEl.scrollTop = 0;
+        return;
+      }
+      var nextTop =
+        currentEl.getBoundingClientRect().top -
+        scrollEl.getBoundingClientRect().top +
+        scrollEl.scrollTop;
+      scrollEl.scrollTop = Math.max(0, Math.round(nextTop));
+    }
+
+    requestAnimationFrame(function () {
+      applyScroll();
+      requestAnimationFrame(applyScroll);
     });
+    window.setTimeout(applyScroll, 280);
   }
 
   function renderCurriculumItemHtml(item) {
