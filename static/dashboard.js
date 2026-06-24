@@ -516,8 +516,8 @@
     var latestBtn = document.getElementById("btn-lesson-latest");
     if (latestBtn) {
       latestBtn.addEventListener("click", function () {
-        var latest = getLatestReport();
-        if (latest) selectLesson(latest.id);
+        var primary = getPrimaryReport();
+        if (primary) selectLesson(primary.id);
       });
     }
   }
@@ -568,6 +568,56 @@
     return state.reports[0] || null;
   }
 
+  function getMaxLessonCompletedClassNum(items) {
+    var max = 0;
+    (items || state.curriculumItems || []).forEach(function (item) {
+      if (item.lessonCompleted && item.classNum > max) max = item.classNum;
+    });
+    return max;
+  }
+
+  function getReportIdForClass(classNum) {
+    if (!classNum) return null;
+    var fromCurriculum = null;
+    (state.curriculumItems || []).forEach(function (item) {
+      if (item.classNum === classNum && item.lessonReportId) {
+        fromCurriculum = item.lessonReportId;
+      }
+    });
+    if (fromCurriculum) return fromCurriculum;
+    var map = state.reportClassMap || {};
+    return (
+      Object.keys(map).find(function (reportId) {
+        return map[reportId] === classNum;
+      }) || null
+    );
+  }
+
+  /** Отчёт последнего пройденного Class в программе (разбор AI-тютора), не просто самый новый по дате. */
+  function getPrimaryReport() {
+    var maxClass = getMaxLessonCompletedClassNum(state.curriculumItems);
+    if (maxClass > 0) {
+      var reportId = getReportIdForClass(maxClass);
+      if (reportId) {
+        var report = state.reports.find(function (r) {
+          return r.id === reportId;
+        });
+        if (report) return report;
+      }
+    }
+    return getLatestReport();
+  }
+
+  function isPrimaryLessonReport(report) {
+    if (!report) return false;
+    var maxClass = getMaxLessonCompletedClassNum(state.curriculumItems);
+    if (maxClass > 0) {
+      return findClassNumForReport(report) === maxClass;
+    }
+    var latest = getLatestReport();
+    return !!(latest && latest.id === report.id);
+  }
+
   function getSelectedReport() {
     if (!state.selectedId) return getLatestReport();
     return (
@@ -585,11 +635,10 @@
     if (!report) return;
 
     state.selectedId = reportId;
-    var latest = getLatestReport();
-    var isLatest = latest && latest.id === reportId;
+    var isPrimary = isPrimaryLessonReport(report);
 
-    renderLessonReport(report, isLatest);
-    updateLessonContextBar(report, isLatest);
+    renderLessonReport(report, isPrimary);
+    updateLessonContextBar(report, isPrimary);
     updateCurriculumReportLinks();
 
     if (options.switchTab !== false) {
@@ -3844,11 +3893,7 @@
     var selectedReport = state.reports.find(function (r) {
       return r.id === state.selectedId;
     });
-    var isLatest =
-      state.reports.length > 0 &&
-      selectedReport &&
-      selectedReport.id === state.reports[0].id;
-    renderNextStepBanner(selectedReport || null, isLatest);
+    renderNextStepBanner(selectedReport || null);
   }
 
   function updateCurriculumReportLinks() {
@@ -3976,15 +4021,7 @@
     });
   }
 
-  function getMaxLessonCompletedClassNum(items) {
-    var max = 0;
-    (items || []).forEach(function (item) {
-      if (item.lessonCompleted && item.classNum > max) max = item.classNum;
-    });
-    return max;
-  }
-
-  function renderNextStepBanner(report, isLatest) {
+  function renderNextStepBanner(report) {
     var banner = document.getElementById("class-next-step");
     var leadEl = document.getElementById("class-next-step-lead");
     if (!banner || !leadEl) return;
@@ -3996,10 +4033,7 @@
       return;
     }
 
-    var viewedClass = report ? findClassNumForReport(report) : null;
-    var maxLessonDone = getMaxLessonCompletedClassNum(state.curriculumItems);
-    var showBanner = isLatest || (viewedClass != null && viewedClass === maxLessonDone);
-    if (!showBanner) {
+    if (!isPrimaryLessonReport(report)) {
       banner.hidden = true;
       return;
     }
@@ -4832,7 +4866,7 @@
     return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   }
 
-  function renderLessonReport(report, isLatest) {
+  function renderLessonReport(report, isPrimary) {
     if (!state.curriculumItems.length && getActiveEnrollment()) {
       refreshCurriculumState();
     }
@@ -4841,10 +4875,16 @@
     var classNum = findClassNumForReport(report);
     var topic = formatLessonTopic(report);
 
-    setText("dash-date-label", isLatest ? "Дата последнего урока" : "Дата урока");
+    setText("dash-date-label", isPrimary ? "Дата последнего урока" : "Дата урока");
     setText("dash-last-date", formatDate(lessonDate));
     setText("lesson-report-class", classNum ? formatReportClassLabel(classNum) : "Класс —");
     setText("lesson-report-topic", topic);
+    var topicLabel = document.querySelector(".lesson-topic-label");
+    if (topicLabel) {
+      topicLabel.textContent = isPrimary
+        ? "Class summary · разбор AI-тютора"
+        : "Class summary · архив урока";
+    }
     var heading = document.getElementById("lesson-report-heading");
     if (heading) {
       var sep = heading.querySelector(".lesson-report-sep");
@@ -4895,15 +4935,15 @@
     setText("summary-score-ring", formatScore(report.fluency_score));
     setText("summary-score-num", formatScore(report.fluency_score));
     setText("summary-text", buildSummaryText(state.studentName, report));
-    renderNextStepBanner(report, isLatest);
+    renderNextStepBanner(report);
   }
 
-  function updateLessonContextBar(report, isLatest) {
+  function updateLessonContextBar(report, isPrimary) {
     var bar = document.getElementById("lesson-context-bar");
     var label = document.getElementById("lesson-context-label");
     if (!bar || !label) return;
 
-    if (isLatest || !report) {
+    if (isPrimary || !report) {
       bar.hidden = true;
       return;
     }
@@ -4911,8 +4951,7 @@
     var lessonDate = report.lesson_date || report.created_at;
     var classNum = findClassNumForReport(report);
     var classPart = classNum ? formatReportClassLabel(classNum) + " · " : "";
-    label.textContent =
-      "Просмотр отчёта · " + classPart + formatDate(lessonDate) + " — не последний";
+    label.textContent = "Архив · " + classPart + formatDate(lessonDate);
     bar.hidden = false;
   }
 
@@ -5372,7 +5411,12 @@
       setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
       return;
     }
-    selectLesson(state.reports[0].id, { switchTab: false });
+    var primary = getPrimaryReport();
+    if (primary) {
+      selectLesson(primary.id, { switchTab: false });
+    } else {
+      selectLesson(state.reports[0].id, { switchTab: false });
+    }
     if (!isDemo) renderChart(state.reports.slice().reverse());
   }
 
