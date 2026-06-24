@@ -70,7 +70,7 @@
   }
 
   // DEPRECATED (ADR-001): не использовать для сайдбара «Программа обучения».
-  // Curriculum строится из PROGRAM_CATALOG через StudentLearningContext.
+  // Curriculum строится из каталога программ (API) через StudentLearningContext.
   // Оставлено временно для совместимости; будет удалено при подключении school API.
   var PLACEHOLDER_CEFR_CURRICULUM = {
     A1: [
@@ -284,198 +284,10 @@
     },
   ];
 
-  // PLACEHOLDER catalog — legacy UI fallback until dashboard loads GET /api/programs.
-  // Canonical file source: data/programs_catalog.json (sync via scripts/sync_programs_catalog.py).
-  var PROGRAM_CATALOG = [
-    {
-      id: "general-beginner",
-      category: "general",
-      levelId: "beginner",
-      title: "General English — Beginner",
-      description:
-        "Старт с нуля: алфавит, базовые фразы, понимание простых вопросов и ответов в быту.",
-      classes: 24,
-      weeks: 12,
-      tags: ["Алфавит", "Быт", "Listening"],
-    },
-    {
-      id: "general-elementary",
-      category: "general",
-      levelId: "elementary",
-      title: "General English — Elementary",
-      description:
-        "Расширяем словарь и говорим о себе, семье, работе и повседневных ситуациях.",
-      classes: 26,
-      weeks: 13,
-      tags: ["Speaking", "Present Simple", "Travel"],
-    },
-    {
-      id: "general-pre-intermediate",
-      category: "general",
-      levelId: "pre_intermediate",
-      title: "General English — Pre-Intermediate",
-      description:
-        "Переходный уровень: увереннее в прошедшем времени, модальных глаголах и диалогах.",
-      classes: 26,
-      weeks: 13,
-      tags: ["Past tenses", "Modal verbs", "Dialogues"],
-    },
-    {
-      id: "general-intermediate",
-      category: "general",
-      levelId: "intermediate",
-      title: "General English — Intermediate",
-      description:
-        "Свободнее обсуждаете новости, планы и мнения; закрепляете грамматику среднего уровня.",
-      classes: 26,
-      weeks: 13,
-      tags: ["Opinions", "Conditionals", "Fluency"],
-    },
-    {
-      id: "general-upper-intermediate",
-      category: "general",
-      levelId: "upper_intermediate",
-      title: "General English — Upper-Intermediate",
-      description:
-        "Сложные темы, идиомы и точность речи — подготовка к продвинутому уровню и экзаменам.",
-      classes: 28,
-      weeks: 14,
-      tags: ["Idioms", "Accuracy", "Debates"],
-    },
-    {
-      id: "general-advanced",
-      category: "general",
-      levelId: "advanced",
-      title: "General English — Advanced",
-      description:
-        "Почти носительский уровень: нюансы, стили речи, профессиональные и академические контексты.",
-      classes: 30,
-      weeks: 15,
-      tags: ["Nuances", "Academic", "Professional"],
-    },
-    {
-      id: "business-intermediate",
-      category: "business",
-      levelId: "intermediate",
-      title: "Business English — Intermediate",
-      description:
-        "Письма, звонки и встречи: базовый деловой английский для офиса и первых переговоров.",
-      classes: 24,
-      weeks: 12,
-      tags: ["Emails", "Meetings", "Office"],
-    },
-    {
-      id: "business-upper-intermediate",
-      category: "business",
-      levelId: "upper_intermediate",
-      title: "Business English — Upper-Intermediate",
-      description:
-        "Презентации, отчёты и переговоры с партнёрами — уверенная коммуникация в бизнесе.",
-      classes: 26,
-      weeks: 13,
-      tags: ["Presentations", "Negotiations", "Reports"],
-    },
-    {
-      id: "business-advanced",
-      category: "business",
-      levelId: "advanced",
-      title: "Business English — Advanced",
-      description:
-        "Стратегические дискуссии, лидерство и сложные кейсы для руководителей и экспертов.",
-      classes: 28,
-      weeks: 14,
-      tags: ["Leadership", "Strategy", "Executive"],
-    },
-    {
-      id: "special-interview",
-      category: "special",
-      levelId: "upper_intermediate",
-      title: "Interview Preparation",
-      description:
-        "Собеседования на английском: self-pitch, ответы на типовые вопросы, mock interview.",
-      classes: 12,
-      weeks: 6,
-      tags: ["CV", "HR questions", "Mock interview"],
-      base: { category: "general", levelId: "upper_intermediate" },
-    },
-    {
-      id: "special-ielts",
-      category: "special",
-      levelId: "upper_intermediate",
-      title: "IELTS Preparation",
-      description:
-        "Структура экзамена, стратегии по секциям и интенсивная практика под целевой балл.",
-      classes: 16,
-      weeks: 8,
-      tags: ["Reading", "Writing", "Speaking"],
-      base: { category: "general", levelId: "upper_intermediate" },
-    },
-    {
-      id: "special-negotiations",
-      category: "special",
-      levelId: "upper_intermediate",
-      title: "Negotiations in English",
-      description:
-        "Тактики переговоров, убеждение и работа с возражениями в международной среде.",
-      classes: 10,
-      weeks: 5,
-      tags: ["Persuasion", "Deals", "Objections"],
-      base: { category: "business", levelId: "upper_intermediate" },
-    },
-    {
-      id: "special-presentations",
-      category: "special",
-      levelId: "intermediate",
-      title: "Presentation Skills",
-      description:
-        "Структура выступления, слайды, Q&A и уверенная подача материала на английском.",
-      classes: 8,
-      weeks: 4,
-      tags: ["Slides", "Public speaking", "Q&A"],
-      base: { category: "business", levelId: "intermediate" },
-    },
-    {
-      id: "special-travel",
-      category: "special",
-      levelId: "elementary",
-      title: "Travel & Culture",
-      description:
-        "Поездки, аэропорт, отель и культурные ситуации — практичный английский для путешествий.",
-      classes: 8,
-      weeks: 4,
-      tags: ["Travel", "Culture", "Small talk"],
-      base: { category: "general", levelId: "elementary" },
-    },
-    {
-      id: "special-customer-support",
-      category: "special",
-      levelId: "intermediate",
-      title: "Customer Support English",
-      description:
-        "Работа с клиентами, эскалации и empathy-фразы для support и success-команд.",
-      classes: 10,
-      weeks: 5,
-      tags: ["Support", "Clients", "Empathy"],
-      base: { category: "business", levelId: "intermediate" },
-    },
-    {
-      id: "special-management",
-      category: "special",
-      levelId: "advanced",
-      title: "Management Communication",
-      description:
-        "One-on-ones, feedback, делегирование и сложные разговоры с командой на английском.",
-      classes: 12,
-      weeks: 6,
-      tags: ["Feedback", "1:1", "Team lead"],
-      base: { category: "business", levelId: "advanced" },
-    },
-  ];
+  // Program catalog: GET /api/programs or static/demo-programs.json (preview).
 
   function getProgramCatalog() {
-    return state.programCatalog && state.programCatalog.length
-      ? state.programCatalog
-      : PROGRAM_CATALOG;
+    return state.programCatalog || [];
   }
 
   function handleEnrollmentConfirmed() {
@@ -2115,14 +1927,34 @@
       });
   }
 
+  function showProgramsCatalogError() {
+    var banner = document.getElementById("dash-programs-error");
+    if (banner) {
+      banner.hidden = false;
+      return;
+    }
+    var err = document.getElementById("dash-error");
+    if (err) {
+      err.hidden = false;
+      err.textContent =
+        "Не удалось загрузить каталог программ. Обновите страницу.";
+    }
+  }
+
   function loadProgramCatalogAndEnrollment() {
     var catalogPromise = DashboardApi.fetchProgramsCatalog()
       .then(function (programs) {
-        return programs && programs.length ? programs : PROGRAM_CATALOG;
+        if (!programs || !programs.length) {
+          throw new Error("Empty program catalog");
+        }
+        state.programCatalog = programs;
+        return programs;
       })
       .catch(function (err) {
-        console.warn("[Programs] Catalog load failed, using embedded fallback:", err);
-        return PROGRAM_CATALOG;
+        console.error("[Programs] Catalog load failed:", err);
+        state.programCatalog = [];
+        showProgramsCatalogError();
+        return [];
       });
 
     var enrollmentPromise = Promise.resolve(null);

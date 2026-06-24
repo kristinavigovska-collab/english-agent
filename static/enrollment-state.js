@@ -58,7 +58,7 @@
 
   /**
    * @param {object} data
-   * @param {string} data.program_id — id из PROGRAM_CATALOG
+   * @param {string} data.program_id — id из каталога программ (API)
    * @param {string} data.level_id — например "intermediate"
    * @param {string} data.level_cefr — например "B1"
    * @param {string} data.level_name — например "Intermediate"

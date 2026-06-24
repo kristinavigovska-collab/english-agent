@@ -13,9 +13,9 @@ SaaS for an English school: Recall.ai bot joins lessons → transcript → Claud
 | Track | Status | Source of truth |
 |-------|--------|-----------------|
 | **Live lessons** | Backend **production-ready** | Recall webhook → `lessons` / `reports` in Supabase |
-| **Programs & subscriptions** | **UI only** (June 2026) | `PROGRAM_CATALOG` in `dashboard.js` + `localStorage` — **not** in DB yet |
+| **Programs & subscriptions** | **Partial backend** (June 2026) | `programs` / `student_enrollments` in Supabase; dashboard loads `GET /api/programs` + enrollment API |
 
-These tracks are **not wired together** in the database. A student can have lesson reports without enrollment, and `enrolled_program_id` in the browser does not affect the webhook pipeline.
+These tracks are **not fully wired together** in the database. A student can have lesson reports without enrollment; `lessons.program_id` is not set by the webhook yet.
 
 ## Live URLs
 
@@ -92,9 +92,9 @@ Tabs: **Активность** (heatmap, metrics, breakdown) · **Общий п�
 
 **Program detail** (in-page, not a separate route): course description, format block (**30 min self-study + 30 min live**), horizontal **EUR plan cards** (free_trial, solo, light, standard, intensive). Plan buttons link to **`/checkout?plan={id}&program={program_id}`** — **route not implemented**.
 
-**Enrollment today:** `saveEnrolledProgramId()` / `getEnrolledProgramId()` → `localStorage` key `enrolled_program_id` only. **No** `GET/POST` programs API. **Do not** add new catalog truth in `dashboard.js` — next step is Supabase + API (see `docs/ARCHITECTURE.md` → Future).
+**Enrollment:** live students → `PUT /api/students/{id}/enrollment` on plan selection; demo/preview → `EnrollmentState` + localStorage cache. Catalog: `GET /api/programs` (no embedded JS catalog).
 
-**Placeholder data:** `PROGRAM_CATALOG`, `PROGRAM_LEARNING_PLANS` at top of `dashboard.js` — replace with school API.
+**Placeholder data:** `PROGRAM_LEARNING_PLANS` in `dashboard.js` — plans API later; catalog is `data/programs_catalog.json` + Supabase.
 
 ### Design tokens
 
@@ -113,7 +113,7 @@ Goal/plan on `students` (migrations 001–002): `target_cefr_level`, `target_dat
 
 Also: `daily_progress` (003), `error_pattern_history` (004), `lessons.lesson_topic` (005). Full list: `docs/MIGRATIONS.md`.
 
-**Not in DB yet:** `programs`, `program_plans`, `student_enrollments`, `lessons.program_id`.
+**Programs tables (migration 007):** `programs`, `program_plans`, `student_enrollments`. Not yet: `lessons.program_id`, checkout/Stripe.
 
 ## Env vars (see `.env.example`)
 
@@ -188,7 +188,7 @@ Also: `daily_progress` (003), `error_pattern_history` (004), `lessons.lesson_top
 - Use Vercel (BackgroundTasks + long Claude calls — use Render)
 - Re-connect personal Gmail without updating Google Cloud **Test users**
 - Suggest implementing webhook verification — it exists; fix env/config instead
-- Treat `PROGRAM_CATALOG` or `localStorage.enrolled_program_id` as production enrollment
+- Treat `localStorage` alone as production enrollment on live dashboard (server `student_enrollments` is source of truth after plan selection)
 - Add new program/pricing truth only in `dashboard.js` without a migration + API plan
 
 ## Commands

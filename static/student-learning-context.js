@@ -2,13 +2,13 @@
  * ADR-001: StudentLearningContext — единый источник правды для дашборда
  * ========================================================================
  *
- * Проблема: три несвязанных источника (goal в Supabase, PROGRAM_CATALOG,
+ * Проблема: три несвязанных источника (goal в Supabase, каталог программ с API,
  * PLACEHOLDER_CEFR_CURRICULUM) притворялись одной системой.
  *
  * Решение — явное разделение ответственности:
  *
  * a) Сайдбар «Программа обучения» (curriculum.classes)
- *    Строится ОТ ПРОГРАММЫ: PROGRAM_CATALOG[enrollment.program_id].classes (число Class).
+ *    Строится ОТ ПРОГРАММЫ: programCatalog[enrollment.program_id].classes (число Class).
  *    НЕ от goal.target_duration_weeks. Количество Class = программа, не срок цели.
  *
  * b) Блок «Цель и план» (goal + computed.hours_per_week_needed, pace_status)
@@ -19,7 +19,7 @@
  *    Прогноз ETA (computed.goal_eta_date) — функция от темпа прохождения Class программы
  *    (enrollment.plan_tier → classes/week). program.classes — вход для ETA, не наоборот.
  *
- * Enrollment: только явный выбор студента через EnrollmentState (program-onboarding).
+ * Enrollment: явный выбор студента на странице Programs → EnrollmentState.
  * Без автоматических рекомендаций и placeholder по CEFR.
  *
  * PLACEHOLDER_CEFR_CURRICULUM в dashboard.js — DEPRECATED, не использовать для сайдбара.
@@ -363,7 +363,7 @@
         warnings.push(
           "curriculum.total_classes (" +
             ctx.curriculum.total_classes +
-            ") !== PROGRAM_CATALOG[" +
+            ") !== program catalog[" +
             ctx.enrollment.program_id +
             "].classes (" +
             expected +
@@ -382,7 +382,7 @@
       warnings.push(
         "enrollment.program_id '" +
           ctx.enrollment.program_id +
-          "' not found in PROGRAM_CATALOG"
+          "' not found in program catalog"
       );
     }
 
