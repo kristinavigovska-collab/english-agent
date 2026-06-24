@@ -169,6 +169,7 @@
     subscriptionPlanId: "standard",
     learningContext: null,
     serverCurriculum: null,
+    previewBundle: null,
   };
 
   var PROGRAM_LEVELS = {
@@ -737,6 +738,79 @@
   }
 
 
+  function hasGoalData(goal) {
+    return !!(
+      goal &&
+      goal.target_cefr_level &&
+      (goal.target_duration_weeks || goal.target_date)
+    );
+  }
+
+  function needsAnalyticsPreview() {
+    return !hasGoal() || !state.studyPlan || !state.progressTracker;
+  }
+
+  function resolveMetricsContext() {
+    if (hasGoal() && state.studyPlan && state.progressTracker) {
+      return {
+        goal: state.goal,
+        studyPlan: state.studyPlan,
+        progressTracker: state.progressTracker,
+        reports: state.reports,
+        isPreview: false,
+      };
+    }
+    if (
+      state.previewBundle &&
+      state.previewBundle.study_plan &&
+      state.previewBundle.progress_tracker &&
+      typeof DashboardApi !== "undefined"
+    ) {
+      return {
+        goal: DashboardApi.goalFieldsFromBundle(state.previewBundle),
+        studyPlan: state.previewBundle.study_plan,
+        progressTracker: state.previewBundle.progress_tracker,
+        reports: state.previewBundle.reports || [],
+        isPreview: true,
+      };
+    }
+    return null;
+  }
+
+  function setPreviewBanners(isPreview) {
+    ["activity-preview-banner", "analytics-preview-banner", "sidebar-preview-banner"].forEach(
+      function (id) {
+        var el = document.getElementById(id);
+        if (el) el.hidden = !isPreview;
+      }
+    );
+    var analyticsView = document.getElementById("view-analytics");
+    if (analyticsView) analyticsView.classList.toggle("is-preview-mode", !!isPreview);
+    var sidebarSection = document.getElementById("sidebar-goal-plan-section");
+    if (sidebarSection) sidebarSection.classList.toggle("is-preview-mode", !!isPreview);
+  }
+
+  function loadPreviewBundleIfNeeded() {
+    if (!needsAnalyticsPreview()) {
+      state.previewBundle = null;
+      setPreviewBanners(false);
+      return Promise.resolve();
+    }
+    if (state.previewBundle) {
+      setPreviewBanners(true);
+      return Promise.resolve();
+    }
+    return DashboardApi.fetchPreviewBundle()
+      .then(function (data) {
+        state.previewBundle = data;
+        setPreviewBanners(true);
+      })
+      .catch(function (err) {
+        console.warn("[Preview] Failed to load preview dashboard:", err);
+        setPreviewBanners(false);
+      });
+  }
+
   function reportChronoDate(report) {
     return parseIsoDate(report.lesson_date || report.created_at);
   }
@@ -1228,19 +1302,22 @@
     var contentEl = document.getElementById("activity-content");
     if (!emptyEl || !contentEl) return;
 
-    if (!hasGoal() || !state.progressTracker) {
+    var ctx = resolveMetricsContext();
+    if (!ctx) {
+      setPreviewBanners(false);
       emptyEl.hidden = false;
       contentEl.hidden = true;
       return;
     }
 
+    setPreviewBanners(ctx.isPreview);
     emptyEl.hidden = true;
     contentEl.hidden = false;
 
-    var stats = buildActivityStats(state.progressTracker, state.reports);
+    var stats = buildActivityStats(ctx.progressTracker, ctx.reports);
     var planTotalMinutes =
-      state.studyPlan && state.studyPlan.total_hours
-        ? Math.round(state.studyPlan.total_hours * 60)
+      ctx.studyPlan && ctx.studyPlan.total_hours
+        ? Math.round(ctx.studyPlan.total_hours * 60)
         : 0;
     var planPct =
       planTotalMinutes > 0
@@ -1271,7 +1348,7 @@
 
     renderActivityBreakdown(stats);
     var heatmapEl = document.getElementById("activity-heatmap");
-    if (heatmapEl) renderActivityHeatmap(heatmapEl, state.progressTracker);
+    if (heatmapEl) renderActivityHeatmap(heatmapEl, ctx.progressTracker);
   }
 
   function formatGoalShortLabel(goal) {
@@ -1371,7 +1448,8 @@
     }).length;
   }
 
-  function buildPaceVerdict(insights, plan) {
+  function buildPaceVerdict(insights, plan, goal) {
+    var goalRef = goal || state.goal;
     var levelPct = Math.round(insights.levelProgress * 100);
     var timePct = Math.round(insights.timeProgress * 100);
     var gap = levelPct - timePct;
@@ -1381,7 +1459,7 @@
         "Вы опережаете график на ~" +
         Math.abs(gap) +
         "%. При сохранении темпа цель " +
-        formatGoalShortLabel(state.goal) +
+        formatGoalShortLabel(goalRef) +
         " достижима раньше срока."
       );
     }
@@ -1390,19 +1468,20 @@
         "Вы отстаёте на ~" +
         Math.abs(gap) +
         "% от графика. Без дополнительных занятий цель к " +
-        formatDateLocal(state.goal.target_date) +
+        formatDateLocal(goalRef.target_date) +
         " под угрозой — прогресс теряется."
       );
     }
     return "Темп совпадает с планом — продолжайте в том же ритме, чтобы уложиться в дедлайн.";
   }
 
-  function buildGoalPaceInsights() {
-    if (!hasGoal() || !state.studyPlan || !state.progressTracker) return null;
+  function buildGoalPaceInsights(ctx) {
+    ctx = ctx || resolveMetricsContext();
+    if (!ctx || !hasGoalData(ctx.goal) || !ctx.studyPlan || !ctx.progressTracker) return null;
 
-    var plan = state.studyPlan;
-    var goal = state.goal;
-    var tracker = state.progressTracker;
+    var plan = ctx.studyPlan;
+    var goal = ctx.goal;
+    var tracker = ctx.progressTracker;
     var alerts = [];
 
     var inactiveStreak = countConsecutiveInactiveDays(tracker);
@@ -1414,7 +1493,7 @@
     var tutorExpected = Number(goal.tutor_lessons_per_week) || 2;
     var intensityCfg = getIntensityConfig(goal.study_intensity_preset);
     if (intensityCfg) tutorExpected = intensityCfg.tutorLessons;
-    var lessonsThisWeek = countLessonsInCurrentWeek(state.reports);
+    var lessonsThisWeek = countLessonsInCurrentWeek(ctx.reports);
     var weekdayIndex = (new Date().getDay() + 6) % 7;
 
     var timeProgress =
@@ -1534,7 +1613,8 @@
       levelProgress: levelProgress,
       paceVerdict: buildPaceVerdict(
         { levelProgress: levelProgress, timeProgress: timeProgress },
-        plan
+        plan,
+        goal
       ),
     };
   }
@@ -1591,22 +1671,24 @@
     var contentEl = document.getElementById("analytics-goal-content");
     if (!emptyEl || !contentEl) return;
 
-    if (!hasGoal() || !state.studyPlan || !state.progressTracker) {
+    var ctx = resolveMetricsContext();
+    if (!ctx) {
       emptyEl.hidden = false;
       contentEl.hidden = true;
       renderGoalPaceAlerts([]);
       return;
     }
 
+    setPreviewBanners(ctx.isPreview);
     emptyEl.hidden = true;
     contentEl.hidden = false;
 
-    var plan = state.studyPlan;
-    var goal = state.goal;
-    var insights = buildGoalPaceInsights();
+    var plan = ctx.studyPlan;
+    var goal = ctx.goal;
+    var insights = buildGoalPaceInsights(ctx);
     if (!insights) return;
 
-    renderGoalPaceAlerts(insights.alerts);
+    renderGoalPaceAlerts(ctx.isPreview ? [] : insights.alerts);
 
     setText("analytics-goal-lead", formatAnalyticsGoalLead(goal));
     setText(
@@ -1639,7 +1721,26 @@
     if (timeFill) timeFill.style.width = timePct + "%";
     setText("analytics-pace-verdict", insights.paceVerdict);
 
-    syncIntensityUi("analytics");
+    if (ctx.isPreview) {
+      setIntensitySelection("analytics-intensity-presets", goal.study_intensity_preset || null);
+      var analyticsProjection = document.getElementById("analytics-intensity-projection");
+      if (analyticsProjection) {
+        if (goal.study_intensity_preset) {
+          analyticsProjection.textContent = formatIntensityProjectionText(
+            goal.study_intensity_preset,
+            goal,
+            plan,
+            ctx.reports
+          );
+          analyticsProjection.hidden = !analyticsProjection.textContent;
+        } else {
+          analyticsProjection.hidden = true;
+          analyticsProjection.textContent = "";
+        }
+      }
+    } else {
+      syncIntensityUi("analytics");
+    }
 
     setText(
       "analytics-pace-required",
@@ -2499,6 +2600,9 @@
 
     if (!detailsEl || !ctaEl || !targetEl) return;
 
+    var ctx = resolveMetricsContext();
+    var previewGoal = ctx && ctx.isPreview ? ctx.goal : null;
+
     if (hasGoal()) {
       targetEl.textContent = state.goal.target_cefr_level;
       if (targetBlock) targetBlock.classList.add("has-goal");
@@ -2531,6 +2635,38 @@
 
       if (goalPlanSection) goalPlanSection.hidden = false;
       ctaEl.hidden = true;
+    } else if (previewGoal && hasGoalData(previewGoal)) {
+      targetEl.textContent = previewGoal.target_cefr_level;
+      if (targetBlock) targetBlock.classList.add("has-goal");
+
+      var previewScenario = String(previewGoal.scenario_description || "").trim();
+      var previewIsScenario =
+        previewGoal.goal_type === "scenario_based" && previewScenario;
+
+      if (captionEl) {
+        captionEl.textContent = previewIsScenario ? "Потолок цели (пример)" : "Цель (пример)";
+      }
+
+      setText("goal-deadline", "к " + formatDateLocal(previewGoal.target_date));
+      setText("goal-remaining", formatRemainingDaysShort(previewGoal.target_date));
+
+      if (descEl) {
+        if (previewIsScenario) {
+          descEl.textContent =
+            "Прикладная цель «" +
+            previewScenario +
+            "» — план не требует полного " +
+            previewGoal.target_cefr_level;
+        } else if (previewGoal.goal_label) {
+          descEl.textContent = "«" + previewGoal.goal_label + "»";
+        } else {
+          descEl.textContent =
+            "Достичь уровня " + (previewGoal.target_cefr_level || "—");
+        }
+      }
+
+      if (goalPlanSection) goalPlanSection.hidden = false;
+      ctaEl.hidden = false;
     } else {
       targetEl.textContent = "—";
       if (targetBlock) targetBlock.classList.remove("has-goal");
@@ -2560,13 +2696,15 @@
   }
 
   function buildGoalPlanSummaryParts() {
-    if (!hasGoal() || !state.studyPlan) return null;
-    var plan = state.studyPlan;
+    var ctx = resolveMetricsContext();
+    if (!ctx || !ctx.studyPlan || !hasGoalData(ctx.goal)) return null;
+    var plan = ctx.studyPlan;
+    var goal = ctx.goal;
     var computed =
-      state.learningContext && state.learningContext.computed
+      !ctx.isPreview && state.learningContext && state.learningContext.computed
         ? state.learningContext.computed
         : null;
-    var date = formatGoalPlanDate(state.goal.target_date);
+    var date = formatGoalPlanDate(goal.target_date);
     var hours = formatHours(
       (computed && computed.hours_per_week_needed != null
         ? computed.hours_per_week_needed
@@ -2655,19 +2793,27 @@
     var card = document.getElementById("study-plan-card");
     if (!section || !card) return;
 
-    var plan = state.studyPlan;
+    var ctx = resolveMetricsContext();
+    var plan = ctx ? ctx.studyPlan : null;
+    var goal = ctx ? ctx.goal : null;
     var computed =
-      state.learningContext && state.learningContext.computed
-        ? state.learningContext.computed
-        : null;
+      !ctx || ctx.isPreview
+        ? null
+        : state.learningContext && state.learningContext.computed
+          ? state.learningContext.computed
+          : null;
     var enrollment = getActiveEnrollment();
 
-    if (!hasGoal() || !plan) {
+    if (!ctx || !plan || !hasGoalData(goal)) {
       section.hidden = true;
       return;
     }
 
     section.hidden = false;
+    setPreviewBanners(ctx.isPreview);
+
+    var goalEditBtn = document.getElementById("btn-goal-edit");
+    if (goalEditBtn) goalEditBtn.hidden = !!ctx.isPreview;
     setText("study-plan-title", "План на " + plan.weeks_total + " " + pluralize(plan.weeks_total, "неделю", "недели", "недель"));
 
     var paceStatus = (computed && computed.pace_status) || plan.status || "on_track";
@@ -2726,12 +2872,12 @@
       if (computed.goal_eta_date) {
         weeksLeftText += " (программа к " + formatDateLocal(computed.goal_eta_date) + ")";
       }
-    } else if (state.goal.study_intensity_preset && state.goal.target_date) {
+    } else if (goal.study_intensity_preset && goal.target_date) {
       weeksLeftText = formatIntensityProjectionText(
-        state.goal.study_intensity_preset,
-        state.goal,
+        goal.study_intensity_preset,
+        goal,
         plan,
-        state.reports
+        ctx.reports
       );
     } else {
       weeksLeftText =
@@ -2754,6 +2900,9 @@
     }
 
     syncIntensityUi("sidebar");
+    if (ctx.isPreview) {
+      setIntensitySelection("sidebar-intensity-presets", goal.study_intensity_preset || null);
+    }
     renderGoalPlanSummary();
     syncGoalPlanCollapse();
     syncStudyPlanCollapse();
@@ -4898,6 +5047,9 @@
         return DashboardApi.fetchCurriculum(enrollment.program_id).then(applyServerCurriculum);
       })
       .then(function () {
+        return loadPreviewBundleIfNeeded();
+      })
+      .then(function () {
         finishDashboardRender();
       })
       .catch(function (err) {
@@ -4906,6 +5058,9 @@
             "Не удалось загрузить отчёты: " + (err.message || "ошибка сети");
           errorEl.hidden = false;
         }
+        return loadPreviewBundleIfNeeded().then(function () {
+          finishDashboardRender();
+        });
       })
       .finally(function () {
         if (loadingEl) loadingEl.hidden = true;
@@ -4933,13 +5088,29 @@
     initLessonNavigation();
     initCurriculumFilters();
     initCurriculumActions();
-    loadDashboardFromApi();
+
+    if (DashboardApi.CONFIG) {
+      loadDashboardFromApi();
+    } else {
+      var loadingEl = document.getElementById("dash-loading");
+      var mainEl = document.querySelector(".main");
+      if (loadingEl) loadingEl.hidden = true;
+      if (mainEl) mainEl.style.visibility = "";
+    }
   }
 
-  DashboardApi.loadAppConfig().then(function () {
-    if (!DashboardApi.CONFIG) return;
-    bootstrapDashboard();
-  });
+  if (typeof DashboardApi === "undefined") {
+    console.error("[Dashboard] dashboard-api.js failed to load");
+    var dashErr = document.getElementById("dash-error");
+    if (dashErr) {
+      dashErr.hidden = false;
+      dashErr.textContent = "Не удалось загрузить скрипты дашборда. Обновите страницу.";
+    }
+  } else {
+    DashboardApi.loadAppConfig().then(function () {
+      bootstrapDashboard();
+    });
+  }
 
   if (typeof ProgramOnboarding !== "undefined") {
     ProgramOnboarding.init({

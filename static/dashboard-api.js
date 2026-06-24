@@ -168,6 +168,34 @@
     });
   }
 
+  function fetchPreviewBundle() {
+    return fetch(liveApiBase() + "/preview/dashboard").then(function (res) {
+      if (!res.ok) {
+        return res.json().then(function (body) {
+          throw new Error(body.detail || res.statusText);
+        });
+      }
+      return res.json();
+    });
+  }
+
+  function goalFieldsFromBundle(data) {
+    return {
+      target_cefr_level: data.target_cefr_level || null,
+      target_date: data.target_date || null,
+      goal_label: data.goal_label || null,
+      goal_set_date: data.goal_set_date || null,
+      goal_type: data.goal_type || null,
+      target_duration_weeks: data.target_duration_weeks || null,
+      scenario_description: data.scenario_description || null,
+      goal_start_cefr_level: data.goal_start_cefr_level || null,
+      tutor_lessons_per_week: data.tutor_lessons_per_week || 2,
+      tutor_lesson_minutes: data.tutor_lesson_minutes || 60,
+      practice_days_per_week: data.practice_days_per_week || 6,
+      study_intensity_preset: data.study_intensity_preset || null,
+    };
+  }
+
   function applyReportsBundle(state, data) {
     state.reports = data.reports || [];
     state.studentName = data.student_name || data.student_email || "Студент";
@@ -229,6 +257,8 @@
     fetchReportsBundle: fetchReportsBundle,
     fetchCurriculum: fetchCurriculum,
     postDemoGoal: postDemoGoal,
+    fetchPreviewBundle: fetchPreviewBundle,
+    goalFieldsFromBundle: goalFieldsFromBundle,
     applyReportsBundle: applyReportsBundle,
     mapCurriculumResponse: mapCurriculumResponse,
   };

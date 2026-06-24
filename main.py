@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from routers import config, demo, reports, webhook
+from routers import config, demo, preview, reports, webhook
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,6 +21,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(webhook.router, prefix="/webhook", tags=["webhook"])
 app.include_router(config.router, prefix="/api", tags=["config"])
+app.include_router(preview.router, prefix="/api", tags=["preview"])
 app.include_router(demo.router, prefix="/api", tags=["demo"])
 app.include_router(reports.router, prefix="/api", tags=["reports"])
 

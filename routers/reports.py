@@ -27,7 +27,7 @@ from services.intensity_config import INTENSITY_PRESETS, normalize_intensity_pre
 router = APIRouter()
 
 
-def _next_cefr_level(current: str) -> str | None:
+def _next_cefr_level(current: str) -> Optional[str]:
     normalized = (current or "").upper()
     try:
         idx = CEFR_LEVELS.index(normalized)

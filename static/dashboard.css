@@ -4174,6 +4174,25 @@ button.curriculum-status-pill--report.is-active .class-action-icon {
   font-size: 0.875rem;
 }
 
+.dashboard-preview-banner {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  color: var(--text-secondary, #5b6472);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.dashboard-preview-banner--sidebar {
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-preview-banner[hidden] {
+  display: none !important;
+}
+
 .vocab-live-level {
   font-size: 2rem;
   font-weight: 700;
