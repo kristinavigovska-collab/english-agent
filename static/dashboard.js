@@ -171,6 +171,9 @@
     goalPlanCollapseBound: false,
     activityPopoverBound: false,
     activityPopoverDate: null,
+    programCategory: "general",
+    programLevel: "all",
+    programsFilterBound: false,
   };
 
   var DEMO_GOAL = {
@@ -396,6 +399,219 @@
 
   var NAV_VIEW_KEY = "app_nav_view";
   var NAV_COLLAPSED_KEY = "app_nav_collapsed";
+  var ENROLLED_PROGRAM_KEY = "enrolled_program_id";
+
+  var PROGRAM_LEVELS = {
+    beginner: { id: "beginner", label: "Beginner", cefr: "A1", order: 1 },
+    elementary: { id: "elementary", label: "Elementary", cefr: "A2", order: 2 },
+    pre_intermediate: {
+      id: "pre_intermediate",
+      label: "Pre-Intermediate",
+      cefr: "A2–B1",
+      order: 3,
+    },
+    intermediate: { id: "intermediate", label: "Intermediate", cefr: "B1", order: 4 },
+    upper_intermediate: {
+      id: "upper_intermediate",
+      label: "Upper-Intermediate",
+      cefr: "B2",
+      order: 5,
+    },
+    advanced: { id: "advanced", label: "Advanced", cefr: "C1", order: 6 },
+  };
+
+  var PROGRAM_CATEGORY_LABELS = {
+    general: "General English",
+    business: "Business English",
+    special: "Special Program",
+  };
+
+  // PLACEHOLDER catalog — replace with school programs API.
+  var PROGRAM_CATALOG = [
+    {
+      id: "general-beginner",
+      category: "general",
+      levelId: "beginner",
+      title: "General English — Beginner",
+      description:
+        "Старт с нуля: алфавит, базовые фразы, понимание простых вопросов и ответов в быту.",
+      classes: 24,
+      weeks: 12,
+      tags: ["Алфавит", "Быт", "Listening"],
+    },
+    {
+      id: "general-elementary",
+      category: "general",
+      levelId: "elementary",
+      title: "General English — Elementary",
+      description:
+        "Расширяем словарь и говорим о себе, семье, работе и повседневных ситуациях.",
+      classes: 26,
+      weeks: 13,
+      tags: ["Speaking", "Present Simple", "Travel"],
+    },
+    {
+      id: "general-pre-intermediate",
+      category: "general",
+      levelId: "pre_intermediate",
+      title: "General English — Pre-Intermediate",
+      description:
+        "Переходный уровень: увереннее в прошедшем времени, модальных глаголах и диалогах.",
+      classes: 26,
+      weeks: 13,
+      tags: ["Past tenses", "Modal verbs", "Dialogues"],
+    },
+    {
+      id: "general-intermediate",
+      category: "general",
+      levelId: "intermediate",
+      title: "General English — Intermediate",
+      description:
+        "Свободнее обсуждаете новости, планы и мнения; закрепляете грамматику среднего уровня.",
+      classes: 26,
+      weeks: 13,
+      tags: ["Opinions", "Conditionals", "Fluency"],
+    },
+    {
+      id: "general-upper-intermediate",
+      category: "general",
+      levelId: "upper_intermediate",
+      title: "General English — Upper-Intermediate",
+      description:
+        "Сложные темы, идиомы и точность речи — подготовка к продвинутому уровню и экзаменам.",
+      classes: 28,
+      weeks: 14,
+      tags: ["Idioms", "Accuracy", "Debates"],
+    },
+    {
+      id: "general-advanced",
+      category: "general",
+      levelId: "advanced",
+      title: "General English — Advanced",
+      description:
+        "Почти носительский уровень: нюансы, стили речи, профессиональные и академические контексты.",
+      classes: 30,
+      weeks: 15,
+      tags: ["Nuances", "Academic", "Professional"],
+    },
+    {
+      id: "business-intermediate",
+      category: "business",
+      levelId: "intermediate",
+      title: "Business English — Intermediate",
+      description:
+        "Письма, звонки и встречи: базовый деловой английский для офиса и первых переговоров.",
+      classes: 24,
+      weeks: 12,
+      tags: ["Emails", "Meetings", "Office"],
+    },
+    {
+      id: "business-upper-intermediate",
+      category: "business",
+      levelId: "upper_intermediate",
+      title: "Business English — Upper-Intermediate",
+      description:
+        "Презентации, отчёты и переговоры с партнёрами — уверенная коммуникация в бизнесе.",
+      classes: 26,
+      weeks: 13,
+      tags: ["Presentations", "Negotiations", "Reports"],
+    },
+    {
+      id: "business-advanced",
+      category: "business",
+      levelId: "advanced",
+      title: "Business English — Advanced",
+      description:
+        "Стратегические дискуссии, лидерство и сложные кейсы для руководителей и экспертов.",
+      classes: 28,
+      weeks: 14,
+      tags: ["Leadership", "Strategy", "Executive"],
+    },
+    {
+      id: "special-interview",
+      category: "special",
+      levelId: "upper_intermediate",
+      title: "Interview Preparation",
+      description:
+        "Собеседования на английском: self-pitch, ответы на типовые вопросы, mock interview.",
+      classes: 12,
+      weeks: 6,
+      tags: ["CV", "HR questions", "Mock interview"],
+      base: { category: "general", levelId: "upper_intermediate" },
+    },
+    {
+      id: "special-ielts",
+      category: "special",
+      levelId: "upper_intermediate",
+      title: "IELTS Preparation",
+      description:
+        "Структура экзамена, стратегии по секциям и интенсивная практика под целевой балл.",
+      classes: 16,
+      weeks: 8,
+      tags: ["Reading", "Writing", "Speaking"],
+      base: { category: "general", levelId: "upper_intermediate" },
+    },
+    {
+      id: "special-negotiations",
+      category: "special",
+      levelId: "upper_intermediate",
+      title: "Negotiations in English",
+      description:
+        "Тактики переговоров, убеждение и работа с возражениями в международной среде.",
+      classes: 10,
+      weeks: 5,
+      tags: ["Persuasion", "Deals", "Objections"],
+      base: { category: "business", levelId: "upper_intermediate" },
+    },
+    {
+      id: "special-presentations",
+      category: "special",
+      levelId: "intermediate",
+      title: "Presentation Skills",
+      description:
+        "Структура выступления, слайды, Q&A и уверенная подача материала на английском.",
+      classes: 8,
+      weeks: 4,
+      tags: ["Slides", "Public speaking", "Q&A"],
+      base: { category: "business", levelId: "intermediate" },
+    },
+    {
+      id: "special-travel",
+      category: "special",
+      levelId: "elementary",
+      title: "Travel & Culture",
+      description:
+        "Поездки, аэропорт, отель и культурные ситуации — практичный английский для путешествий.",
+      classes: 8,
+      weeks: 4,
+      tags: ["Travel", "Culture", "Small talk"],
+      base: { category: "general", levelId: "elementary" },
+    },
+    {
+      id: "special-customer-support",
+      category: "special",
+      levelId: "intermediate",
+      title: "Customer Support English",
+      description:
+        "Работа с клиентами, эскалации и empathy-фразы для support и success-команд.",
+      classes: 10,
+      weeks: 5,
+      tags: ["Support", "Clients", "Empathy"],
+      base: { category: "business", levelId: "intermediate" },
+    },
+    {
+      id: "special-management",
+      category: "special",
+      levelId: "advanced",
+      title: "Management Communication",
+      description:
+        "One-on-ones, feedback, делегирование и сложные разговоры с командой на английском.",
+      classes: 12,
+      weeks: 6,
+      tags: ["Feedback", "1:1", "Team lead"],
+      base: { category: "business", levelId: "advanced" },
+    },
+  ];
 
   initSidebarResize();
   initGrammarToggles();
@@ -404,6 +620,7 @@
   initStudyPlanCollapse();
   initActivityHeatmapPopover();
   initAppNav();
+  initProgramsPage();
 
   document.querySelectorAll("#view-home .tab, #view-analytics .analytics-tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
@@ -549,7 +766,9 @@
   }
 
   function setAppNavView(view) {
-    view = view === "analytics" ? "analytics" : "home";
+    if (view !== "home" && view !== "analytics" && view !== "programs") {
+      view = "home";
+    }
     document.querySelectorAll(".app-nav-item").forEach(function (btn) {
       var active = btn.dataset.navView === view;
       btn.classList.toggle("is-active", active);
@@ -558,8 +777,12 @@
 
     var homeView = document.getElementById("view-home");
     var analyticsView = document.getElementById("view-analytics");
+    var programsView = document.getElementById("view-programs");
     if (homeView) homeView.hidden = view !== "home";
     if (analyticsView) analyticsView.hidden = view !== "analytics";
+    if (programsView) programsView.hidden = view !== "programs";
+
+    if (view === "programs") renderProgramsPage();
 
     try {
       localStorage.setItem(NAV_VIEW_KEY, view);
@@ -678,6 +901,7 @@
     renderCurriculumProgram();
     renderActivity();
     renderAnalyticsGoalPlan();
+    renderProgramsPage();
   }
 
   function hasGoal() {
@@ -2113,6 +2337,359 @@
     if (disclaimerEl) {
       disclaimerEl.textContent = PLAN_DISCLAIMER_SHORT;
       disclaimerEl.title = plan.disclaimer || PLAN_DISCLAIMER;
+    }
+  }
+
+  function getProgramById(programId) {
+    return PROGRAM_CATALOG.find(function (program) {
+      return program.id === programId;
+    }) || null;
+  }
+
+  function getProgramLevel(levelId) {
+    return PROGRAM_LEVELS[levelId] || null;
+  }
+
+  function cefrToProgramLevel(cefr) {
+    var level = String(cefr || "").toUpperCase();
+    if (level === "A1") return "beginner";
+    if (level === "A2") return "elementary";
+    if (level === "B1") return "intermediate";
+    if (level === "B2") return "upper_intermediate";
+    if (level === "C1" || level === "C2") return "advanced";
+    return null;
+  }
+
+  function getRecommendedProgramId() {
+    var latest = getLatestReport();
+    var levelId = cefrToProgramLevel(latest && latest.vocabulary_level);
+    if (!levelId) return null;
+    if (hasGoal() && state.goal.goal_type === "scenario_based") {
+      var special = PROGRAM_CATALOG.find(function (program) {
+        return program.category === "special" && program.levelId === levelId;
+      });
+      if (special) return special.id;
+    }
+    return "general-" + levelId.replace(/_/g, "-");
+  }
+
+  function readEnrolledProgramId() {
+    try {
+      return localStorage.getItem(ENROLLED_PROGRAM_KEY) || null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function getEnrolledProgramId() {
+    return readEnrolledProgramId() || getRecommendedProgramId();
+  }
+
+  function saveEnrolledProgramId(programId) {
+    try {
+      if (programId) localStorage.setItem(ENROLLED_PROGRAM_KEY, programId);
+      else localStorage.removeItem(ENROLLED_PROGRAM_KEY);
+    } catch (err) {
+      /* ignore */
+    }
+  }
+
+  function getProgramsForCategory(category, levelFilter) {
+    return PROGRAM_CATALOG.filter(function (program) {
+      if (program.category !== category) return false;
+      if (!levelFilter || levelFilter === "all") return true;
+      if (program.category === "special") {
+        return (
+          program.levelId === levelFilter ||
+          (program.base && program.base.levelId === levelFilter)
+        );
+      }
+      return program.levelId === levelFilter;
+    });
+  }
+
+  function getLevelOptionsForCategory(category) {
+    var options = [{ id: "all", label: "Все уровни" }];
+    var allowed = [];
+
+    if (category === "general") {
+      allowed = [
+        "beginner",
+        "elementary",
+        "pre_intermediate",
+        "intermediate",
+        "upper_intermediate",
+        "advanced",
+      ];
+    } else if (category === "business") {
+      allowed = ["intermediate", "upper_intermediate", "advanced"];
+    } else {
+      var seen = { all: true };
+      PROGRAM_CATALOG.filter(function (program) {
+        return program.category === "special";
+      }).forEach(function (program) {
+        if (program.levelId && !seen[program.levelId]) {
+          seen[program.levelId] = true;
+          allowed.push(program.levelId);
+        }
+      });
+      allowed.sort(function (a, b) {
+        return (PROGRAM_LEVELS[a] ? PROGRAM_LEVELS[a].order : 0) -
+          (PROGRAM_LEVELS[b] ? PROGRAM_LEVELS[b].order : 0);
+      });
+    }
+
+    allowed.forEach(function (levelId) {
+      var level = PROGRAM_LEVELS[levelId];
+      if (!level) return;
+      options.push({
+        id: levelId,
+        label: level.label + " · " + level.cefr,
+      });
+    });
+    return options;
+  }
+
+  function formatProgramBaseLabel(base) {
+    if (!base) return "";
+    var categoryLabel = PROGRAM_CATEGORY_LABELS[base.category] || base.category;
+    var level = PROGRAM_LEVELS[base.levelId];
+    var levelLabel = level ? level.label : base.levelId;
+    return categoryLabel + " · " + levelLabel;
+  }
+
+  function renderProgramsLevelChips() {
+    var container = document.getElementById("programs-level-chips");
+    if (!container) return;
+
+    var options = getLevelOptionsForCategory(state.programCategory);
+    if (
+      state.programLevel !== "all" &&
+      !options.some(function (option) {
+        return option.id === state.programLevel;
+      })
+    ) {
+      state.programLevel = "all";
+    }
+
+    container.innerHTML = options
+      .map(function (option) {
+        var active = option.id === state.programLevel;
+        return (
+          '<button type="button" class="programs-level-chip' +
+          (active ? " is-active" : "") +
+          '" data-program-level="' +
+          esc(option.id) +
+          '" aria-pressed="' +
+          (active ? "true" : "false") +
+          '">' +
+          esc(option.label) +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function renderProgramCard(program, enrolledId, recommendedId) {
+    var level = getProgramLevel(program.levelId);
+    var isActive = program.id === enrolledId;
+    var isRecommended = !isActive && program.id === recommendedId;
+    var cardClass =
+      "program-card" +
+      (isActive ? " is-active" : "") +
+      (isRecommended ? " is-recommended" : "");
+
+    var badges =
+      '<span class="program-card-badge program-card-badge--level">' +
+      esc(level ? level.label : program.levelId) +
+      "</span>" +
+      (level
+        ? '<span class="program-card-badge program-card-badge--cefr">' +
+          esc(level.cefr) +
+          "</span>"
+        : "") +
+      (isActive
+        ? '<span class="program-card-badge program-card-badge--active">Ваша программа</span>'
+        : "") +
+      (isRecommended
+        ? '<span class="program-card-badge program-card-badge--recommended">Рекомендуем</span>'
+        : "");
+
+    var baseHtml = "";
+    if (program.base) {
+      baseHtml =
+        '<div class="program-card-base">' +
+        '<span class="program-card-base-icon" aria-hidden="true">🔗</span>' +
+        '<p class="program-card-base-text">Построено на базе <strong>' +
+        esc(formatProgramBaseLabel(program.base)) +
+        "</strong> — сначала освоите базовый трек или подтвердите уровень с преподавателем.</p>" +
+        "</div>";
+    }
+
+    var tagsHtml = (program.tags || [])
+      .map(function (tag) {
+        return '<span class="program-card-tag">' + esc(tag) + "</span>";
+      })
+      .join("");
+
+    return (
+      '<article class="' +
+      cardClass +
+      '" data-program-id="' +
+      esc(program.id) +
+      '">' +
+      '<div class="program-card-top">' +
+      '<div class="program-card-badges">' +
+      badges +
+      "</div>" +
+      '<span class="program-card-category">' +
+      esc(PROGRAM_CATEGORY_LABELS[program.category] || program.category) +
+      "</span>" +
+      "</div>" +
+      "<h3 class=\"program-card-title\">" +
+      esc(program.title) +
+      "</h3>" +
+      '<p class="program-card-desc">' +
+      esc(program.description) +
+      "</p>" +
+      baseHtml +
+      '<div class="program-card-meta">' +
+      "<span>" +
+      program.classes +
+      " Class</span>" +
+      "<span>~" +
+      program.weeks +
+      " " +
+      pluralize(program.weeks, "неделя", "недели", "недель") +
+      "</span>" +
+      "</div>" +
+      '<div class="program-card-tags">' +
+      tagsHtml +
+      "</div>" +
+      '<div class="program-card-actions">' +
+      '<button type="button" class="btn' +
+      (isActive ? "" : " btn-primary") +
+      ' program-select-btn" data-program-id="' +
+      esc(program.id) +
+      '">' +
+      (isActive ? "Выбрано" : "Выбрать программу") +
+      "</button>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderProgramsPage() {
+    var grid = document.getElementById("programs-grid");
+    var emptyEl = document.getElementById("programs-empty");
+    var countEl = document.getElementById("programs-results-count");
+    var hintEl = document.getElementById("programs-results-hint");
+    var currentSection = document.getElementById("programs-current");
+    if (!grid) return;
+
+    renderProgramsLevelChips();
+
+    document.querySelectorAll(".programs-category-tab").forEach(function (btn) {
+      var active = btn.dataset.programCategory === state.programCategory;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    var enrolledId = getEnrolledProgramId();
+    var recommendedId = getRecommendedProgramId();
+    var programs = getProgramsForCategory(state.programCategory, state.programLevel);
+
+    if (countEl) {
+      countEl.textContent =
+        programs.length +
+        " " +
+        pluralize(programs.length, "программа", "программы", "программ");
+    }
+
+    if (hintEl) {
+      if (state.programCategory === "special") {
+        hintEl.textContent =
+          "Special Programs включают модули поверх General или Business — смотрите блок «Построено на базе».";
+        hintEl.hidden = false;
+      } else if (state.programCategory === "business") {
+        hintEl.textContent = "Business English доступен с уровня Intermediate.";
+        hintEl.hidden = false;
+      } else {
+        hintEl.textContent =
+          "General English — линейный путь из 6 уровней от Beginner до Advanced.";
+        hintEl.hidden = false;
+      }
+    }
+
+    if (emptyEl) emptyEl.hidden = programs.length > 0;
+    grid.innerHTML = programs
+      .map(function (program) {
+        return renderProgramCard(program, enrolledId, recommendedId);
+      })
+      .join("");
+
+    var enrolled = enrolledId ? getProgramById(enrolledId) : null;
+    if (currentSection) {
+      if (enrolled) {
+        var enrolledLevel = getProgramLevel(enrolled.levelId);
+        currentSection.hidden = false;
+        setText("programs-current-title", enrolled.title);
+        setText(
+          "programs-current-meta",
+          (enrolledLevel ? enrolledLevel.label + " · " + enrolledLevel.cefr + " · " : "") +
+            enrolled.classes +
+            " Class · ~" +
+            enrolled.weeks +
+            " " +
+            pluralize(enrolled.weeks, "неделя", "недели", "недель") +
+            (enrolled.base ? " · база: " + formatProgramBaseLabel(enrolled.base) : "")
+        );
+      } else {
+        currentSection.hidden = true;
+      }
+    }
+  }
+
+  function initProgramsPage() {
+    if (state.programsFilterBound) return;
+    state.programsFilterBound = true;
+
+    document.querySelectorAll(".programs-category-tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.programCategory = btn.dataset.programCategory || "general";
+        state.programLevel = "all";
+        renderProgramsPage();
+      });
+    });
+
+    var levelContainer = document.getElementById("programs-level-chips");
+    if (levelContainer) {
+      levelContainer.addEventListener("click", function (event) {
+        var chip = event.target.closest(".programs-level-chip");
+        if (!chip) return;
+        state.programLevel = chip.dataset.programLevel || "all";
+        renderProgramsPage();
+      });
+    }
+
+    var grid = document.getElementById("programs-grid");
+    if (grid) {
+      grid.addEventListener("click", function (event) {
+        var btn = event.target.closest(".program-select-btn");
+        if (!btn) return;
+        var programId = btn.dataset.programId;
+        if (!programId) return;
+        saveEnrolledProgramId(programId);
+        renderProgramsPage();
+        renderCurriculumProgram();
+      });
+    }
+
+    var continueBtn = document.getElementById("btn-programs-continue");
+    if (continueBtn) {
+      continueBtn.addEventListener("click", function () {
+        setAppNavView("home");
+      });
     }
   }
 

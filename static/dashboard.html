@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-7" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-9" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -184,7 +184,7 @@
         </svg>
       </span>
     </button>
-    <nav class="app-nav" aria-label="Основное меню">
+    <nav class="app-nav" aria-label="Main navigation">
       <div class="app-nav-brand">
         <span class="app-nav-logo" aria-hidden="true">Y</span>
         <span class="app-nav-brand-text">Yappi</span>
@@ -210,7 +210,18 @@
           </button>
         </li>
         <li>
-          <button type="button" class="app-nav-item" data-nav-view="analytics" title="Аналитика">
+          <button type="button" class="app-nav-item" data-nav-view="programs" title="Programs">
+            <span class="app-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.5 5.5h11A1.5 1.5 0 0119 7v12.5A1.5 1.5 0 0117.5 21h-11A1.5 1.5 0 015 19.5V7a1.5 1.5 0 011.5-1.5z" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 9.5h8M8 13h8M8 16.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="app-nav-label">Programs</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="app-nav-item" data-nav-view="analytics" title="Analytics">
             <span class="app-nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5.5 19.5V5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -219,7 +230,7 @@
                 <rect x="14.5" y="8" width="3.5" height="11.5" rx="1" stroke="currentColor" stroke-width="1.5"/>
               </svg>
             </span>
-            <span class="app-nav-label">Аналитика</span>
+            <span class="app-nav-label">Analytics</span>
           </button>
         </li>
       </ul>
@@ -882,6 +893,60 @@
   </div>
     </div>
 
+    <div class="app-view" id="view-programs" hidden>
+      <div class="programs-page">
+        <header class="programs-page-head">
+          <h1 class="programs-page-title">Программы обучения</h1>
+          <p class="programs-page-lead">
+            Выберите направление и уровень — специальные курсы строятся на базе General или Business English.
+          </p>
+        </header>
+
+        <section class="programs-current" id="programs-current" hidden aria-label="Текущая программа">
+          <div class="programs-current-icon" aria-hidden="true">✓</div>
+          <div class="programs-current-body">
+            <p class="programs-current-kicker">Ваша программа</p>
+            <h2 class="programs-current-title" id="programs-current-title">—</h2>
+            <p class="programs-current-meta" id="programs-current-meta">—</p>
+          </div>
+          <button type="button" class="btn btn-primary programs-current-btn" id="btn-programs-continue">Продолжить обучение</button>
+        </section>
+
+        <div class="programs-filters">
+          <div class="programs-category-tabs" role="tablist" aria-label="Категория программ">
+            <button type="button" class="programs-category-tab is-active" data-program-category="general" role="tab" aria-selected="true">
+              <span class="programs-category-tab-title">General English</span>
+              <span class="programs-category-tab-note">Beginner → Advanced · 6 уровней</span>
+            </button>
+            <button type="button" class="programs-category-tab" data-program-category="business" role="tab" aria-selected="false">
+              <span class="programs-category-tab-title">Business English</span>
+              <span class="programs-category-tab-note">от Intermediate</span>
+            </button>
+            <button type="button" class="programs-category-tab" data-program-category="special" role="tab" aria-selected="false">
+              <span class="programs-category-tab-title">Special Programs</span>
+              <span class="programs-category-tab-note">на базе General / Business</span>
+            </button>
+          </div>
+
+          <div class="programs-level-bar">
+            <span class="programs-level-label">Уровень</span>
+            <div class="programs-level-chips" id="programs-level-chips" role="group" aria-label="Фильтр по уровню"></div>
+          </div>
+        </div>
+
+        <div class="programs-results-head">
+          <p class="programs-results-count" id="programs-results-count">—</p>
+          <p class="programs-results-hint" id="programs-results-hint" hidden></p>
+        </div>
+
+        <div class="programs-grid" id="programs-grid" aria-live="polite"></div>
+
+        <p class="programs-empty" id="programs-empty" hidden>
+          Нет программ для выбранного уровня. Попробуйте другой фильтр или категорию.
+        </p>
+      </div>
+    </div>
+
     <div class="app-view" id="view-analytics" hidden>
       <div class="analytics-page">
         <div class="analytics-page-head">
@@ -1115,7 +1180,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260623-7" defer></script>
+  <script src="/static/dashboard.js?v=20260623-8" defer></script>
 
 </body>
 </html>
