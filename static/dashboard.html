@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260621-41" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-7" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -170,21 +170,21 @@
   </div>
 
   <div class="app-shell">
+    <button
+      type="button"
+      class="app-nav-toggle"
+      id="app-nav-toggle"
+      aria-expanded="true"
+      aria-label="Свернуть меню"
+    >
+      <span class="app-nav-toggle-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="5" width="16" height="14" rx="2.25" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M9 5v14" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </span>
+    </button>
     <nav class="app-nav" aria-label="Основное меню">
-      <button
-        type="button"
-        class="app-nav-toggle"
-        id="app-nav-toggle"
-        aria-expanded="true"
-        aria-label="Свернуть меню"
-      >
-        <span class="app-nav-toggle-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="5" width="16" height="14" rx="2.25" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M9 5v14" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
-        </span>
-      </button>
       <div class="app-nav-brand">
         <span class="app-nav-logo" aria-hidden="true">Y</span>
         <span class="app-nav-brand-text">Yappi</span>
@@ -402,7 +402,6 @@
         <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">Class summary</button>
         <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
         <button class="tab" type="button" role="tab" data-tab="detailed" aria-selected="false">Детальный отчёт</button>
-        <button class="tab" type="button" role="tab" data-tab="activity" aria-selected="false">Активность</button>
       </nav>
 
       <!-- Tab: Lesson report -->
@@ -879,13 +878,26 @@
 
       </div>
 
-      <!-- Tab: Activity -->
-      <div class="tab-panel" id="panel-activity" role="tabpanel">
-        <p class="activity-empty" id="activity-empty" hidden>
-          Задайте цель обучения, чтобы видеть календарь активности и статистику занятий.
-        </p>
+    </div>
+  </div>
+    </div>
 
-        <div id="activity-content" hidden>
+    <div class="app-view" id="view-analytics" hidden>
+      <div class="analytics-page">
+        <div class="analytics-page-head">
+          <h1 class="analytics-page-title">Аналитика</h1>
+          <nav class="analytics-tabs" role="tablist" aria-label="Разделы аналитики">
+            <button class="analytics-tab active" type="button" role="tab" data-tab="activity" aria-selected="true">Активность</button>
+            <button class="analytics-tab" type="button" role="tab" data-tab="progress" aria-selected="false">Общий прогресс</button>
+          </nav>
+        </div>
+
+        <div class="tab-panel active" id="panel-activity" role="tabpanel">
+          <p class="activity-empty" id="activity-empty" hidden>
+            Задайте цель обучения, чтобы видеть календарь активности и статистику занятий.
+          </p>
+
+          <div id="activity-content" hidden>
           <div class="activity-board">
             <div class="activity-top-row">
               <article class="activity-tile activity-tile--gauge">
@@ -967,32 +979,143 @@
               </article>
             </div>
           </div>
+          </div>
         </div>
-      </div>
 
-    </div>
-  </div>
-    </div>
+        <div class="tab-panel" id="panel-progress" role="tabpanel">
+          <p class="analytics-goal-empty" id="analytics-goal-empty" hidden>
+            Задайте цель обучения в профиле, чтобы видеть связь темпа занятий с достижением цели.
+          </p>
 
-    <div class="app-view" id="view-analytics" hidden>
-      <div class="analytics-page">
-        <header class="analytics-page-header">
-          <h1 class="analytics-page-title">Аналитика</h1>
-          <p class="analytics-page-lead">
-            Сводка по прогрессу, занятиям и ошибкам — раздел в разработке.
-          </p>
-        </header>
-        <section class="card analytics-placeholder-card">
-          <p class="analytics-placeholder-text">
-            Здесь появятся графики CEFR, динамика ошибок и сравнение с планом обучения.
-          </p>
-        </section>
+          <div id="analytics-goal-content" hidden>
+            <div class="analytics-goal-alerts" id="analytics-goal-alerts" hidden aria-live="polite"></div>
+
+            <div class="analytics-goal-board">
+              <header class="analytics-goal-header">
+                <div class="analytics-goal-header-text">
+                  <h2 class="analytics-goal-title">Цель и план</h2>
+                  <p class="analytics-goal-lead" id="analytics-goal-lead">—</p>
+                </div>
+                <span class="plan-status-badge" id="analytics-plan-status-badge">—</span>
+              </header>
+
+              <div class="analytics-goal-hero">
+                <div class="analytics-goal-hero-main">
+                  <div class="analytics-goal-hero-row">
+                    <span class="analytics-goal-hero-label">Цель</span>
+                    <strong class="analytics-goal-hero-value" id="analytics-goal-target">—</strong>
+                  </div>
+                  <div class="analytics-goal-hero-row">
+                    <span class="analytics-goal-hero-label">Дедлайн</span>
+                    <span class="analytics-goal-hero-meta" id="analytics-goal-deadline">—</span>
+                  </div>
+                  <div class="analytics-goal-hero-row">
+                    <span class="analytics-goal-hero-label">Осталось</span>
+                    <span class="analytics-goal-hero-meta" id="analytics-goal-remaining">—</span>
+                  </div>
+                </div>
+                <div class="analytics-goal-hero-progress">
+                  <div class="analytics-goal-hero-progress-value" id="analytics-goal-progress-pct">—</div>
+                  <div class="analytics-goal-hero-progress-label">прогресс к цели</div>
+                  <div class="study-plan-progress-bar analytics-goal-hero-progress-bar" aria-hidden="true">
+                    <div class="study-plan-progress-fill" id="analytics-goal-progress-fill"></div>
+                  </div>
+                </div>
+              </div>
+
+              <section class="analytics-goal-section" aria-labelledby="analytics-pace-title">
+                <h3 class="analytics-goal-section-title" id="analytics-pace-title">Темп и график</h3>
+                <p class="analytics-goal-section-lead">
+                  Сравнение прогресса по уровню и прошедшего времени — если зелёная полоса ниже серой, вы отстаёте.
+                </p>
+                <div class="analytics-pace-bars">
+                  <div class="analytics-pace-bar-row">
+                    <div class="analytics-pace-bar-head">
+                      <span>Прогресс к цели</span>
+                      <span id="analytics-pace-level-pct">—</span>
+                    </div>
+                    <div class="analytics-pace-bar analytics-pace-bar--level" aria-hidden="true">
+                      <div class="analytics-pace-bar-fill" id="analytics-pace-level-fill"></div>
+                    </div>
+                  </div>
+                  <div class="analytics-pace-bar-row">
+                    <div class="analytics-pace-bar-head">
+                      <span>Прошло времени</span>
+                      <span id="analytics-pace-time-pct">—</span>
+                    </div>
+                    <div class="analytics-pace-bar analytics-pace-bar--time" aria-hidden="true">
+                      <div class="analytics-pace-bar-fill" id="analytics-pace-time-fill"></div>
+                    </div>
+                  </div>
+                </div>
+                <p class="analytics-pace-verdict" id="analytics-pace-verdict">—</p>
+              </section>
+
+              <section class="analytics-goal-section" aria-labelledby="analytics-intensity-title">
+                <h3 class="analytics-goal-section-title" id="analytics-intensity-title">Интенсивность и прогноз</h3>
+                <p class="analytics-goal-section-lead">
+                  Как частота занятий влияет на дату достижения цели. Выберите темп — прогноз пересчитается.
+                </p>
+                <div class="study-plan-intensity analytics-goal-intensity">
+                  <div class="study-plan-intensity-row">
+                    <span class="study-plan-intensity-label">Интенсивность</span>
+                    <div class="segment-control segment-control-compact" id="analytics-intensity-presets" role="group" aria-label="Интенсивность занятий">
+                      <button type="button" class="segment-btn intensity-preset" data-intensity="once_week" aria-pressed="false">1×/нед</button>
+                      <button type="button" class="segment-btn intensity-preset" data-intensity="few_times_week" aria-pressed="false">2–3×/нед</button>
+                      <button type="button" class="segment-btn intensity-preset" data-intensity="daily" aria-pressed="false">Каждый день</button>
+                    </div>
+                  </div>
+                  <p class="intensity-projection analytics-intensity-projection" id="analytics-intensity-projection" hidden></p>
+                </div>
+                <div class="analytics-pace-grid">
+                  <article class="analytics-pace-card">
+                    <span class="analytics-pace-card-label">Нужно по плану</span>
+                    <span class="analytics-pace-card-value" id="analytics-pace-required">—</span>
+                    <span class="analytics-pace-card-hint" id="analytics-pace-required-hint">—</span>
+                  </article>
+                  <article class="analytics-pace-card">
+                    <span class="analytics-pace-card-label">Ваш темп за 7 дней</span>
+                    <span class="analytics-pace-card-value" id="analytics-pace-actual">—</span>
+                    <span class="analytics-pace-card-hint" id="analytics-pace-actual-hint">—</span>
+                  </article>
+                  <article class="analytics-pace-card">
+                    <span class="analytics-pace-card-label">Уроки с репетитором</span>
+                    <span class="analytics-pace-card-value" id="analytics-pace-lessons">—</span>
+                    <span class="analytics-pace-card-hint" id="analytics-pace-lessons-hint">—</span>
+                  </article>
+                  <article class="analytics-pace-card">
+                    <span class="analytics-pace-card-label">Активность на платформе</span>
+                    <span class="analytics-pace-card-value" id="analytics-pace-visit">—</span>
+                    <span class="analytics-pace-card-hint" id="analytics-pace-visit-hint">—</span>
+                  </article>
+                </div>
+              </section>
+
+              <section class="analytics-goal-section analytics-goal-section--plan" aria-labelledby="analytics-plan-title">
+                <h3 class="analytics-goal-section-title" id="analytics-plan-title">План нагрузки</h3>
+                <p class="study-plan-headline" id="analytics-study-plan-headline">—</p>
+                <p class="study-plan-breakdown" id="analytics-study-plan-breakdown">—</p>
+                <div class="study-plan-progress">
+                  <div class="study-plan-progress-labels">
+                    <span id="analytics-study-plan-progress-text">—</span>
+                    <span id="analytics-study-plan-weeks-left">—</span>
+                  </div>
+                  <div class="study-plan-progress-bar" aria-hidden="true">
+                    <div class="study-plan-progress-fill" id="analytics-study-plan-progress-fill"></div>
+                  </div>
+                </div>
+                <p class="study-plan-disclaimer" id="analytics-study-plan-disclaimer" title=""></p>
+                <button class="goal-edit-link" type="button" id="btn-analytics-goal-edit">Изменить цель</button>
+              </section>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260621-40" defer></script>
+  <script src="/static/dashboard.js?v=20260623-7" defer></script>
 
 </body>
 </html>
