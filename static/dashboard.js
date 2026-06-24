@@ -174,6 +174,8 @@
     programCategory: "general",
     programLevel: "all",
     programsFilterBound: false,
+    programDetailId: null,
+    subscriptionPlanId: "standard",
   };
 
   var DEMO_GOAL = {
@@ -425,6 +427,90 @@
     business: "Business English",
     special: "Special Program",
   };
+
+  var PROGRAM_LEARNING_PLANS = [
+    {
+      id: "free_trial",
+      name: "FREE TRIAL",
+      cardTitle: "Try it free",
+      priceMain: "€0",
+      priceNote: "no card needed",
+      features: [
+        { text: "1 live class included", ok: true },
+        { text: "7 days full access", ok: true },
+        { text: "AI error analysis", ok: true },
+        { text: "No auto-charge", ok: true },
+      ],
+      cta: "Start free →",
+      ctaVariant: "free",
+      accent: "free",
+    },
+    {
+      id: "solo",
+      name: "SOLO",
+      cardTitle: "Self-study",
+      priceMain: "€20",
+      priceNote: "per month",
+      features: [
+        { text: "yBook + program access", ok: true },
+        { text: "AI Tutor for self-study", ok: true },
+        { text: "Goal & progress dashboard", ok: true },
+        { text: "No live classes", ok: false },
+      ],
+      cta: "Subscribe",
+      ctaVariant: "dark",
+    },
+    {
+      id: "light",
+      name: "LIGHT",
+      cardTitle: "4 classes / mo",
+      priceMain: "€88",
+      priceNote: "per month",
+      perClass: "€17 per class",
+      features: [
+        { text: "Everything in Solo", ok: true },
+        { text: "4 × 30 min live classes", ok: true },
+        { text: "AI analysis after each class", ok: true },
+        { text: "1 class per week", ok: true },
+      ],
+      cta: "Subscribe",
+      ctaVariant: "dark",
+    },
+    {
+      id: "standard",
+      name: "STANDARD",
+      cardTitle: "8 classes / mo",
+      priceMain: "€140",
+      priceNote: "per month",
+      perClass: "€15 per class",
+      featured: true,
+      badge: "Most popular",
+      features: [
+        { text: "Everything in Light", ok: true },
+        { text: "8 × 30 min live classes", ok: true },
+        { text: "2 classes per week", ok: true },
+        { text: "Goal velocity forecast", ok: true },
+      ],
+      cta: "Subscribe",
+      ctaVariant: "accent",
+    },
+    {
+      id: "intensive",
+      name: "INTENSIVE",
+      cardTitle: "16 classes / mo",
+      priceMain: "€236",
+      priceNote: "per month",
+      perClass: "€13.5 per class",
+      features: [
+        { text: "Everything in Standard", ok: true },
+        { text: "16 × 30 min live classes", ok: true },
+        { text: "4 classes per week", ok: true },
+        { text: "Priority tutor matching", ok: true },
+      ],
+      cta: "Subscribe",
+      ctaVariant: "dark",
+    },
+  ];
 
   // PLACEHOLDER catalog — replace with school programs API.
   var PROGRAM_CATALOG = [
@@ -727,7 +813,11 @@
 
     document.querySelectorAll(".app-nav-item").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        setAppNavView(btn.dataset.navView);
+        var view = btn.dataset.navView;
+        if (view === "programs") {
+          state.programDetailId = null;
+        }
+        setAppNavView(view);
       });
     });
 
@@ -782,7 +872,11 @@
     if (analyticsView) analyticsView.hidden = view !== "analytics";
     if (programsView) programsView.hidden = view !== "programs";
 
-    if (view === "programs") renderProgramsPage();
+    if (view === "programs") {
+      updateProgramsViewMode();
+      if (state.programDetailId) renderProgramDetailPage();
+      else renderProgramsPage();
+    }
 
     try {
       localStorage.setItem(NAV_VIEW_KEY, view);
@@ -2490,10 +2584,11 @@
       .join("");
   }
 
-  function renderProgramCard(program, enrolledId, recommendedId) {
+  function renderProgramCard(program, enrolledId, recommendedId, mode) {
+    var isHero = mode === "hero";
     var level = getProgramLevel(program.levelId);
-    var isActive = program.id === enrolledId;
-    var isRecommended = !isActive && program.id === recommendedId;
+    var isActive = isHero || program.id === enrolledId;
+    var isRecommended = !isHero && !isActive && program.id === recommendedId;
     var cardClass =
       "program-card" +
       (isActive ? " is-active" : "") +
@@ -2509,7 +2604,9 @@
           "</span>"
         : "") +
       (isActive
-        ? '<span class="program-card-badge program-card-badge--active">Ваша программа</span>'
+        ? '<span class="program-card-badge program-card-badge--active">' +
+          (isHero ? "Ваша выбранная программа" : "Ваша программа") +
+          "</span>"
         : "") +
       (isRecommended
         ? '<span class="program-card-badge program-card-badge--recommended">Рекомендуем</span>'
@@ -2532,6 +2629,16 @@
       })
       .join("");
 
+    var categoryLabel = esc(
+      PROGRAM_CATEGORY_LABELS[program.category] || program.category
+    );
+
+    var actionHtml = isHero
+      ? '<button type="button" class="btn btn-primary program-continue-btn" id="btn-programs-continue">Продолжить обучение</button>'
+      : '<button type="button" class="btn btn-primary program-view-btn" data-program-id="' +
+        esc(program.id) +
+        '">Посмотреть программу</button>';
+
     return (
       '<article class="' +
       cardClass +
@@ -2543,7 +2650,7 @@
       badges +
       "</div>" +
       '<span class="program-card-category">' +
-      esc(PROGRAM_CATEGORY_LABELS[program.category] || program.category) +
+      categoryLabel +
       "</span>" +
       "</div>" +
       "<h3 class=\"program-card-title\">" +
@@ -2567,16 +2674,281 @@
       tagsHtml +
       "</div>" +
       '<div class="program-card-actions">' +
-      '<button type="button" class="btn' +
-      (isActive ? "" : " btn-primary") +
-      ' program-select-btn" data-program-id="' +
-      esc(program.id) +
-      '">' +
-      (isActive ? "Выбрано" : "Выбрать программу") +
-      "</button>" +
+      actionHtml +
       "</div>" +
       "</article>"
     );
+  }
+
+  function buildProgramCheckoutUrl(programId, planId) {
+    return (
+      "/checkout?plan=" +
+      encodeURIComponent(planId) +
+      "&program=" +
+      encodeURIComponent(programId)
+    );
+  }
+
+  function goToProgramCheckout(programId, planId) {
+    window.location.href = buildProgramCheckoutUrl(programId, planId);
+  }
+
+  function renderPlanFeatureItem(item, isFeatured) {
+    return (
+      '<li class="program-plan-feature' +
+      (item.ok ? "" : " program-plan-feature--muted") +
+      '">' +
+      '<span class="program-plan-feature-icon' +
+      (item.ok
+        ? isFeatured
+          ? " program-plan-feature-icon--ok-featured"
+          : " program-plan-feature-icon--ok"
+        : " program-plan-feature-icon--no") +
+      '" aria-hidden="true">' +
+      (item.ok ? "✓" : "✕") +
+      "</span>" +
+      esc(item.text) +
+      "</li>"
+    );
+  }
+
+  function renderLearningPlanTile(programId, plan) {
+    var cardClass = "program-plan-card";
+    if (plan.featured) cardClass += " program-plan-card--featured";
+    if (plan.accent === "free") cardClass += " program-plan-card--free";
+
+    var ribbonHtml = plan.badge
+      ? '<div class="program-plan-card-ribbon">' + esc(plan.badge) + "</div>"
+      : "";
+
+    var priceNoteHtml =
+      '<p class="program-plan-card-price-note">' + esc(plan.priceNote) + "</p>";
+    if (plan.perClass) {
+      priceNoteHtml +=
+        '<p class="program-plan-card-per-class">' + esc(plan.perClass) + "</p>";
+    }
+
+    var featuresHtml = (plan.features || [])
+      .map(function (item) {
+        return renderPlanFeatureItem(item, !!plan.featured);
+      })
+      .join("");
+
+    var btnClass = "program-plan-card-btn program-plan-card-btn--" + (plan.ctaVariant || "dark");
+
+    return (
+      '<article class="' +
+      cardClass +
+      '">' +
+      ribbonHtml +
+      '<p class="program-plan-card-label">' +
+      esc(plan.name) +
+      "</p>" +
+      "<h3 class=\"program-plan-card-title\">" +
+      esc(plan.cardTitle) +
+      "</h3>" +
+      '<div class="program-plan-card-price">' +
+      esc(plan.priceMain) +
+      "</div>" +
+      priceNoteHtml +
+      '<ul class="program-plan-card-features">' +
+      featuresHtml +
+      "</ul>" +
+      '<button type="button" class="' +
+      btnClass +
+      '" data-program-id="' +
+      esc(programId) +
+      '" data-plan-id="' +
+      esc(plan.id) +
+      '">' +
+      esc(plan.cta) +
+      "</button>" +
+      "</article>"
+    );
+  }
+
+  function renderProgramDetailPlansSection(program) {
+    var plansHtml = PROGRAM_LEARNING_PLANS.map(function (plan) {
+      return renderLearningPlanTile(program.id, plan);
+    }).join("");
+
+    return (
+      '<section class="program-detail-plans" aria-labelledby="program-plans-title">' +
+      '<header class="program-detail-plans-head">' +
+      "<h2 class=\"program-detail-plans-title\" id=\"program-plans-title\">Choose your plan</h2>" +
+      '<p class="program-detail-plans-lead">All plans include yBook + AI Tutor. Add live classes to progress faster.</p>' +
+      "</header>" +
+      '<div class="program-detail-plans-grid-wrap">' +
+      '<div class="program-detail-plans-grid" role="list">' +
+      plansHtml +
+      "</div>" +
+      "</div>" +
+      '<ul class="program-detail-perks program-detail-perks--inline">' +
+      "<li><span class=\"program-detail-perk-icon\" aria-hidden=\"true\">⏱</span>Micro class = 30 min focused session</li>" +
+      "<li><span class=\"program-detail-perk-icon\" aria-hidden=\"true\">🤖</span>AI analyses errors after every live class</li>" +
+      "<li><span class=\"program-detail-perk-icon\" aria-hidden=\"true\">📅</span>Unused classes roll over to next month</li>" +
+      "</ul>" +
+      '<p class="program-detail-plans-footnote">Prices in EUR. Cancel anytime.</p>' +
+      "</section>"
+    );
+  }
+
+  function buildProgramOverviewParagraphs(program) {
+    var level = getProgramLevel(program.levelId);
+    var categoryLabel = PROGRAM_CATEGORY_LABELS[program.category] || program.category;
+    var paragraphs = [program.description];
+
+    if (program.category === "general") {
+      paragraphs.push(
+        "Ступень линейной программы " +
+          categoryLabel +
+          " для уровня " +
+          (level ? level.label + " (" + level.cefr + ")" : program.levelId) +
+          ": говорение, аудирование, чтение и письмо в связной повседневной и учебной практике."
+      );
+    } else if (program.category === "business") {
+      paragraphs.push(
+        "Программа " +
+          categoryLabel +
+          " для уровня " +
+          (level ? level.label : program.levelId) +
+          " — переписка, созвоны, встречи и деловые ситуации в работе."
+      );
+    } else {
+      paragraphs.push(
+        "Специализированный курс с узким фокусом: вы тренируете конкретный навык поверх базовой программы English."
+      );
+    }
+
+    if (program.base) {
+      paragraphs.push(
+        "Модуль опирается на " +
+          formatProgramBaseLabel(program.base) +
+          " — рекомендуем подтвердить базовый уровень с преподавателем перед стартом."
+      );
+    }
+
+    return paragraphs;
+  }
+
+  function updateProgramsViewMode() {
+    var catalog = document.getElementById("programs-catalog");
+    var detail = document.getElementById("program-detail");
+    var inDetail = !!state.programDetailId;
+    if (catalog) catalog.hidden = inDetail;
+    if (detail) detail.hidden = !inDetail;
+  }
+
+  function openProgramDetail(programId) {
+    if (!getProgramById(programId)) return;
+    state.programDetailId = programId;
+    if (!state.subscriptionPlanId) state.subscriptionPlanId = "standard";
+    updateProgramsViewMode();
+    renderProgramDetailPage();
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function closeProgramDetail() {
+    state.programDetailId = null;
+    updateProgramsViewMode();
+    renderProgramsPage();
+  }
+
+  function renderProgramDetailPage() {
+    var container = document.getElementById("program-detail");
+    if (!container || !state.programDetailId) return;
+
+    var program = getProgramById(state.programDetailId);
+    if (!program) {
+      closeProgramDetail();
+      return;
+    }
+
+    var level = getProgramLevel(program.levelId);
+    var enrolledId = getEnrolledProgramId();
+    var isEnrolled = program.id === enrolledId;
+    var overview = buildProgramOverviewParagraphs(program);
+    var tagsHtml = (program.tags || [])
+      .map(function (tag) {
+        return '<span class="program-card-tag">' + esc(tag) + "</span>";
+      })
+      .join("");
+
+    var baseHtml = "";
+    if (program.base) {
+      baseHtml =
+        '<div class="program-detail-base">' +
+        "🔗 Построено на базе <strong>" +
+        esc(formatProgramBaseLabel(program.base)) +
+        "</strong></div>";
+    }
+
+    container.innerHTML =
+      '<div class="program-detail-layout">' +
+      '<div class="program-detail-main">' +
+      '<button type="button" class="program-detail-back" id="btn-program-detail-back">← Все программы</button>' +
+      '<header class="program-detail-head">' +
+      '<div class="program-detail-badges">' +
+      '<span class="program-card-badge program-card-badge--level">' +
+      esc(level ? level.label : program.levelId) +
+      "</span>" +
+      (level
+        ? '<span class="program-card-badge program-card-badge--cefr">' +
+          esc(level.cefr) +
+          "</span>"
+        : "") +
+      (isEnrolled
+        ? '<span class="program-card-badge program-card-badge--active">Ваша программа</span>'
+        : "") +
+      "</div>" +
+      '<p class="program-detail-category">' +
+      esc(PROGRAM_CATEGORY_LABELS[program.category] || program.category) +
+      "</p>" +
+      "<h1 class=\"program-detail-title\">" +
+      esc(program.title) +
+      "</h1>" +
+      "</header>" +
+      '<section class="program-detail-section" aria-labelledby="program-about-title">' +
+      '<h2 class="program-detail-section-title" id="program-about-title">О курсе</h2>' +
+      overview
+        .map(function (paragraph) {
+          return '<p class="program-detail-text">' + esc(paragraph) + "</p>";
+        })
+        .join("") +
+      "</section>" +
+      '<section class="program-detail-section" aria-labelledby="program-format-title">' +
+      '<h2 class="program-detail-section-title" id="program-format-title">Формат обучения</h2>' +
+      '<div class="program-detail-format">' +
+      '<span class="program-detail-format-icon" aria-hidden="true">⏱</span>' +
+      '<div class="program-detail-format-body">' +
+      '<p class="program-detail-format-title">Ежедневный ритм программы</p>' +
+      '<p class="program-detail-format-text">Программа рассчитана на <strong>30 минут self-study</strong> на платформе и <strong>30 минут живого урока</strong> с преподавателем. Такой формат помогает закреплять материал самостоятельно и сразу отрабатывать его в разговоре.</p>' +
+      "</div>" +
+      "</div>" +
+      "</section>" +
+      '<section class="program-detail-section">' +
+      '<h2 class="program-detail-section-title">Что входит</h2>' +
+      '<div class="program-detail-meta">' +
+      "<span>" +
+      program.classes +
+      " Class с преподавателем</span>" +
+      "<span>~" +
+      program.weeks +
+      " " +
+      pluralize(program.weeks, "неделя", "недели", "недель") +
+      " программы</span>" +
+      "<span>Self-study + live каждый учебный день</span>" +
+      "</div>" +
+      (tagsHtml ? '<div class="program-detail-tags">' + tagsHtml + "</div>" : "") +
+      baseHtml +
+      "</section>" +
+      "</div>" +
+      renderProgramDetailPlansSection(program) +
+      "</div>";
   }
 
   function renderProgramsPage() {
@@ -2631,21 +3003,11 @@
     var enrolled = enrolledId ? getProgramById(enrolledId) : null;
     if (currentSection) {
       if (enrolled) {
-        var enrolledLevel = getProgramLevel(enrolled.levelId);
         currentSection.hidden = false;
-        setText("programs-current-title", enrolled.title);
-        setText(
-          "programs-current-meta",
-          (enrolledLevel ? enrolledLevel.label + " · " + enrolledLevel.cefr + " · " : "") +
-            enrolled.classes +
-            " Class · ~" +
-            enrolled.weeks +
-            " " +
-            pluralize(enrolled.weeks, "неделя", "недели", "недель") +
-            (enrolled.base ? " · база: " + formatProgramBaseLabel(enrolled.base) : "")
-        );
+        currentSection.innerHTML = renderProgramCard(enrolled, enrolledId, null, "hero");
       } else {
         currentSection.hidden = true;
+        currentSection.innerHTML = "";
       }
     }
   }
@@ -2675,20 +3037,50 @@
     var grid = document.getElementById("programs-grid");
     if (grid) {
       grid.addEventListener("click", function (event) {
-        var btn = event.target.closest(".program-select-btn");
+        var btn = event.target.closest(".program-view-btn");
         if (!btn) return;
+        event.stopPropagation();
         var programId = btn.dataset.programId;
         if (!programId) return;
-        saveEnrolledProgramId(programId);
-        renderProgramsPage();
-        renderCurriculumProgram();
+        openProgramDetail(programId);
       });
     }
 
-    var continueBtn = document.getElementById("btn-programs-continue");
-    if (continueBtn) {
-      continueBtn.addEventListener("click", function () {
-        setAppNavView("home");
+    var programsView = document.getElementById("view-programs");
+    if (programsView) {
+      programsView.addEventListener("click", function (event) {
+        if (event.target.closest("#btn-programs-continue")) {
+          setAppNavView("home");
+          return;
+        }
+
+        if (event.target.closest(".program-continue-btn")) {
+          return;
+        }
+
+        if (event.target.closest(".program-view-btn")) {
+          return;
+        }
+
+        if (event.target.closest("#btn-program-detail-back")) {
+          closeProgramDetail();
+          return;
+        }
+
+        if (event.target.closest(".program-plan-card-btn")) {
+          var planBtn = event.target.closest(".program-plan-card-btn");
+          var checkoutProgramId = planBtn.dataset.programId || state.programDetailId;
+          var checkoutPlanId = planBtn.dataset.planId;
+          if (checkoutProgramId && checkoutPlanId) {
+            goToProgramCheckout(checkoutProgramId, checkoutPlanId);
+          }
+          return;
+        }
+
+        var card = event.target.closest(".program-card[data-program-id]");
+        if (card) {
+          openProgramDetail(card.dataset.programId);
+        }
       });
     }
   }
@@ -4778,8 +5170,8 @@
     wrap.innerHTML =
       '<svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">' +
       '<defs><linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>' +
-      '<stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>' +
+      '<stop offset="0%" stop-color="#6687FF" stop-opacity="0.3"/>' +
+      '<stop offset="100%" stop-color="#6687FF" stop-opacity="0"/>' +
       "</linearGradient></defs>" +
       '<line class="chart-grid-line" x1="40" y1="20" x2="560" y2="20"/>' +
       '<line class="chart-grid-line" x1="40" y1="65" x2="560" y2="65"/>' +
@@ -4809,7 +5201,7 @@
       last.x +
       '" y="' +
       (last.y - 12) +
-      '" text-anchor="middle" fill="#4f46e5" font-size="13" font-weight="700" font-family="Inter,sans-serif">' +
+      '" text-anchor="middle" fill="#6687FF" font-size="13" font-weight="700" font-family="Inter,sans-serif">' +
       formatScore(last.score) +
       "</text></svg>" +
       '<div class="chart-labels">' +

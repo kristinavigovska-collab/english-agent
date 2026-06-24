@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-9" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-22" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -742,8 +742,8 @@
             <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">
               <defs>
                 <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>
+                  <stop offset="0%" stop-color="#6687FF" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#6687FF" stop-opacity="0"/>
                 </linearGradient>
               </defs>
               <line class="chart-grid-line" x1="40" y1="20"  x2="560" y2="20"/>
@@ -762,8 +762,8 @@
               <circle class="chart-dot" cx="301" cy="75.35" r="4"/>
               <circle class="chart-dot" cx="388" cy="69.95" r="4"/>
               <circle class="chart-dot" cx="475" cy="63.2"  r="4"/>
-              <circle class="chart-dot" cx="562" cy="60.5"  r="5" style="fill:#4f46e5;stroke:#fff;stroke-width:2.5"/>
-              <text x="562" y="48" text-anchor="middle" fill="#4f46e5" font-size="13" font-weight="700" font-family="Inter,sans-serif">7.0</text>
+              <circle class="chart-dot" cx="562" cy="60.5"  r="5" style="fill:#6687FF;stroke:#fff;stroke-width:2.5"/>
+              <text x="562" y="48" text-anchor="middle" fill="#6687FF" font-size="13" font-weight="700" font-family="Inter,sans-serif">7.0</text>
             </svg>
             <div class="chart-labels">
               <span>14 апр</span>
@@ -894,6 +894,7 @@
     </div>
 
     <div class="app-view" id="view-programs" hidden>
+      <div id="programs-catalog">
       <div class="programs-page">
         <header class="programs-page-head">
           <h1 class="programs-page-title">Программы обучения</h1>
@@ -902,15 +903,7 @@
           </p>
         </header>
 
-        <section class="programs-current" id="programs-current" hidden aria-label="Текущая программа">
-          <div class="programs-current-icon" aria-hidden="true">✓</div>
-          <div class="programs-current-body">
-            <p class="programs-current-kicker">Ваша программа</p>
-            <h2 class="programs-current-title" id="programs-current-title">—</h2>
-            <p class="programs-current-meta" id="programs-current-meta">—</p>
-          </div>
-          <button type="button" class="btn btn-primary programs-current-btn" id="btn-programs-continue">Продолжить обучение</button>
-        </section>
+        <div class="programs-grid programs-grid--current" id="programs-current" hidden aria-label="Ваша выбранная программа"></div>
 
         <div class="programs-filters">
           <div class="programs-category-tabs" role="tablist" aria-label="Категория программ">
@@ -945,6 +938,9 @@
           Нет программ для выбранного уровня. Попробуйте другой фильтр или категорию.
         </p>
       </div>
+      </div>
+
+      <div class="program-detail-page" id="program-detail" hidden></div>
     </div>
 
     <div class="app-view" id="view-analytics" hidden>
@@ -1180,7 +1176,7 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260623-8" defer></script>
+  <script src="/static/dashboard.js?v=20260623-19" defer></script>
 
 </body>
 </html>
