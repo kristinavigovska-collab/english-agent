@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-06-21
+Last updated: 2026-06-23
 
 ## Decisions
 
@@ -14,6 +14,9 @@ Last updated: 2026-06-21
 | Personal Gmail | Disconnected from Recall; removed from GCP test users |
 | Lesson topic | Calendar event title / Recall metadata → `lessons.lesson_topic` via webhook |
 | Study intensity | Presets `once_week` / `few_times_week` / `daily` on `students`; drives plan + curriculum pacing |
+| Programs (June 2026) | Per-program subscription model in **UI**; catalog + plans in `dashboard.js`; enrollment in `localStorage` only |
+| Lesson format (product) | 30 min self-study (yBook + AI) + 30 min live micro class — stated on program detail page |
+| Dashboard accent | `#6687FF` (CSS `--accent`) |
 
 ## Phase 0–1 — completed
 
@@ -32,16 +35,35 @@ Last updated: 2026-06-21
 
 ### Completed (June 2026)
 
+**Lessons & reports (backend)**
+
 - [x] Goal + study plan (`goal_plan_service`, migrations 001–002)
 - [x] Study intensity presets (`intensity_config`, migration 006, `PATCH /goal`)
 - [x] Daily progress backend — `daily_progress`, `POST /practice` (migration 003)
 - [x] Error pattern tracking — stuck/new badges, plan +10% multiplier (migration 004)
 - [x] `lessons.lesson_topic` column + webhook wiring (migration 005)
-- [x] Dashboard sidebar: CEFR levels, collapsible **«Цель и план»** card (`sidebar_goal_collapsed` in `localStorage`)
-- [x] Curriculum program UI — filters, single-scroll «Все» list anchored on current Class (placeholder data in JS)
-- [x] Main tabs: current lesson, summary, detailed report, **«Активность»** (metrics, breakdown, 16-week heatmap, day popover)
-- [x] Expandable grammar, stuck-topic block, lesson topic plaque
 - [x] `PATCH /api/students/{id}/goal`
+
+**Dashboard UI**
+
+- [x] App nav: Home · Programs · Analytics (English labels)
+- [x] Home: Class summary tabs, sidebar goal/plan, curriculum list (placeholder classes)
+- [x] Analytics: activity heatmap, usage breakdown, **Общий прогресс** tab with pace alerts
+- [x] Programs: catalog (General / Business / Special), program detail page, horizontal EUR plan cards
+- [x] Expandable grammar, stuck-topic block, lesson topic plaque
+- [x] Selected program card in catalog grid; «Посмотреть программу» → detail
+
+### Phase 2b — Programs & subscriptions (UI only)
+
+| Done in UI | Not built yet |
+|------------|----------------|
+| `PROGRAM_CATALOG` (16 placeholder programs) | `programs` table in Supabase |
+| Program detail + 5 EUR plans (free_trial … intensive) | `program_plans` in DB |
+| `localStorage.enrolled_program_id` | `student_enrollments` / API |
+| Checkout links `/checkout?plan=…&program=…` | Checkout route, Stripe |
+| Sidebar curriculum (`PLACEHOLDER_CEFR_CURRICULUM`) | Linked to enrolled program |
+
+**Agent rule:** do not assume enrollment in DB or that programs affect the Recall webhook until Phase 3 backend lands.
 
 ### P0 — test one real lesson
 
@@ -52,15 +74,24 @@ Last updated: 2026-06-21
 5. After lesson: Supabase `reports` + `lessons.lesson_topic` + Recall webhook logs. Re-run if needed: `scripts/reprocess_lesson.py`.
 6. Apply migrations **005** and **006** on Supabase if columns missing.
 
-### P1 — student-facing (remaining)
+### P1 — programs backend (next after live lesson proof)
 
-- [ ] Replace curriculum placeholder with school program / materials API
+- [x] Migration `007_add_programs_catalog.sql` — `programs`, `program_plans`, `student_enrollments` + seed (file in repo; **apply on Supabase**)
+- [x] `docs/PROGRAMS.md` — catalog, plans, enrollment model, planned API
+- [ ] `GET /api/programs`, `GET /api/students/{id}/enrollment`
+- [ ] Replace `localStorage.enrolled_program_id` with server state
+- [ ] Sidebar curriculum driven by enrolled program (not separate placeholder)
+- [ ] Optional: `lessons.program_id` on webhook
+
+### P1 — student-facing (other)
+
 - [ ] Student login: email → magic link (no UUID in URL)
 - [ ] UI to mark self-study (`POST /practice` exists; no dashboard button yet)
-- [ ] Real platform session time (heatmap «время на платформе» = sum of recorded lesson/self-study minutes today)
+- [ ] Real platform session time (heatmap «время на платформе»)
 
-### P2 — school ops
+### P2 — school ops & monetization
 
+- Checkout / Stripe for per-program subscription
 - `schools` table + school calendar account docs for teachers
 - Auto-email “report ready” after webhook
 - Wire book-class / self-study curriculum overlays to scheduling + materials
@@ -92,14 +123,16 @@ Last updated: 2026-06-21
 | Gap | Notes |
 |-----|--------|
 | Dashboard auth | `student_id` in URL is public — anyone with UUID sees reports |
-| Curriculum data | UI complete; program list is hardcoded placeholder in `dashboard.js` |
-| Activity data model | `daily_progress` = one row per day, one `source` (`lesson` \| `self_practice`); popover shows three metrics but a day is usually lesson **or** self-study |
+| Programs data | Catalog, plans, enrollment — **client-only** in `dashboard.js` / `localStorage` |
+| Curriculum vs Programs | Two separate placeholders; not synced |
+| Checkout | URL stub only; no payment integration |
+| Activity data model | `daily_progress` = one row per day, one `source` (`lesson` \| `self_practice`) |
 | Mark practice UI | `POST /practice` API works; no student-facing button in dashboard yet |
 | UI vs Claude | Demo shows pronunciation/wpm; API does not — hidden on live load |
 | Render free | Cold start ~30–50 s; ping `/` before lessons |
 | Calendar filter | Use separate Google calendar; Recall UI limited |
 | pytest | Not in `requirements.txt` — `pip install pytest` for `tests/` |
-| Migrations 005–006 | SQL files exist; confirm applied on Supabase prod |
+| Migrations 005–007 | SQL files exist; confirm applied on Supabase prod |
 
 ## Pitfalls we hit
 
@@ -112,11 +145,13 @@ Last updated: 2026-06-21
 - Agents often cite old docs saying webhook secret is “unused” — it is **implemented**; check env sync if webhooks fail
 - After editing `dashboard.js` / `dashboard.css`, bump `?v=` in `dashboard.html` for cache bust on Render
 - Curriculum scroll anchor: use layout-settled scroll (`rAF` + short delay) after goal/plan collapse toggles
-- `.cefr-journey { margin-bottom: 0 }` can swallow sidebar spacing — goal/plan section needs explicit margin
+- Do not document «Активность» on Home — it lives under **Analytics** since June 2026
+- `enrolled_program_id` in localStorage does **not** persist across devices or affect lesson pipeline
 
 ## Links
 
 - **Lesson day checklist:** `docs/LESSON_DAY.md`
 - **Schema migrations:** `docs/MIGRATIONS.md`
+- **Programs model:** `docs/PROGRAMS.md`
 - Deploy: `docs/DEPLOY_RENDER.md`
 - Architecture: `docs/ARCHITECTURE.md`

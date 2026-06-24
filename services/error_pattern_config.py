@@ -1,11 +1,15 @@
-"""Thresholds for recurring error pattern tracking."""
+"""Thresholds for recurring error pattern tracking — re-exported from app_config (ADR-002)."""
 
-# Lessons in a row with the same category → "stuck"
-STUCK_LESSONS_THRESHOLD = 3
+from services.app_config import (
+    RESOLVED_ABSENCE_LESSONS,
+    STUCK_LESSONS_THRESHOLD,
+    STUCK_LOAD_MIN_CATEGORIES,
+    STUCK_LOAD_MULTIPLIER,
+)
 
-# Lessons without the category after being stuck → "resolved"
-RESOLVED_ABSENCE_LESSONS = 2
-
-# Study-plan load bump when many stuck patterns slow real progress
-STUCK_LOAD_MULTIPLIER = 1.10
-STUCK_LOAD_MIN_CATEGORIES = 2
+__all__ = [
+    "STUCK_LESSONS_THRESHOLD",
+    "RESOLVED_ABSENCE_LESSONS",
+    "STUCK_LOAD_MULTIPLIER",
+    "STUCK_LOAD_MIN_CATEGORIES",
+]

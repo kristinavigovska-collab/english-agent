@@ -1,33 +1,21 @@
 (function () {
   var STUDENT_ID = window.STUDENT_ID || "";
   var isDemo =
-    !STUDENT_ID ||
-    STUDENT_ID === "__STUDENT_ID__" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      STUDENT_ID
-    );
+    typeof DashboardApi !== "undefined"
+      ? DashboardApi.isDemoStudentId(STUDENT_ID)
+      : !STUDENT_ID ||
+        STUDENT_ID === "__STUDENT_ID__" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          STUDENT_ID
+        );
 
-  var CEFR_CAPTION = "Уровень CEFR (международная шкала A1–C2)";
-
-  var CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-  var HOURS_PER_CEFR_LEVEL = 190;
-  var SCENARIO_COEFF = 0.5;
-  var PLAN_DISCLAIMER =
-    "Расчёт на основе средних нормативов CEFR (~190 ч/уровень), уточняется по мере вашего прогресса";
-  var PLAN_DISCLAIMER_SHORT = "На основе нормативов CEFR";
-  var DURATION_WEEKS_MIN = 1;
-  var DURATION_WEEKS_MAX = 104;
-  var STUCK_LESSONS_THRESHOLD = 3;
-  var RESOLVED_ABSENCE_LESSONS = 2;
-  var STUCK_LOAD_MULTIPLIER = 1.1;
-  var STUCK_LOAD_MIN_CATEGORIES = 2;
   var SIDEBAR_WIDTH_KEY = "sidebar_width";
   var SIDEBAR_WIDTH_DEFAULT = 360;
   var SIDEBAR_WIDTH_MIN = 360;
   var SIDEBAR_WIDTH_MAX = 480;
   var SIDEBAR_WIDTH_MAX_RATIO = 0.4;
   var GOAL_PLAN_COLLAPSED_KEY = "sidebar_goal_collapsed";
-  var ACTIVITY_HEATMAP_WEEKS = 16;
+  var ACTIVITY_HEATMAP_WEEKS_DEFAULT = 16;
   var MONTH_SHORT_RU = [
     "янв",
     "фев",
@@ -43,7 +31,47 @@
     "дек",
   ];
 
-  // PLACEHOLDER curriculum — replace with school program / textbook API when available.
+  function cfg(path, fallback) {
+    return typeof DashboardApi !== "undefined"
+      ? DashboardApi.cfg(path, fallback)
+      : fallback;
+  }
+
+  function cefrLevels() {
+    return cfg("cefr_levels", []);
+  }
+
+  function planDisclaimer() {
+    return cfg("plan_disclaimer", "");
+  }
+
+  function planDisclaimerShort() {
+    return cfg("plan_disclaimer_short", "");
+  }
+
+  function stuckThresholdLessons() {
+    return cfg("stuck_threshold_lessons", 3);
+  }
+
+  function durationWeeksMin() {
+    return cfg("duration_weeks_min", 1);
+  }
+
+  function durationWeeksMax() {
+    return cfg("duration_weeks_max", 104);
+  }
+
+  function activityHeatmapWeeks() {
+    return cfg("activity_heatmap_weeks", ACTIVITY_HEATMAP_WEEKS_DEFAULT);
+  }
+
+  function cefrCaption() {
+    return cfg("cefr_caption", "Уровень CEFR (международная шкала A1–C2)");
+  }
+
+  // DEPRECATED (ADR-001): не использовать для сайдбара «Программа обучения».
+  // Curriculum строится из PROGRAM_CATALOG через StudentLearningContext.
+  // Оставлено временно для совместимости; будет удалено при подключении school API.
   var PLACEHOLDER_CEFR_CURRICULUM = {
     A1: [
       "Знакомство и приветствия",
@@ -95,46 +123,9 @@
     ],
   };
 
-  var INTENSITY_PRESETS = {
-    once_week: {
-      label: "1 раз в неделю",
-      classesPerWeek: 1,
-      tutorLessons: 1,
-      practiceDays: 1,
-    },
-    few_times_week: {
-      label: "2–3 раза в неделю",
-      classesPerWeek: 2.5,
-      tutorLessons: 3,
-      practiceDays: 3,
-    },
-    daily: {
-      label: "Каждый день",
-      classesPerWeek: 7,
-      tutorLessons: 7,
-      practiceDays: 7,
-    },
-  };
-
-  var ERROR_CATEGORY_LABELS = {
-    third_person_singular: "Согласование 3-го лица ед.ч.",
-    noun_plural: "Множественное число существительных",
-    verb_preposition: "Предлоги после глаголов",
-    tense_agreement: "Согласование времён",
-    past_simple: "Past Simple",
-    present_perfect: "Present Perfect / Past vs Perfect",
-    conditionals: "Условные предложения",
-    question_formation: "Построение вопросов",
-    possessive: "Притяжательный падеж",
-    articles: "Артикли (a/an/the)",
-    comparatives: "Сравнительная и превосходная степень",
-    gerunds_infinitives: "Gerund vs Infinitive",
-    much_many: "Much vs Many / исчисляемость",
-    word_order: "Порядок слов",
-    fillers_coherence: "Слова-филлеры / связность речи",
-    modals: "Модальные глаголы",
-    other: "Прочее",
-  };
+  var NAV_VIEW_KEY = "app_nav_view";
+  var NAV_COLLAPSED_KEY = "app_nav_collapsed";
+  var ENROLLED_PLAN_KEY = "enrolled_plan_id";
 
   var state = {
     reports: [],
@@ -176,232 +167,9 @@
     programsFilterBound: false,
     programDetailId: null,
     subscriptionPlanId: "standard",
+    learningContext: null,
+    serverCurriculum: null,
   };
-
-  var DEMO_GOAL = {
-    goal_type: "scenario_based",
-    target_cefr_level: "C1",
-    target_duration_weeks: 26,
-    target_date: "2026-12-01",
-    goal_label: "собеседование на позицию менеджера",
-    scenario_description: "собеседование на позицию менеджера",
-    goal_set_date: "2026-04-14",
-    goal_start_cefr_level: "A1",
-    tutor_lessons_per_week: 2,
-    tutor_lesson_minutes: 60,
-    practice_days_per_week: 6,
-    study_intensity_preset: null,
-  };
-
-  var DEMO_REPORTS = [
-    {
-      id: "demo-7",
-      lesson_date: "2026-05-28T14:00:00Z",
-      created_at: "2026-05-28T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "She don't like spicy food",
-          correction: "She doesn't like spicy food",
-          explanation:
-            "В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.",
-          error_category: "third_person_singular",
-        },
-        {
-          error: "I am living here since 2020",
-          correction: "I have lived here since 2020",
-          explanation:
-            "Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.",
-          error_category: "present_perfect",
-        },
-        {
-          error: "I have went to Paris last year",
-          correction: "I went to Paris last year",
-          explanation:
-            "Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.",
-          error_category: "past_simple",
-        },
-        {
-          error: "More better than before",
-          correction: "Much better than before",
-          explanation:
-            "У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.",
-          error_category: "comparatives",
-        },
-      ],
-      vocabulary_level: "B1",
-      fluency_score: 8,
-      lesson_topic: "Travel & Past Tenses",
-      weak_topics: ["Past Simple vs Present Perfect", "Comparatives", "Ed/-ing adjectives"],
-      recommendations: ["Gap-fill: 15 предложений на времена", "Role-play: booking a hotel", "Shadowing: travel podcast"],
-    },
-    {
-      id: "demo-6",
-      lesson_date: "2026-05-19T14:00:00Z",
-      created_at: "2026-05-19T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "If I will have time, I will call you",
-          correction: "If I have time, I will call you",
-          explanation:
-            "В First Conditional (реальное условие) после if используется Present Simple, а не will. Will стоит только в главной части предложения.",
-          error_category: "conditionals",
-        },
-        {
-          error: "He suggested to go earlier",
-          correction: "He suggested going earlier",
-          explanation:
-            "После suggest нужен gerund (-ing), а не infinitive с to. Правильно: suggest doing something.",
-          error_category: "gerunds_infinitives",
-        },
-        {
-          error: "She don't want to wait",
-          correction: "She doesn't want to wait",
-          explanation:
-            "В Present Simple с she/he/it — doesn't + базовая форма глагола.",
-          error_category: "third_person_singular",
-        },
-      ],
-      vocabulary_level: "B1",
-      fluency_score: 7.5,
-      weak_topics: ["Conditionals", "Gerunds after suggest"],
-      recommendations: ["Упражнения на 1st conditional", "Пересказ диалога из подкаста"],
-    },
-    {
-      id: "demo-5",
-      lesson_date: "2026-05-12T14:00:00Z",
-      created_at: "2026-05-12T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "I didn't went there",
-          correction: "I didn't go there",
-          explanation:
-            "После didn't (Past Simple) идёт базовая форма глагола (go), а не Past Simple (went).",
-          error_category: "past_simple",
-        },
-        {
-          error: "Much people were waiting",
-          correction: "Many people were waiting",
-          explanation:
-            "Much используется с неисчисляемыми существительными. People — исчисляемое, поэтому many.",
-          error_category: "much_many",
-        },
-        {
-          error: "She is teacher",
-          correction: "She is a teacher",
-          explanation:
-            "Перед профессией в единственном числе нужен неопределённый артикль a/an: a teacher.",
-          error_category: "articles",
-        },
-        {
-          error: "My brother work in London",
-          correction: "My brother works in London",
-          explanation:
-            "В Present Simple с he/she/it глагол получает окончание -s: works.",
-          error_category: "third_person_singular",
-        },
-      ],
-      vocabulary_level: "A2",
-      fluency_score: 7,
-      weak_topics: ["Articles", "Much vs many", "Past Simple"],
-      recommendations: ["Статьи a/an/the — 10 предложений", "Повторить irregular verbs"],
-    },
-    {
-      id: "demo-4",
-      lesson_date: "2026-05-05T14:00:00Z",
-      created_at: "2026-05-05T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "I look forward to meet you",
-          correction: "I look forward to meeting you",
-          explanation:
-            "Look forward to — устойчивое сочетание, после to здесь идёт gerund (-ing), а не infinitive.",
-        },
-      ],
-      vocabulary_level: "A2",
-      fluency_score: 6.5,
-      weak_topics: ["Gerunds after prepositions"],
-      recommendations: ["Составить 5 писем с look forward to"],
-    },
-    {
-      id: "demo-3",
-      lesson_date: "2026-04-28T14:00:00Z",
-      created_at: "2026-04-28T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "He don't know the answer",
-          correction: "He doesn't know the answer",
-          explanation:
-            "В Present Simple с he/she/it вспомогательный — doesn't + базовая форма глагола.",
-        },
-        {
-          error: "I am agree with you",
-          correction: "I agree with you",
-          explanation:
-            "Agree — глагол состояния (stative verb), не используется с am/is/are. Правильно: I agree.",
-        },
-      ],
-      vocabulary_level: "A2",
-      fluency_score: 6,
-      weak_topics: ["Present Simple", "State verbs"],
-      recommendations: ["Диалог: согласие и несогласие"],
-    },
-    {
-      id: "demo-2",
-      lesson_date: "2026-04-21T14:00:00Z",
-      created_at: "2026-04-21T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "I have 25 years old",
-          correction: "I am 25 years old",
-          explanation:
-            "Возраст выражается через to be: I am + число + years old. Have здесь не используется.",
-        },
-        {
-          error: "She is more tall than me",
-          correction: "She is taller than me",
-          explanation:
-            "У односложных прилагательных сравнительная степень — суффикс -er (taller), без more.",
-        },
-      ],
-      vocabulary_level: "A2",
-      fluency_score: 5.5,
-      weak_topics: ["To be", "Comparatives"],
-      recommendations: ["Описать семью — 10 предложений"],
-    },
-    {
-      id: "demo-1",
-      lesson_date: "2026-04-14T14:00:00Z",
-      created_at: "2026-04-14T14:00:00Z",
-      grammar_errors: [
-        {
-          error: "I go to school yesterday",
-          correction: "I went to school yesterday",
-          explanation:
-            "Yesterday — маркер Past Simple. Нужна форма went, а не go (Present Simple).",
-        },
-        {
-          error: "He can to swim",
-          correction: "He can swim",
-          explanation:
-            "После модального глагола can идёт базовая форма без to: can swim.",
-        },
-        {
-          error: "She is speak English",
-          correction: "She speaks English",
-          explanation:
-            "Present Simple: с she/he/it глагол получает -s (speaks). Is используется только для Continuous или пассива.",
-        },
-      ],
-      vocabulary_level: "A1",
-      fluency_score: 5,
-      weak_topics: ["Past Simple", "Modals", "Present Simple"],
-      recommendations: ["Базовые глаголы — карточки", "Present Simple — 10 фраз о себе"],
-    },
-  ];
-
-  var NAV_VIEW_KEY = "app_nav_view";
-  var NAV_COLLAPSED_KEY = "app_nav_collapsed";
-  var ENROLLED_PROGRAM_KEY = "enrolled_program_id";
 
   var PROGRAM_LEVELS = {
     beginner: { id: "beginner", label: "Beginner", cefr: "A1", order: 1 },
@@ -699,100 +467,28 @@
     },
   ];
 
-  initSidebarResize();
-  initGrammarToggles();
-  initGoalModal();
-  initGoalPlanCollapse();
-  initStudyPlanCollapse();
-  initActivityHeatmapPopover();
-  initAppNav();
-  initProgramsPage();
-
-  document.querySelectorAll("#view-home .tab, #view-analytics .analytics-tab").forEach(function (tab) {
-    tab.addEventListener("click", function () {
-      var root = tab.closest(".app-view");
-      activateTab(tab.dataset.tab, root);
-    });
-  });
-
-  initLessonNavigation();
-  initCurriculumFilters();
-  initCurriculumActions();
-
-  if (isDemo) {
-    var loadingDemo = document.getElementById("dash-loading");
-    if (loadingDemo) loadingDemo.hidden = true;
-    state.reports = sortReports(DEMO_REPORTS);
-    refreshErrorTracking();
-    state.studentName = "Кристина Виговская";
-    state.goal = DEMO_GOAL;
-    state.studyPlan = computeStudyPlanClient(DEMO_GOAL, state.reports, state.errorTracking);
-    state.progressTracker = buildDemoProgressTracker(DEMO_GOAL, state.reports);
-    renderStudentOverview();
-    if (state.reports.length) {
-      selectLesson(state.reports[0].id, { switchTab: false });
-    }
-    return;
+  if (typeof EnrollmentState !== "undefined") {
+    EnrollmentState.init(PROGRAM_CATALOG, PROGRAM_LEVELS);
   }
 
-  var loadingEl = document.getElementById("dash-loading");
-  var errorEl = document.getElementById("dash-error");
-  var mainEl = document.querySelector(".main");
+  function handleEnrollmentConfirmed() {
+    state.curriculumStubProgress = {};
+    rebuildStudentLearningContext();
+    renderStudentOverview();
+  }
 
-  if (loadingEl) loadingEl.hidden = false;
-  if (mainEl) mainEl.style.visibility = "hidden";
+  function openProgramOnboarding(options) {
+    if (typeof ProgramOnboarding !== "undefined") {
+      ProgramOnboarding.open(options || {});
+    }
+  }
 
-  fetch("/api/students/" + encodeURIComponent(STUDENT_ID) + "/reports")
-    .then(function (res) {
-      if (!res.ok) {
-        return res.json().then(function (body) {
-          throw new Error(body.detail || res.statusText);
-        });
-      }
-      return res.json();
-    })
-    .then(function (data) {
-      document.querySelectorAll(".demo-only").forEach(function (el) {
-        el.hidden = true;
-      });
-      state.reports = sortReports(data.reports || []);
-      state.studentName = data.student_name || data.student_email || "Студент";
-      state.goal = {
-        target_cefr_level: data.target_cefr_level || null,
-        target_date: data.target_date || null,
-        goal_label: data.goal_label || null,
-        goal_set_date: data.goal_set_date || null,
-        goal_type: data.goal_type || null,
-        target_duration_weeks: data.target_duration_weeks || null,
-        scenario_description: data.scenario_description || null,
-        tutor_lessons_per_week: data.tutor_lessons_per_week || 2,
-        tutor_lesson_minutes: data.tutor_lesson_minutes || 60,
-        practice_days_per_week: data.practice_days_per_week || 6,
-        study_intensity_preset: data.study_intensity_preset || null,
-      };
-      state.studyPlan = data.study_plan || null;
-      state.progressTracker = data.progress_tracker || null;
-      state.errorTracking = data.error_tracking || null;
-      renderStudentOverview();
-      if (!state.reports.length) {
-        setHtml("grammar-list-current", emptyMsg("Пока нет отчётов по урокам."));
-        setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
-        return;
-      }
-      selectLesson(state.reports[0].id, { switchTab: false });
-      renderChart(state.reports.slice().reverse());
-    })
-    .catch(function (err) {
-      if (errorEl) {
-        errorEl.textContent =
-          "Не удалось загрузить отчёты: " + (err.message || "ошибка сети");
-        errorEl.hidden = false;
-      }
-    })
-    .finally(function () {
-      if (loadingEl) loadingEl.hidden = true;
-      if (mainEl) mainEl.style.visibility = "";
-    });
+  function maybeOpenRequiredOnboarding() {
+    if (typeof EnrollmentState !== "undefined" && !EnrollmentState.isEnrolled()) {
+      openProgramOnboarding({ required: true });
+    }
+  }
+
 
   function initAppNav() {
     var shell = document.querySelector(".app-shell");
@@ -884,6 +580,7 @@
       /* ignore */
     }
   }
+  window.setAppNavView = setAppNavView;
 
   function initLessonNavigation() {
     if (state.historyBound) return;
@@ -1008,7 +705,7 @@
 
   function cefrIndex(level) {
     if (!level) return -1;
-    return CEFR_LEVELS.indexOf(String(level).toUpperCase());
+    return cefrLevels().indexOf(String(level).toUpperCase());
   }
 
   function cefrScore(level, fluency) {
@@ -1019,7 +716,8 @@
   }
 
   function categoryLabel(catId) {
-    return ERROR_CATEGORY_LABELS[catId] || ERROR_CATEGORY_LABELS.other;
+    var labels = cfg("error_category_labels", {}) || {};
+    return labels[catId] || labels.other || catId;
   }
 
   function inferErrorCategory(item) {
@@ -1038,312 +736,18 @@
     return "other";
   }
 
-  function categoriesInReport(report) {
-    var counts = {};
-    (report.grammar_errors || []).forEach(function (item) {
-      var cat = inferErrorCategory(item);
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
-    return counts;
-  }
 
   function reportChronoDate(report) {
     return parseIsoDate(report.lesson_date || report.created_at);
   }
 
-  function maxConsecutiveStreak(flags) {
-    var best = 0;
-    var current = 0;
-    flags.forEach(function (flag) {
-      if (flag) {
-        current += 1;
-        best = Math.max(best, current);
-      } else {
-        current = 0;
-      }
-    });
-    return best;
-  }
 
-  function consecutiveAtEnd(flags) {
-    var count = 0;
-    for (var i = flags.length - 1; i >= 0; i -= 1) {
-      if (flags[i]) count += 1;
-      else break;
-    }
-    return count;
-  }
 
-  function absentFromLastN(flags, n) {
-    if (flags.length < n) return false;
-    for (var i = flags.length - n; i < flags.length; i += 1) {
-      if (flags[i]) return false;
-    }
-    return true;
-  }
 
-  function classifyPatternStatus(flags, consecutive, maxStreak, firstIdx, numLessons) {
-    if (!numLessons || !flags.some(Boolean)) return "inactive";
-    var wasStuck = maxStreak >= STUCK_LESSONS_THRESHOLD;
-    var isNew = firstIdx === numLessons - 1 && flags[numLessons - 1];
-    if (consecutive >= STUCK_LESSONS_THRESHOLD) return "stuck";
-    if (isNew) return "new";
-    if (wasStuck && consecutive === 0 && absentFromLastN(flags, RESOLVED_ABSENCE_LESSONS)) {
-      return "resolved";
-    }
-    if (flags[numLessons - 1] || consecutive > 0) return "recurring";
-    return "inactive";
-  }
 
-  function buildErrorTracking(reports) {
-    var sorted = reports.slice().sort(function (a, b) {
-      return (reportChronoDate(a) || 0) - (reportChronoDate(b) || 0);
-    });
-    if (!sorted.length) {
-      return { patterns: [], stuck_patterns: [], new_patterns: [], stuck_topics: [] };
-    }
 
-    var categoryMap = {};
-    sorted.forEach(function (report) {
-      var counts = categoriesInReport(report);
-      Object.keys(counts).forEach(function (cat) {
-        if (!categoryMap[cat]) categoryMap[cat] = [];
-        categoryMap[cat].push({
-          lesson_id: report.lesson_id || report.id,
-          report_id: report.id,
-          date: isoDateOnly(reportChronoDate(report) || new Date()),
-          count_in_lesson: counts[cat],
-        });
-      });
-    });
 
-    var patterns = Object.keys(categoryMap).map(function (cat) {
-      var occs = categoryMap[cat];
-      var flags = sorted.map(function (r) {
-        return !!categoriesInReport(r)[cat];
-      });
-      var consecutive = consecutiveAtEnd(flags);
-      var maxStreak = maxConsecutiveStreak(flags);
-      var firstIdx = flags.indexOf(true);
-      var status = classifyPatternStatus(
-        flags,
-        consecutive,
-        maxStreak,
-        firstIdx,
-        sorted.length
-      );
-      return {
-        error_category: cat,
-        label: categoryLabel(cat),
-        occurrences: occs,
-        total_occurrences: occs.reduce(function (sum, o) {
-          return sum + o.count_in_lesson;
-        }, 0),
-        consecutive_lessons_count: consecutive,
-        max_consecutive_lessons: maxStreak,
-        status: status,
-      };
-    });
 
-    var rank = { stuck: 0, new: 1, recurring: 2, resolved: 3, inactive: 4 };
-    patterns.sort(function (a, b) {
-      return (
-        (rank[a.status] || 9) - (rank[b.status] || 9) ||
-        b.consecutive_lessons_count - a.consecutive_lessons_count ||
-        b.total_occurrences - a.total_occurrences
-      );
-    });
-
-    var stuck = patterns.filter(function (p) {
-      return p.status === "stuck";
-    });
-    var fresh = patterns.filter(function (p) {
-      return p.status === "new";
-    });
-    var stuckTopics = stuck.slice(0, 3).map(function (p) {
-      var n = p.consecutive_lessons_count;
-      return {
-        error_category: p.error_category,
-        label: p.label,
-        consecutive_lessons_count: n,
-        message:
-          p.label +
-          " — повторяется " +
-          n +
-          " " +
-          pluralize(n, "урок", "урока", "уроков") +
-          " подряд, стоит закрепить отдельно",
-      };
-    });
-
-    var patternByCat = {};
-    patterns.forEach(function (p) {
-      patternByCat[p.error_category] = p;
-    });
-
-    sorted.forEach(function (report) {
-      report.grammar_errors = (report.grammar_errors || []).map(function (item) {
-        var cat = inferErrorCategory(item);
-        var pat = patternByCat[cat];
-        return Object.assign({}, item, {
-          error_category: cat,
-          category_label: categoryLabel(cat),
-          pattern_status: pat ? pat.status : "inactive",
-          consecutive_lessons_count: pat ? pat.consecutive_lessons_count : 0,
-        });
-      });
-    });
-
-    return {
-      patterns: patterns,
-      stuck_patterns: stuck,
-      new_patterns: fresh,
-      stuck_topics: stuckTopics,
-    };
-  }
-
-  function buildPrioritizedWeakTopics(tracking, weakTopics) {
-    var items = [];
-    var seen = {};
-    (tracking.stuck_patterns || []).forEach(function (p) {
-      items.push({
-        text: p.label,
-        priority: "stuck",
-        consecutive_lessons_count: p.consecutive_lessons_count,
-      });
-      seen[p.label.toLowerCase()] = true;
-    });
-    (tracking.new_patterns || []).forEach(function (p) {
-      if (!seen[p.label.toLowerCase()]) {
-        items.push({ text: p.label, priority: "new", consecutive_lessons_count: 0 });
-        seen[p.label.toLowerCase()] = true;
-      }
-    });
-    (weakTopics || []).forEach(function (topic) {
-      var key = String(topic).trim().toLowerCase();
-      if (key && !seen[key]) {
-        items.push({ text: topic, priority: "normal", consecutive_lessons_count: 0 });
-        seen[key] = true;
-      }
-    });
-    return items;
-  }
-
-  function refreshErrorTracking() {
-    state.errorTracking = buildErrorTracking(state.reports);
-    var latest = state.reports[0];
-    if (latest) {
-      latest.prioritized_weak_topics = buildPrioritizedWeakTopics(
-        state.errorTracking,
-        latest.weak_topics
-      );
-    }
-  }
-
-  function computeStudyPlanClient(goal, reports, tracking) {
-    if (!goal || !goal.target_cefr_level || !goal.goal_set_date) return null;
-    if (!reports || !reports.length) return null;
-
-    var durationWeeks = Number(goal.target_duration_weeks);
-    if (!durationWeeks && goal.target_date) {
-      var start = parseIsoDate(goal.goal_set_date);
-      var end = parseIsoDate(goal.target_date);
-      if (start && end) durationWeeks = Math.max(1, Math.floor((end - start) / (7 * 86400000)));
-    }
-    if (!durationWeeks) return null;
-
-    var sorted = reports.slice().sort(function (a, b) {
-      return new Date(a.lesson_date || a.created_at || 0) - new Date(b.lesson_date || b.created_at || 0);
-    });
-    var latest = sorted[sorted.length - 1];
-    var startCefr = goal.goal_start_cefr_level || sorted[0].vocabulary_level;
-    var currentCefr = latest.vocabulary_level || startCefr;
-
-    var startScore = cefrScore(startCefr);
-    var currentScore = cefrScore(currentCefr, latest.fluency_score);
-    var targetScore = cefrScore(goal.target_cefr_level);
-    if (startScore == null || currentScore == null || targetScore == null) return null;
-    if (targetScore <= startScore) return null;
-
-    var typeCoeff = goal.goal_type === "scenario_based" ? SCENARIO_COEFF : 1;
-    var trackingData = tracking || state.errorTracking || buildErrorTracking(reports);
-    if ((trackingData.stuck_patterns || []).length >= STUCK_LOAD_MIN_CATEGORIES) {
-      typeCoeff *= STUCK_LOAD_MULTIPLIER;
-    }
-    var totalDistance = targetScore - startScore;
-    var remainingDistance = Math.max(0, targetScore - currentScore);
-    var totalHours = totalDistance * HOURS_PER_CEFR_LEVEL * typeCoeff;
-
-    var curriculumWeeks = durationWeeks;
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var goalStart = parseIsoDate(goal.goal_set_date) || today;
-    var weeksElapsed = Math.max(0, Math.floor((today - goalStart) / (7 * 86400000)));
-    var planEndDate = parseIsoDate(goal.target_date);
-    var weeksRemaining;
-    var planWeeksTotal = curriculumWeeks;
-
-    if (goal.study_intensity_preset && planEndDate && planEndDate > goalStart) {
-      planWeeksTotal = Math.max(1, Math.ceil((planEndDate - goalStart) / (7 * 86400000)));
-      weeksRemaining = Math.max(1, Math.ceil((planEndDate - today) / (7 * 86400000)));
-    } else {
-      weeksRemaining = Math.max(1, curriculumWeeks - weeksElapsed);
-    }
-
-    var hoursRemaining = remainingDistance * HOURS_PER_CEFR_LEVEL * typeCoeff;
-    var hoursPerWeek = hoursRemaining / weeksRemaining;
-
-    var intensityCfg = getIntensityConfig(goal.study_intensity_preset);
-    var tutorLessons = intensityCfg
-      ? intensityCfg.tutorLessons
-      : Number(goal.tutor_lessons_per_week || 2);
-    var tutorMinutes = Number(goal.tutor_lesson_minutes || 60);
-    var practiceDays = intensityCfg
-      ? intensityCfg.practiceDays
-      : Number(goal.practice_days_per_week || 6);
-    var tutorHours = tutorLessons * tutorMinutes / 60;
-    var selfHours = Math.max(0, hoursPerWeek - tutorHours);
-    var minutesPerDay = (hoursPerWeek / practiceDays) * 60;
-
-    var reportsSince = sorted.filter(function (r) {
-      var d = parseIsoDate(r.lesson_date || r.created_at);
-      return d && d >= goalStart;
-    });
-    var tutorCompleted = reportsSince.length * tutorMinutes / 60;
-    var timeProgress = planWeeksTotal > 0 ? Math.min(1, weeksElapsed / planWeeksTotal) : 0;
-    var levelProgress = Math.min(1, Math.max(0, (currentScore - startScore) / totalDistance));
-    var hoursCompleted = Math.min(totalHours, Math.max(tutorCompleted, levelProgress * totalHours));
-
-    var status = "on_track";
-    if (levelProgress >= timeProgress * 1.1) status = "ahead";
-    else if (levelProgress < timeProgress * 0.85) status = "behind";
-
-    var statusMessage =
-      status === "ahead"
-        ? "Опережаете график — можно сохранить текущий темп"
-        : status === "on_track"
-          ? "Идёте по плану"
-          : "Отстаёте — нужно увеличить нагрузку до " + formatHours(hoursPerWeek) + " ч/нед";
-
-    return {
-      hours_per_week: round1(hoursPerWeek),
-      minutes_per_day: Math.round(minutesPerDay),
-      tutor_hours_per_week: round1(tutorHours),
-      self_study_hours_per_week: round1(selfHours),
-      total_hours: round1(totalHours),
-      hours_completed: round1(hoursCompleted),
-      hours_remaining: round1(Math.max(0, totalHours - hoursCompleted)),
-      weeks_total: planWeeksTotal,
-      weeks_elapsed: weeksElapsed,
-      weeks_remaining: weeksRemaining,
-      progress_percent: round1(totalHours ? (hoursCompleted / totalHours) * 100 : 0),
-      status: status,
-      status_message: statusMessage,
-      disclaimer: PLAN_DISCLAIMER,
-      goal_type: goal.goal_type || "general_level",
-      scenario_description: goal.scenario_description || goal.goal_label,
-    };
-  }
 
   function round1(n) {
     return Math.round(Number(n) * 10) / 10;
@@ -1363,8 +767,8 @@
 
   function getNextCefrLevel(current) {
     var idx = cefrIndex(current);
-    if (idx < 0 || idx >= CEFR_LEVELS.length - 1) return null;
-    return CEFR_LEVELS[idx + 1];
+    if (idx < 0 || idx >= cefrLevels().length - 1) return null;
+    return cefrLevels()[idx + 1];
   }
 
   function populateGoalCefrSelect(preselected) {
@@ -1385,7 +789,7 @@
     select.appendChild(placeholder);
 
     if (!current) {
-      CEFR_LEVELS.forEach(function (level) {
+      cefrLevels().forEach(function (level) {
         var opt = document.createElement("option");
         opt.value = level;
         opt.textContent = level;
@@ -1400,7 +804,7 @@
         hintEl.hidden = false;
       }
     } else {
-      CEFR_LEVELS.forEach(function (level) {
+      cefrLevels().forEach(function (level) {
         var levelIdx = cefrIndex(level);
         var currentIdx = cefrIndex(current);
         if (levelIdx <= currentIdx) return;
@@ -1444,93 +848,6 @@
     return null;
   }
 
-  function buildDemoProgressTracker(goal, reports) {
-    var start = parseIsoDate(goal.goal_set_date);
-    var end = parseIsoDate(goal.target_date);
-    if (!start || !end) return null;
-
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var lessonByDate = {};
-    (reports || []).forEach(function (report) {
-      var lessonDate = parseIsoDate(report.lesson_date || report.created_at);
-      if (!lessonDate) return;
-      lessonByDate[isoDateOnly(lessonDate)] = 60;
-    });
-
-    var days = [];
-    var cursor = new Date(start);
-    var index = 0;
-    var planned = 30;
-
-    while (cursor <= end) {
-      index += 1;
-      var iso = isoDateOnly(cursor);
-      var isPast = cursor <= today;
-      var dow = cursor.getDay();
-
-      if (lessonByDate[iso]) {
-        days.push({
-          date: iso,
-          day_index: index,
-          planned_minutes: planned,
-          completed: true,
-          completed_minutes: lessonByDate[iso],
-          source: "lesson",
-          state: "lesson",
-        });
-      } else if (isPast && (dow === 0 || dow === 2 || dow === 4) && index % 6 !== 0) {
-        days.push({
-          date: iso,
-          day_index: index,
-          planned_minutes: planned,
-          completed: true,
-          completed_minutes: dow === 0 ? 20 : 25,
-          source: "self_practice",
-          state: "completed",
-        });
-      } else if (!isPast) {
-        days.push({
-          date: iso,
-          day_index: index,
-          planned_minutes: planned,
-          completed: false,
-          completed_minutes: null,
-          source: null,
-          state: "future",
-        });
-      } else {
-        days.push({
-          date: iso,
-          day_index: index,
-          planned_minutes: planned,
-          completed: false,
-          completed_minutes: null,
-          source: null,
-          state: "missed",
-        });
-      }
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
-    var elapsed = days.filter(function (day) {
-      var dayDate = parseIsoDate(day.date);
-      return dayDate && dayDate <= today && day.planned_minutes > 0;
-    });
-
-    return {
-      days: days,
-      completed_days: elapsed.filter(function (day) {
-        return day.completed;
-      }).length,
-      planned_days_elapsed: elapsed.length,
-      streak: computeActivityStreak(days, today),
-      goal_start_date: isoDateOnly(start),
-      goal_end_date: isoDateOnly(end),
-      can_mark_today: false,
-      today_planned_minutes: planned,
-    };
-  }
 
   function buildActivityDayMap(tracker) {
     var map = {};
@@ -1834,13 +1151,13 @@
     var endSunday = new Date(today);
     endSunday.setDate(endSunday.getDate() - endSunday.getDay());
     var startSunday = new Date(endSunday);
-    startSunday.setDate(startSunday.getDate() - (ACTIVITY_HEATMAP_WEEKS - 1) * 7);
+    startSunday.setDate(startSunday.getDate() - (activityHeatmapWeeks() - 1) * 7);
 
     var dayMap = buildActivityDayMap(tracker);
     var monthCells = ["<span></span>"];
     var monthSeen = {};
     var week;
-    for (week = 0; week < ACTIVITY_HEATMAP_WEEKS; week += 1) {
+    for (week = 0; week < activityHeatmapWeeks(); week += 1) {
       var weekStart = new Date(startSunday);
       weekStart.setDate(weekStart.getDate() + week * 7);
       var monthKey = weekStart.getFullYear() + "-" + weekStart.getMonth();
@@ -1855,7 +1172,7 @@
     var cells = [];
     var dow;
     for (dow = 0; dow < 7; dow += 1) {
-      for (week = 0; week < ACTIVITY_HEATMAP_WEEKS; week += 1) {
+      for (week = 0; week < activityHeatmapWeeks(); week += 1) {
         var cellDate = new Date(startSunday);
         cellDate.setDate(cellDate.getDate() + week * 7 + dow);
         var iso = isoDateOnly(cellDate);
@@ -2429,8 +1746,8 @@
 
     var disclaimerEl = document.getElementById("analytics-study-plan-disclaimer");
     if (disclaimerEl) {
-      disclaimerEl.textContent = PLAN_DISCLAIMER_SHORT;
-      disclaimerEl.title = plan.disclaimer || PLAN_DISCLAIMER;
+      disclaimerEl.textContent = planDisclaimerShort();
+      disclaimerEl.title = plan.disclaimer || planDisclaimer();
     }
   }
 
@@ -2454,38 +1771,75 @@
     return null;
   }
 
-  function getRecommendedProgramId() {
-    var latest = getLatestReport();
-    var levelId = cefrToProgramLevel(latest && latest.vocabulary_level);
-    if (!levelId) return null;
-    if (hasGoal() && state.goal.goal_type === "scenario_based") {
-      var special = PROGRAM_CATALOG.find(function (program) {
-        return program.category === "special" && program.levelId === levelId;
-      });
-      if (special) return special.id;
-    }
-    return "general-" + levelId.replace(/_/g, "-");
+  /** Активное зачисление из StudentLearningContext. */
+  function getActiveEnrollment() {
+    return state.learningContext && state.learningContext.enrollment
+      ? state.learningContext.enrollment
+      : null;
   }
 
-  function readEnrolledProgramId() {
+  function getActiveProgramId() {
+    var enrollment = getActiveEnrollment();
+    return enrollment ? enrollment.program_id : null;
+  }
+
+  function readEnrolledPlanId() {
     try {
-      return localStorage.getItem(ENROLLED_PROGRAM_KEY) || null;
+      return localStorage.getItem(ENROLLED_PLAN_KEY) || null;
     } catch (err) {
       return null;
     }
   }
 
-  function getEnrolledProgramId() {
-    return readEnrolledProgramId() || getRecommendedProgramId();
-  }
-
-  function saveEnrolledProgramId(programId) {
+  function saveEnrolledPlanId(planId) {
     try {
-      if (programId) localStorage.setItem(ENROLLED_PROGRAM_KEY, programId);
-      else localStorage.removeItem(ENROLLED_PROGRAM_KEY);
+      if (planId) localStorage.setItem(ENROLLED_PLAN_KEY, planId);
+      else localStorage.removeItem(ENROLLED_PLAN_KEY);
     } catch (err) {
       /* ignore */
     }
+  }
+
+  /**
+   * Единый канонический контекст дашборда (ADR-001, student-learning-context.js).
+   * Вызывать после изменения goal, reports, studyPlan, enrollment.
+   */
+  function rebuildStudentLearningContext() {
+    if (typeof EnglishAgentSLC === "undefined") {
+      console.warn("[StudentLearningContext] EnglishAgentSLC module not loaded");
+      return;
+    }
+
+    var enrollmentRecord =
+      typeof EnrollmentState !== "undefined" && EnrollmentState.isEnrolled()
+        ? EnrollmentState.current
+        : null;
+
+    state.learningContext = EnglishAgentSLC.build({
+      studentId: STUDENT_ID,
+      goal: state.goal,
+      studyPlan: state.studyPlan,
+      reports: state.reports,
+      progressTracker: state.progressTracker,
+      programCatalog: PROGRAM_CATALOG,
+      programLevels: PROGRAM_LEVELS,
+      enrollmentRecord: enrollmentRecord,
+      enrolledPlanId: readEnrolledPlanId() || state.subscriptionPlanId,
+      currentCefr: getCurrentStudentCefr(),
+    });
+
+    EnglishAgentSLC.validate(state.learningContext, {
+      programCatalog: PROGRAM_CATALOG,
+    });
+
+    refreshCurriculumState();
+
+    EnglishAgentSLC.syncComputed(
+      state.learningContext,
+      state.curriculumItems,
+      state.studyPlan,
+      state.goal
+    );
   }
 
   function getProgramsForCategory(category, levelFilter) {
@@ -2584,15 +1938,22 @@
       .join("");
   }
 
-  function renderProgramCard(program, enrolledId, recommendedId, mode) {
+  function renderProgramCard(program, enrolledRecord, mode) {
     var isHero = mode === "hero";
+    var isEnrolledCurrent =
+      enrolledRecord && enrolledRecord.program_id === program.id;
     var level = getProgramLevel(program.levelId);
-    var isActive = isHero || program.id === enrolledId;
-    var isRecommended = !isHero && !isActive && program.id === recommendedId;
+    var isActive = isHero || isEnrolledCurrent;
     var cardClass =
-      "program-card" +
-      (isActive ? " is-active" : "") +
-      (isRecommended ? " is-recommended" : "");
+      "program-card" + (isActive ? " is-active" : "");
+
+    var enrolledBadge = "";
+    if (isEnrolledCurrent && enrolledRecord) {
+      enrolledBadge =
+        '<span class="program-card-badge program-card-badge--active">Your program · ' +
+        esc(enrolledRecord.level_cefr || level.cefr || "") +
+        "</span>";
+    }
 
     var badges =
       '<span class="program-card-badge program-card-badge--level">' +
@@ -2603,14 +1964,7 @@
           esc(level.cefr) +
           "</span>"
         : "") +
-      (isActive
-        ? '<span class="program-card-badge program-card-badge--active">' +
-          (isHero ? "Ваша выбранная программа" : "Ваша программа") +
-          "</span>"
-        : "") +
-      (isRecommended
-        ? '<span class="program-card-badge program-card-badge--recommended">Рекомендуем</span>'
-        : "");
+      enrolledBadge;
 
     var baseHtml = "";
     if (program.base) {
@@ -2633,11 +1987,11 @@
       PROGRAM_CATEGORY_LABELS[program.category] || program.category
     );
 
-    var actionHtml = isHero
-      ? '<button type="button" class="btn btn-primary program-continue-btn" id="btn-programs-continue">Продолжить обучение</button>'
-      : '<button type="button" class="btn btn-primary program-view-btn" data-program-id="' +
+    var actionHtml = isEnrolledCurrent
+      ? '<button type="button" class="btn btn-primary program-continue-btn">Continue</button>'
+      : '<button type="button" class="btn btn-primary program-enroll-btn" data-program-id="' +
         esc(program.id) +
-        '">Посмотреть программу</button>';
+        '">Get started</button>';
 
     return (
       '<article class="' +
@@ -2675,6 +2029,9 @@
       "</div>" +
       '<div class="program-card-actions">' +
       actionHtml +
+      '<button type="button" class="btn program-view-btn program-view-btn--secondary" data-program-id="' +
+      esc(program.id) +
+      '">View program</button>' +
       "</div>" +
       "</article>"
     );
@@ -2869,8 +2226,11 @@
     }
 
     var level = getProgramLevel(program.levelId);
-    var enrolledId = getEnrolledProgramId();
-    var isEnrolled = program.id === enrolledId;
+    var enrolledRecord =
+      typeof EnrollmentState !== "undefined" && EnrollmentState.isEnrolled()
+        ? EnrollmentState.current
+        : null;
+    var isEnrolled = enrolledRecord && program.id === enrolledRecord.program_id;
     var overview = buildProgramOverviewParagraphs(program);
     var tagsHtml = (program.tags || [])
       .map(function (tag) {
@@ -2901,8 +2261,10 @@
           esc(level.cefr) +
           "</span>"
         : "") +
-      (isEnrolled
-        ? '<span class="program-card-badge program-card-badge--active">Ваша программа</span>'
+      (isEnrolled && enrolledRecord
+        ? '<span class="program-card-badge program-card-badge--active">Your program · ' +
+          esc(enrolledRecord.level_cefr || "") +
+          "</span>"
         : "") +
       "</div>" +
       '<p class="program-detail-category">' +
@@ -2946,6 +2308,13 @@
       (tagsHtml ? '<div class="program-detail-tags">' + tagsHtml + "</div>" : "") +
       baseHtml +
       "</section>" +
+      '<div class="program-detail-enroll-cta">' +
+      (isEnrolled
+        ? '<button type="button" class="btn btn-primary program-continue-btn">Continue</button>'
+        : '<button type="button" class="btn btn-primary program-enroll-btn" data-program-id="' +
+          esc(program.id) +
+          '">Get started</button>') +
+      "</div>" +
       "</div>" +
       renderProgramDetailPlansSection(program) +
       "</div>";
@@ -2967,8 +2336,10 @@
       btn.setAttribute("aria-selected", active ? "true" : "false");
     });
 
-    var enrolledId = getEnrolledProgramId();
-    var recommendedId = getRecommendedProgramId();
+    var enrolledRecord =
+      typeof EnrollmentState !== "undefined" && EnrollmentState.isEnrolled()
+        ? EnrollmentState.current
+        : null;
     var programs = getProgramsForCategory(state.programCategory, state.programLevel);
 
     if (countEl) {
@@ -2996,15 +2367,18 @@
     if (emptyEl) emptyEl.hidden = programs.length > 0;
     grid.innerHTML = programs
       .map(function (program) {
-        return renderProgramCard(program, enrolledId, recommendedId);
+        return renderProgramCard(program, enrolledRecord);
       })
       .join("");
 
-    var enrolled = enrolledId ? getProgramById(enrolledId) : null;
+    var enrolled =
+      enrolledRecord && enrolledRecord.program_id
+        ? getProgramById(enrolledRecord.program_id)
+        : null;
     if (currentSection) {
-      if (enrolled) {
+      if (enrolled && enrolledRecord) {
         currentSection.hidden = false;
-        currentSection.innerHTML = renderProgramCard(enrolled, enrolledId, null, "hero");
+        currentSection.innerHTML = renderProgramCard(enrolled, enrolledRecord, "hero");
       } else {
         currentSection.hidden = true;
         currentSection.innerHTML = "";
@@ -3037,6 +2411,18 @@
     var grid = document.getElementById("programs-grid");
     if (grid) {
       grid.addEventListener("click", function (event) {
+        var enrollBtn = event.target.closest(".program-enroll-btn");
+        if (enrollBtn) {
+          event.stopPropagation();
+          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
+          return;
+        }
+        var continueBtn = event.target.closest(".program-continue-btn");
+        if (continueBtn) {
+          event.stopPropagation();
+          setAppNavView("home");
+          return;
+        }
         var btn = event.target.closest(".program-view-btn");
         if (!btn) return;
         event.stopPropagation();
@@ -3046,15 +2432,32 @@
       });
     }
 
+    var currentSection = document.getElementById("programs-current");
+    if (currentSection) {
+      currentSection.addEventListener("click", function (event) {
+        var enrollBtn = event.target.closest(".program-enroll-btn");
+        if (enrollBtn) {
+          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
+          return;
+        }
+        var continueBtn = event.target.closest(".program-continue-btn");
+        if (continueBtn) {
+          setAppNavView("home");
+        }
+      });
+    }
+
     var programsView = document.getElementById("view-programs");
     if (programsView) {
       programsView.addEventListener("click", function (event) {
-        if (event.target.closest("#btn-programs-continue")) {
-          setAppNavView("home");
+        var enrollBtn = event.target.closest(".program-enroll-btn");
+        if (enrollBtn) {
+          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
           return;
         }
 
         if (event.target.closest(".program-continue-btn")) {
+          setAppNavView("home");
           return;
         }
 
@@ -3159,13 +2562,23 @@
   function buildGoalPlanSummaryParts() {
     if (!hasGoal() || !state.studyPlan) return null;
     var plan = state.studyPlan;
+    var computed =
+      state.learningContext && state.learningContext.computed
+        ? state.learningContext.computed
+        : null;
     var date = formatGoalPlanDate(state.goal.target_date);
-    var hours = formatHours(plan.hours_per_week) + " ч/нед";
+    var hours = formatHours(
+      (computed && computed.hours_per_week_needed != null
+        ? computed.hours_per_week_needed
+        : plan.hours_per_week)
+    ) + " ч/нед";
+    var paceStatus =
+      (computed && computed.pace_status) || plan.status || "on_track";
     return {
-      expanded: date + " · " + hours + " · " + compactPlanStatusMessage(plan),
+      expanded: date + " · " + hours + " · " + compactPlanStatusMessage({ status: paceStatus }),
       chipText: date + " · " + hours,
-      chipBadge: shortPlanStatusMessage(plan),
-      chipBadgeClass: plan.status || "on_track",
+      chipBadge: shortPlanStatusMessage({ status: paceStatus }),
+      chipBadgeClass: paceStatus,
     };
   }
 
@@ -3243,6 +2656,12 @@
     if (!section || !card) return;
 
     var plan = state.studyPlan;
+    var computed =
+      state.learningContext && state.learningContext.computed
+        ? state.learningContext.computed
+        : null;
+    var enrollment = getActiveEnrollment();
+
     if (!hasGoal() || !plan) {
       section.hidden = true;
       return;
@@ -3251,15 +2670,21 @@
     section.hidden = false;
     setText("study-plan-title", "План на " + plan.weeks_total + " " + pluralize(plan.weeks_total, "неделю", "недели", "недель"));
 
+    var paceStatus = (computed && computed.pace_status) || plan.status || "on_track";
     var badge = document.getElementById("plan-status-badge");
     if (badge) {
-      badge.textContent = compactPlanStatusMessage(plan);
-      badge.className = "plan-status-badge " + (plan.status || "on_track");
+      badge.textContent = compactPlanStatusMessage({ status: paceStatus, status_message: plan.status_message, hours_per_week: plan.hours_per_week });
+      badge.className = "plan-status-badge " + paceStatus;
     }
+
+    var hoursPerWeek =
+      computed && computed.hours_per_week_needed != null
+        ? computed.hours_per_week_needed
+        : plan.hours_per_week;
 
     setText(
       "study-plan-headline",
-      "Нужно " + formatHours(plan.hours_per_week) + " ч/нед (" + plan.minutes_per_day + " мин/день)"
+      "Нужно " + formatHours(hoursPerWeek) + " ч/нед (" + plan.minutes_per_day + " мин/день)"
     );
     setText(
       "study-plan-breakdown",
@@ -3268,32 +2693,64 @@
         formatHours(plan.self_study_hours_per_week) +
         " ч практика"
     );
+
+    var hoursCompleted =
+      computed && computed.completed_hours != null
+        ? computed.completed_hours
+        : plan.hours_completed;
+    var totalHours =
+      computed && computed.total_hours_estimated != null
+        ? computed.total_hours_estimated
+        : plan.total_hours;
+
     setText(
       "study-plan-progress-text",
-      "Пройдено " + formatHours(plan.hours_completed) + " из " + formatHours(plan.total_hours) + " ч"
-    );
-    setText(
-      "study-plan-weeks-left",
-      state.goal.study_intensity_preset && state.goal.target_date
-        ? formatIntensityProjectionText(
-            state.goal.study_intensity_preset,
-            state.goal,
-            plan,
-            state.reports
-          )
-        : "При текущем темпе: ещё ~" +
-            plan.weeks_remaining +
-            " " +
-            pluralize(plan.weeks_remaining, "неделя", "недели", "недель")
+      "Пройдено " + formatHours(hoursCompleted) + " из " + formatHours(totalHours) + " ч"
     );
 
+    var weeksLeftText;
+    if (
+      enrollment &&
+      computed &&
+      computed.goal_eta_confidence_weeks != null &&
+      typeof EnglishAgentSLC !== "undefined"
+    ) {
+      var classesPerWeek = EnglishAgentSLC.classesPerWeekFromPlan(enrollment.plan_tier);
+      weeksLeftText =
+        "Темп программы (~" +
+        classesPerWeek +
+        " Class/нед): ещё ~" +
+        computed.goal_eta_confidence_weeks +
+        " " +
+        pluralize(computed.goal_eta_confidence_weeks, "неделя", "недели", "недель");
+      if (computed.goal_eta_date) {
+        weeksLeftText += " (программа к " + formatDateLocal(computed.goal_eta_date) + ")";
+      }
+    } else if (state.goal.study_intensity_preset && state.goal.target_date) {
+      weeksLeftText = formatIntensityProjectionText(
+        state.goal.study_intensity_preset,
+        state.goal,
+        plan,
+        state.reports
+      );
+    } else {
+      weeksLeftText =
+        "При текущем темпе: ещё ~" +
+        plan.weeks_remaining +
+        " " +
+        pluralize(plan.weeks_remaining, "неделя", "недели", "недель");
+    }
+    setText("study-plan-weeks-left", weeksLeftText);
+
+    var progressPct =
+      totalHours > 0 ? Math.min(100, Math.round((hoursCompleted / totalHours) * 100)) : plan.progress_percent;
     var fill = document.getElementById("study-plan-progress-fill");
-    if (fill) fill.style.width = Math.min(100, plan.progress_percent) + "%";
+    if (fill) fill.style.width = Math.min(100, progressPct) + "%";
 
     var disclaimerEl = document.getElementById("study-plan-disclaimer");
     if (disclaimerEl) {
-      disclaimerEl.textContent = PLAN_DISCLAIMER_SHORT;
-      disclaimerEl.title = plan.disclaimer || PLAN_DISCLAIMER;
+      disclaimerEl.textContent = planDisclaimerShort();
+      disclaimerEl.title = plan.disclaimer || planDisclaimer();
     }
 
     syncIntensityUi("sidebar");
@@ -3442,51 +2899,6 @@
       .replace(/\s+/g, " ");
   }
 
-  function buildCurriculumTopicPool(startLevel, targetLevel) {
-    var startIdx = Math.max(0, cefrIndex(startLevel));
-    var targetIdx = Math.max(startIdx, cefrIndex(targetLevel));
-    var pool = [];
-
-    for (var i = startIdx; i <= targetIdx; i += 1) {
-      var level = CEFR_LEVELS[i];
-      var topics = PLACEHOLDER_CEFR_CURRICULUM[level] || [];
-      topics.forEach(function (title) {
-        pool.push({ level: level, title: title });
-      });
-    }
-
-    if (!pool.length) {
-      pool.push({ level: targetLevel || "B1", title: "Общая практика" });
-    }
-    return pool;
-  }
-
-  function buildPlaceholderCurriculum(goal, plan) {
-    var weeks = Number(goal.target_duration_weeks || (plan && plan.weeks_total)) || 12;
-    var latest = getLatestReport();
-    var startLevel =
-      goal.goal_start_cefr_level || (latest && latest.vocabulary_level) || "A1";
-    var targetLevel = goal.target_cefr_level || "B2";
-    var pool = buildCurriculumTopicPool(startLevel, targetLevel);
-    var items = [];
-
-    for (var w = 1; w <= weeks; w += 1) {
-      var poolIdx = w - 1;
-      var entry =
-        poolIdx < pool.length ? pool[poolIdx] : pool[poolIdx % pool.length];
-      items.push({
-        classNum: w,
-        title: entry.title,
-        level: entry.level,
-        lessonCompleted: false,
-        selfStudyCompleted: false,
-        completed: false,
-        isCurrent: false,
-      });
-    }
-    return items;
-  }
-
   function collectCompletedLessonTopics(reports) {
     var seen = {};
     (reports || []).forEach(function (report) {
@@ -3527,13 +2939,20 @@
     return map;
   }
 
-  function getCurriculumItems() {
-    if (!hasGoal()) return [];
-    return applyCurriculumCompletions(
-      buildPlaceholderCurriculum(state.goal, state.studyPlan),
-      state.reports,
-      state.progressTracker
-    );
+  function getCurriculumItemsFromContext() {
+    var ctx = state.learningContext;
+    if (!ctx || !ctx.curriculum || !ctx.curriculum.classes) return [];
+    return ctx.curriculum.classes.map(function (item) {
+      return Object.assign({}, item);
+    });
+  }
+
+  function attachClassIndexToReports(reports, reportClassMap) {
+    (reports || []).forEach(function (report) {
+      var classNum = reportClassMap[report.id];
+      report.class_index = classNum != null ? classNum - 1 : null;
+      report.class_num = classNum != null ? classNum : null;
+    });
   }
 
   function buildReportClassMap(items, reports) {
@@ -3603,18 +3022,31 @@
   }
 
   function refreshCurriculumState() {
-    if (!hasGoal()) {
+    var enrollment = getActiveEnrollment();
+    if (!enrollment) {
       state.curriculumItems = [];
       state.reportClassMap = {};
       return;
     }
-    var items = getCurriculumItems();
-    state.reportClassMap = buildReportClassMap(items, state.reports);
-    state.curriculumItems = enrichCurriculumWithReportIds(items, state.reportClassMap);
+
+    if (state.serverCurriculum && state.serverCurriculum.program_id === enrollment.program_id) {
+      applyServerCurriculum(state.serverCurriculum);
+      return;
+    }
+
+    DashboardApi.fetchCurriculum(enrollment.program_id)
+      .then(applyServerCurriculum)
+      .catch(function (err) {
+        console.warn("[Curriculum] fetch failed:", err);
+        state.curriculumItems = [];
+        state.reportClassMap = {};
+      });
   }
 
   function findClassNumForReport(report) {
     if (!report) return null;
+    if (report.class_num != null) return report.class_num;
+    if (report.class_index != null) return report.class_index + 1;
     return state.reportClassMap[report.id] || null;
   }
 
@@ -3998,11 +3430,31 @@
     var progressFill = document.getElementById("curriculum-progress-fill");
     if (!section || !listEl) return;
 
-    if (!hasGoal()) {
-      section.hidden = true;
-      listEl.innerHTML = "";
+    var enrollment = getActiveEnrollment();
+    if (!enrollment) {
+      section.hidden = false;
+      if (summaryEl) {
+        summaryEl.textContent = "Программа не выбрана";
+      }
+      if (progressFill) progressFill.style.width = "0%";
+      listEl.innerHTML =
+        '<li class="curriculum-empty">' +
+        '<p>Выберите программу обучения — от неё зависит список Class в курсе.</p>' +
+        '<button type="button" class="btn btn-secondary" id="btn-choose-program">Выбрать программу</button>' +
+        "</li>";
+      var chooseBtn = document.getElementById("btn-choose-program");
+      if (chooseBtn) {
+        chooseBtn.addEventListener("click", function () {
+          openProgramOnboarding();
+        });
+      }
+      var changeBtn = document.getElementById("btn-change-enrollment");
+      if (changeBtn) changeBtn.hidden = true;
       return;
     }
+
+    var changeBtnVisible = document.getElementById("btn-change-enrollment");
+    if (changeBtnVisible) changeBtnVisible.hidden = false;
 
     refreshCurriculumState();
     var items = state.curriculumItems;
@@ -4016,8 +3468,16 @@
 
     section.hidden = false;
     if (summaryEl) {
+      var programLabel = enrollment.program_name || "Программа";
       summaryEl.textContent =
-        "Пройдено " + completedCount + " из " + items.length + " Class";
+        programLabel +
+        " · " +
+        (enrollment.level_name || enrollment.program_level || "") +
+        " · пройдено " +
+        completedCount +
+        " из " +
+        items.length +
+        " Class";
     }
     if (progressFill) {
       progressFill.style.width = progressPercent + "%";
@@ -4056,6 +3516,28 @@
   }
 
   function markCurriculumStubProgress(classNum, patch) {
+    if (isDemo && (patch.lesson || patch.selfStudy)) {
+      fetch("/api/demo/curriculum/" + encodeURIComponent(classNum) + "/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lesson: !!patch.lesson,
+          self_study: !!patch.selfStudy,
+        }),
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("demo completion failed");
+          return res.json();
+        })
+        .then(function (data) {
+          applyServerCurriculum(data);
+          renderCurriculumProgram();
+        })
+        .catch(function (err) {
+          console.warn("[Curriculum] demo complete failed:", err);
+        });
+      return;
+    }
     state.curriculumStubProgress[classNum] = Object.assign(
       {},
       state.curriculumStubProgress[classNum] || {},
@@ -4143,15 +3625,47 @@
   }
 
   function getIntensityConfig(key) {
-    return key && INTENSITY_PRESETS[key] ? INTENSITY_PRESETS[key] : null;
+    var presets = cfg("intensity_presets", {}) || {};
+    var raw = key && presets[key] ? presets[key] : null;
+    if (!raw) return null;
+    return {
+      label: raw.label,
+      classesPerWeek: raw.classes_per_week,
+      tutorLessons: raw.tutor_lessons_per_week,
+      practiceDays: raw.practice_days_per_week,
+    };
   }
 
   function countCurriculumProgress(goal, plan, reports, progressTracker) {
-    var items = applyCurriculumCompletions(
-      buildPlaceholderCurriculum(goal, plan),
-      reports || [],
-      progressTracker
-    );
+    var items = state.curriculumItems && state.curriculumItems.length
+      ? state.curriculumItems.slice()
+      : [];
+    if (!items.length && state.learningContext && state.learningContext.curriculum) {
+      items = getCurriculumItemsFromContext();
+    } else if (!items.length && typeof EnglishAgentSLC !== "undefined") {
+      var snapshot = EnglishAgentSLC.build({
+        studentId: STUDENT_ID,
+        goal: goal,
+        studyPlan: plan,
+        reports: reports,
+        progressTracker: progressTracker,
+        programCatalog: PROGRAM_CATALOG,
+        programLevels: PROGRAM_LEVELS,
+        enrollmentRecord:
+          typeof EnrollmentState !== "undefined" && EnrollmentState.isEnrolled()
+            ? EnrollmentState.current
+            : null,
+        enrolledPlanId: readEnrolledPlanId() || state.subscriptionPlanId,
+      });
+      if (snapshot.curriculum && snapshot.curriculum.classes) {
+        items = snapshot.curriculum.classes.map(function (item) {
+          return Object.assign({}, item);
+        });
+      }
+    }
+    if (!items.length) {
+      return { total: 0, completed: 0, remaining: 0 };
+    }
     var completed = items.filter(function (item) {
       return item.lessonCompleted;
     }).length;
@@ -4294,13 +3808,23 @@
     }
   }
 
+  function applyDemoGoalFromServer(data) {
+    DashboardApi.applyReportsBundle(state, data);
+    state.reports = sortReports(state.reports);
+    if (data.curriculum) {
+      applyServerCurriculum(data.curriculum);
+    }
+    rebuildStudentLearningContext();
+    renderStudentOverview();
+  }
+
   function applyIntensityToGoalState(presetKey) {
     if (!hasGoal()) return;
-    var cfg = getIntensityConfig(presetKey);
+    var intensityCfg = getIntensityConfig(presetKey);
     state.goal.study_intensity_preset = presetKey || null;
-    if (cfg) {
-      state.goal.tutor_lessons_per_week = cfg.tutorLessons;
-      state.goal.practice_days_per_week = cfg.practiceDays;
+    if (intensityCfg) {
+      state.goal.tutor_lessons_per_week = intensityCfg.tutorLessons;
+      state.goal.practice_days_per_week = intensityCfg.practiceDays;
       state.goal.target_date = computeIntensityTargetDate(
         presetKey,
         state.goal,
@@ -4312,7 +3836,11 @@
       end.setDate(end.getDate() + Number(state.goal.target_duration_weeks) * 7);
       state.goal.target_date = isoDateOnly(end);
     }
-    state.studyPlan = computeStudyPlanClient(state.goal, state.reports, state.errorTracking);
+    if (isDemo) {
+      DashboardApi.postDemoGoal(
+        buildGoalPatchPayload({ study_intensity_preset: presetKey || null })
+      ).then(applyDemoGoalFromServer);
+    }
   }
 
   function buildGoalPatchPayload(overrides) {
@@ -4347,7 +3875,6 @@
 
     if (isDemo) {
       applyIntensityToGoalState(presetKey);
-      renderStudentOverview();
       return;
     }
 
@@ -4383,9 +3910,11 @@
         };
         state.studyPlan = data.study_plan || null;
         state.progressTracker = data.progress_tracker || null;
+        rebuildStudentLearningContext();
         renderStudentOverview();
       })
       .catch(function () {
+        rebuildStudentLearningContext();
         renderStudentOverview();
       });
   }
@@ -4424,7 +3953,7 @@
   function clampDurationWeeks(value) {
     var weeks = Number(value);
     if (!weeks || isNaN(weeks)) weeks = 12;
-    return Math.min(DURATION_WEEKS_MAX, Math.max(DURATION_WEEKS_MIN, Math.round(weeks)));
+    return Math.min(durationWeeksMax(), Math.max(durationWeeksMin(), Math.round(weeks)));
   }
 
   function formatDurationSummary(weeks) {
@@ -4657,21 +4186,17 @@
     }
 
     if (isDemo) {
-      var start = todayIsoDate();
-      var endDate = new Date();
-      if (payload.target_date) {
-        endDate = parseIsoDate(payload.target_date) || endDate;
-      } else {
-        endDate.setDate(endDate.getDate() + weeks * 7);
-      }
-      state.goal = Object.assign({}, payload, {
-        target_date: payload.target_date || isoDateOnly(endDate),
-        goal_set_date: start,
-        goal_start_cefr_level: getLatestReport() ? getLatestReport().vocabulary_level : "B1",
-      });
-      state.studyPlan = computeStudyPlanClient(state.goal, state.reports);
-      renderStudentOverview();
-      closeGoalModal();
+      DashboardApi.postDemoGoal(payload)
+        .then(function (data) {
+          applyDemoGoalFromServer(data);
+          closeGoalModal();
+        })
+        .catch(function (err) {
+          if (errorEl) {
+            errorEl.textContent = err.message || "Ошибка сохранения";
+            errorEl.hidden = false;
+          }
+        });
       return;
     }
 
@@ -4714,6 +4239,7 @@
         };
         state.studyPlan = data.study_plan || null;
         state.progressTracker = data.progress_tracker || null;
+        rebuildStudentLearningContext();
         renderStudentOverview();
         closeGoalModal();
       })
@@ -4813,7 +4339,7 @@
   }
 
   function renderLessonReport(report, isLatest) {
-    if (!state.curriculumItems.length && hasGoal()) {
+    if (!state.curriculumItems.length && getActiveEnrollment()) {
       refreshCurriculumState();
     }
 
@@ -4834,10 +4360,7 @@
     renderGrammarList("grammar-list-current", report.grammar_errors);
     renderGrammarList("grammar-list-detailed", report.grammar_errors);
     renderStuckTopics(state.errorTracking);
-    renderPrioritizedWeakTopics(
-      report.prioritized_weak_topics ||
-        buildPrioritizedWeakTopics(state.errorTracking || { stuck_patterns: [], new_patterns: [] }, report.weak_topics)
-    );
+    renderPrioritizedWeakTopics(report.prioritized_weak_topics || []);
 
     setBadge("badge-grammar-current", grammarBadge(report.grammar_errors), true);
     setBadge("badge-vocab-current", report.vocabulary_level || "—", false);
@@ -4947,7 +4470,7 @@
   function patternBadgeHtml(item) {
     var status = item.pattern_status;
     var n = item.consecutive_lessons_count || 0;
-    if (status === "stuck" && n >= STUCK_LESSONS_THRESHOLD) {
+    if (status === "stuck" && n >= stuckThresholdLessons()) {
       return (
         '<span class="pattern-badge pattern-stuck">Повторяется ' +
         n +
@@ -5226,7 +4749,7 @@
     } else {
       el.classList.remove("amber", "green");
       el.classList.add("cefr-badge");
-      el.title = CEFR_CAPTION;
+      el.title = cefrCaption();
     }
   }
 
@@ -5313,5 +4836,124 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+
+  function applyServerCurriculum(data) {
+    if (!data || !data.classes || !data.classes.length) {
+      state.curriculumItems = [];
+      state.reportClassMap = {};
+      return;
+    }
+    var items = DashboardApi.mapCurriculumResponse(data);
+    state.serverCurriculum = data;
+    state.reportClassMap = buildReportClassMap(items, state.reports);
+    attachClassIndexToReports(state.reports, state.reportClassMap);
+    state.curriculumItems = enrichCurriculumWithReportIds(items, state.reportClassMap);
+    if (state.learningContext && typeof EnglishAgentSLC !== "undefined") {
+      EnglishAgentSLC.syncComputed(
+        state.learningContext,
+        state.curriculumItems,
+        state.studyPlan,
+        state.goal
+      );
+    }
+  }
+
+  function finishDashboardRender() {
+    renderStudentOverview();
+    maybeOpenRequiredOnboarding();
+    if (!state.reports.length) {
+      setHtml("grammar-list-current", emptyMsg("Пока нет отчётов по урокам."));
+      setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
+      return;
+    }
+    selectLesson(state.reports[0].id, { switchTab: false });
+    if (!isDemo) renderChart(state.reports.slice().reverse());
+  }
+
+  function loadDashboardFromApi() {
+    var loadingEl = document.getElementById("dash-loading");
+    var errorEl = document.getElementById("dash-error");
+    var mainEl = document.querySelector(".main");
+    if (loadingEl) loadingEl.hidden = false;
+    if (mainEl) mainEl.style.visibility = "hidden";
+
+    return DashboardApi.fetchReportsBundle()
+      .then(function (data) {
+        if (!isDemo) {
+          document.querySelectorAll(".demo-only").forEach(function (el) {
+            el.hidden = true;
+          });
+        }
+        DashboardApi.applyReportsBundle(state, data);
+        state.reports = sortReports(state.reports);
+        rebuildStudentLearningContext();
+        if (data.curriculum) {
+          applyServerCurriculum(data.curriculum);
+          return null;
+        }
+        var enrollment = getActiveEnrollment();
+        if (!enrollment) return null;
+        return DashboardApi.fetchCurriculum(enrollment.program_id).then(applyServerCurriculum);
+      })
+      .then(function () {
+        finishDashboardRender();
+      })
+      .catch(function (err) {
+        if (errorEl) {
+          errorEl.textContent =
+            "Не удалось загрузить отчёты: " + (err.message || "ошибка сети");
+          errorEl.hidden = false;
+        }
+      })
+      .finally(function () {
+        if (loadingEl) loadingEl.hidden = true;
+        if (mainEl) mainEl.style.visibility = "";
+      });
+  }
+
+  function bootstrapDashboard() {
+    initSidebarResize();
+    initGrammarToggles();
+    initGoalModal();
+    initGoalPlanCollapse();
+    initStudyPlanCollapse();
+    initActivityHeatmapPopover();
+    initAppNav();
+    initProgramsPage();
+
+    document.querySelectorAll("#view-home .tab, #view-analytics .analytics-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        var root = tab.closest(".app-view");
+        activateTab(tab.dataset.tab, root);
+      });
+    });
+
+    initLessonNavigation();
+    initCurriculumFilters();
+    initCurriculumActions();
+    loadDashboardFromApi();
+  }
+
+  DashboardApi.loadAppConfig().then(function () {
+    if (!DashboardApi.CONFIG) return;
+    bootstrapDashboard();
+  });
+
+  if (typeof ProgramOnboarding !== "undefined") {
+    ProgramOnboarding.init({
+      catalog: PROGRAM_CATALOG,
+      levels: PROGRAM_LEVELS,
+      esc: esc,
+      onEnrolled: handleEnrollmentConfirmed,
+    });
+  }
+
+  var changeEnrollmentBtn = document.getElementById("btn-change-enrollment");
+  if (changeEnrollmentBtn) {
+    changeEnrollmentBtn.addEventListener("click", function () {
+      openProgramOnboarding({ changeMode: true });
+    });
   }
 })();

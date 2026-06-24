@@ -20,12 +20,11 @@ from services import (
     goal_plan_service,
     supabase_service,
 )
+from services.app_config import CEFR_LEVELS
+from services.curriculum_service import build_curriculum
 from services.intensity_config import INTENSITY_PRESETS, normalize_intensity_preset
 
 router = APIRouter()
-
-
-CEFR_LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
 
 
 def _next_cefr_level(current: str) -> str | None:
@@ -360,6 +359,74 @@ def mark_practice(student_id: str, body: MarkPracticeRequest):
     )
 
     return get_student_reports(student_id)
+
+
+@router.get("/students/{student_id}/curriculum")
+def get_student_curriculum(student_id: str, program_id: str):
+    """Program class list with completion derived from lesson reports and progress."""
+    student = supabase_service.get_student(student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    rows = supabase_service.get_student_reports(student_id)
+    tracking_view = error_pattern_service.build_error_tracking(rows)
+    stuck_count = len(tracking_view.stuck_patterns)
+    plan = goal_plan_service.compute_study_plan(
+        student, rows, stuck_category_count=stuck_count
+    )
+
+    progress_tracker = None
+    if plan:
+        period_start, period_end, _ = daily_progress_service.goal_period(student)
+        if period_start and period_end:
+            stored_rows = supabase_service.get_daily_progress(
+                student_id, period_start.isoformat(), period_end.isoformat()
+            )
+            tracker = daily_progress_service.build_tracker(
+                student, plan, stored_rows, rows
+            )
+            if tracker:
+                progress_tracker = daily_progress_service.tracker_to_dict(tracker)
+
+    curriculum = build_curriculum(program_id, rows, progress_tracker)
+    if not curriculum:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return curriculum
+
+
+@router.post("/students/{student_id}/curriculum/{class_id}/complete")
+def complete_curriculum_class(student_id: str, class_id: int):
+    """
+    Mark class complete — live completion is derived from lesson reports;
+    returns refreshed curriculum snapshot.
+    """
+    student = supabase_service.get_student(student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    program_id = student.get("program_id") or "general-intermediate"
+    rows = supabase_service.get_student_reports(student_id)
+    tracking_view = error_pattern_service.build_error_tracking(rows)
+    plan = goal_plan_service.compute_study_plan(
+        student, rows, stuck_category_count=len(tracking_view.stuck_patterns)
+    )
+    progress_tracker = None
+    if plan:
+        period_start, period_end, _ = daily_progress_service.goal_period(student)
+        if period_start and period_end:
+            stored_rows = supabase_service.get_daily_progress(
+                student_id, period_start.isoformat(), period_end.isoformat()
+            )
+            tracker = daily_progress_service.build_tracker(
+                student, plan, stored_rows, rows
+            )
+            if tracker:
+                progress_tracker = daily_progress_service.tracker_to_dict(tracker)
+
+    curriculum = build_curriculum(program_id, rows, progress_tracker)
+    if not curriculum:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return curriculum
 
 
 @router.get("/dashboard/{student_id}", response_class=HTMLResponse)

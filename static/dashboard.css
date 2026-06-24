@@ -4159,11 +4159,13 @@ button.curriculum-status-pill--report.is-active .class-action-icon {
 }
 
 #dash-loading[hidden],
-#dash-error[hidden] {
+#dash-error[hidden],
+#dash-config-error[hidden] {
   display: none !important;
 }
 
-#dash-error {
+#dash-error,
+#dash-config-error {
   margin: 0 var(--page-padding) 1rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-sm);
@@ -4344,4 +4346,291 @@ button.curriculum-status-pill--report.is-active .class-action-icon {
   .goal-plan-card .study-plan-mobile-toggle {
     display: none;
   }
+}
+
+/* ── Program onboarding modal ── */
+.program-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(17, 24, 39, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.program-onboarding-overlay[hidden] {
+  display: none;
+}
+
+body.onboarding-open {
+  overflow: hidden;
+}
+
+.program-onboarding-panel {
+  width: 100%;
+  max-width: 560px;
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: var(--surface);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.14);
+  padding: 1.5rem;
+}
+
+.program-onboarding-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.program-onboarding-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.program-onboarding-close {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.program-onboarding-close:hover {
+  background: var(--card);
+  color: var(--text);
+}
+
+.onboarding-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.onboarding-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0 0 1.25rem;
+  line-height: 1.45;
+}
+
+.onboarding-change-warning {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  margin-bottom: 1rem;
+}
+
+.onboarding-program-list,
+.onboarding-level-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.onboarding-program-card,
+.onboarding-level-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.onboarding-program-card:hover,
+.onboarding-level-row:hover {
+  border-color: #c7d2fe;
+}
+
+.onboarding-program-card.is-selected,
+.onboarding-level-row.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.onboarding-program-card-title {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.onboarding-program-card-range {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.375rem;
+}
+
+.onboarding-program-card-desc {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.onboarding-level-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.onboarding-level-cefr {
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.onboarding-level-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.onboarding-level-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.onboarding-level-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.onboarding-track-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: -0.5rem 0 1rem;
+}
+
+.onboarding-back {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.75rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.onboarding-actions--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.onboarding-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0.5rem 0 0;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.curriculum-change-enrollment {
+  display: inline-block;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.curriculum-change-enrollment:hover {
+  color: var(--accent-hover);
+}
+
+.enrollment-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  z-index: 300;
+  max-width: min(92vw, 420px);
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  background: #111827;
+  color: #fff;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.enrollment-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.program-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.program-view-btn--secondary {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.25rem 0;
+}
+
+.program-view-btn--secondary:hover {
+  color: var(--accent);
+}
+
+.curriculum-empty .btn {
+  margin-top: 0.75rem;
+}
+
+.program-detail-enroll-cta {
+  margin: 1.25rem 0 0;
 }

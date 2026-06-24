@@ -1,0 +1,4258 @@
+{
+  "days": [
+    {
+      "date": "2026-04-14",
+      "day_index": 1,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-15",
+      "day_index": 2,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-16",
+      "day_index": 3,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-17",
+      "day_index": 4,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-18",
+      "day_index": 5,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-19",
+      "day_index": 6,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-20",
+      "day_index": 7,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-21",
+      "day_index": 8,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-22",
+      "day_index": 9,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-23",
+      "day_index": 10,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-24",
+      "day_index": 11,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-25",
+      "day_index": 12,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-26",
+      "day_index": 13,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-27",
+      "day_index": 14,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-28",
+      "day_index": 15,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-29",
+      "day_index": 16,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-04-30",
+      "day_index": 17,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-01",
+      "day_index": 18,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-02",
+      "day_index": 19,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-03",
+      "day_index": 20,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-04",
+      "day_index": 21,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-05",
+      "day_index": 22,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-06",
+      "day_index": 23,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-07",
+      "day_index": 24,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-08",
+      "day_index": 25,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-09",
+      "day_index": 26,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-10",
+      "day_index": 27,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-11",
+      "day_index": 28,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-12",
+      "day_index": 29,
+      "planned_minutes": 88,
+      "completed": true,
+      "completed_minutes": 60,
+      "source": "lesson",
+      "state": "lesson"
+    },
+    {
+      "date": "2026-05-13",
+      "day_index": 30,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-14",
+      "day_index": 31,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-15",
+      "day_index": 32,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-16",
+      "day_index": 33,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-17",
+      "day_index": 34,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-18",
+      "day_index": 35,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-19",
+      "day_index": 36,
+      "planned_minutes": 88,
+      "completed": true,
+      "completed_minutes": 60,
+      "source": "lesson",
+      "state": "lesson"
+    },
+    {
+      "date": "2026-05-20",
+      "day_index": 37,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-21",
+      "day_index": 38,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-22",
+      "day_index": 39,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-23",
+      "day_index": 40,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-24",
+      "day_index": 41,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-25",
+      "day_index": 42,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-26",
+      "day_index": 43,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-27",
+      "day_index": 44,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-28",
+      "day_index": 45,
+      "planned_minutes": 88,
+      "completed": true,
+      "completed_minutes": 60,
+      "source": "lesson",
+      "state": "lesson"
+    },
+    {
+      "date": "2026-05-29",
+      "day_index": 46,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-30",
+      "day_index": 47,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-05-31",
+      "day_index": 48,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-01",
+      "day_index": 49,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-02",
+      "day_index": 50,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-03",
+      "day_index": 51,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-04",
+      "day_index": 52,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-05",
+      "day_index": 53,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-06",
+      "day_index": 54,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-07",
+      "day_index": 55,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-08",
+      "day_index": 56,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-09",
+      "day_index": 57,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-10",
+      "day_index": 58,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-11",
+      "day_index": 59,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-12",
+      "day_index": 60,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-13",
+      "day_index": 61,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-14",
+      "day_index": 62,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-15",
+      "day_index": 63,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-16",
+      "day_index": 64,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-17",
+      "day_index": 65,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-18",
+      "day_index": 66,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-19",
+      "day_index": 67,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-20",
+      "day_index": 68,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-21",
+      "day_index": 69,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-22",
+      "day_index": 70,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-23",
+      "day_index": 71,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-24",
+      "day_index": 72,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "missed"
+    },
+    {
+      "date": "2026-06-25",
+      "day_index": 73,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-06-26",
+      "day_index": 74,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-06-27",
+      "day_index": 75,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-06-28",
+      "day_index": 76,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-06-29",
+      "day_index": 77,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-06-30",
+      "day_index": 78,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-01",
+      "day_index": 79,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-02",
+      "day_index": 80,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-03",
+      "day_index": 81,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-04",
+      "day_index": 82,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-05",
+      "day_index": 83,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-06",
+      "day_index": 84,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-07",
+      "day_index": 85,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-08",
+      "day_index": 86,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-09",
+      "day_index": 87,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-10",
+      "day_index": 88,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-11",
+      "day_index": 89,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-12",
+      "day_index": 90,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-13",
+      "day_index": 91,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-14",
+      "day_index": 92,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-15",
+      "day_index": 93,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-16",
+      "day_index": 94,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-17",
+      "day_index": 95,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-18",
+      "day_index": 96,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-19",
+      "day_index": 97,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-20",
+      "day_index": 98,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-21",
+      "day_index": 99,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-22",
+      "day_index": 100,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-23",
+      "day_index": 101,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-24",
+      "day_index": 102,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-25",
+      "day_index": 103,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-26",
+      "day_index": 104,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-27",
+      "day_index": 105,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-28",
+      "day_index": 106,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-29",
+      "day_index": 107,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-30",
+      "day_index": 108,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-07-31",
+      "day_index": 109,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-01",
+      "day_index": 110,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-02",
+      "day_index": 111,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-03",
+      "day_index": 112,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-04",
+      "day_index": 113,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-05",
+      "day_index": 114,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-06",
+      "day_index": 115,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-07",
+      "day_index": 116,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-08",
+      "day_index": 117,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-09",
+      "day_index": 118,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-10",
+      "day_index": 119,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-11",
+      "day_index": 120,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-12",
+      "day_index": 121,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-13",
+      "day_index": 122,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-14",
+      "day_index": 123,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-15",
+      "day_index": 124,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-16",
+      "day_index": 125,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-17",
+      "day_index": 126,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-18",
+      "day_index": 127,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-19",
+      "day_index": 128,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-20",
+      "day_index": 129,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-21",
+      "day_index": 130,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-22",
+      "day_index": 131,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-23",
+      "day_index": 132,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-24",
+      "day_index": 133,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-25",
+      "day_index": 134,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-26",
+      "day_index": 135,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-27",
+      "day_index": 136,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-28",
+      "day_index": 137,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-29",
+      "day_index": 138,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-30",
+      "day_index": 139,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-08-31",
+      "day_index": 140,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-01",
+      "day_index": 141,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-02",
+      "day_index": 142,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-03",
+      "day_index": 143,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-04",
+      "day_index": 144,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-05",
+      "day_index": 145,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-06",
+      "day_index": 146,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-07",
+      "day_index": 147,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-08",
+      "day_index": 148,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-09",
+      "day_index": 149,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-10",
+      "day_index": 150,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-11",
+      "day_index": 151,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-12",
+      "day_index": 152,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-13",
+      "day_index": 153,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-14",
+      "day_index": 154,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-15",
+      "day_index": 155,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-16",
+      "day_index": 156,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-17",
+      "day_index": 157,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-18",
+      "day_index": 158,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-19",
+      "day_index": 159,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-20",
+      "day_index": 160,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-21",
+      "day_index": 161,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-22",
+      "day_index": 162,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-23",
+      "day_index": 163,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-24",
+      "day_index": 164,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-25",
+      "day_index": 165,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-26",
+      "day_index": 166,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-27",
+      "day_index": 167,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-28",
+      "day_index": 168,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-29",
+      "day_index": 169,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-09-30",
+      "day_index": 170,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-01",
+      "day_index": 171,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-02",
+      "day_index": 172,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-03",
+      "day_index": 173,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-04",
+      "day_index": 174,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-05",
+      "day_index": 175,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-06",
+      "day_index": 176,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-07",
+      "day_index": 177,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-08",
+      "day_index": 178,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-09",
+      "day_index": 179,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-10",
+      "day_index": 180,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-11",
+      "day_index": 181,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-12",
+      "day_index": 182,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-13",
+      "day_index": 183,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-14",
+      "day_index": 184,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-15",
+      "day_index": 185,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-16",
+      "day_index": 186,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-17",
+      "day_index": 187,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-18",
+      "day_index": 188,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-19",
+      "day_index": 189,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-20",
+      "day_index": 190,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-21",
+      "day_index": 191,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-22",
+      "day_index": 192,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-23",
+      "day_index": 193,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-24",
+      "day_index": 194,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-25",
+      "day_index": 195,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-26",
+      "day_index": 196,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-27",
+      "day_index": 197,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-28",
+      "day_index": 198,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-29",
+      "day_index": 199,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-30",
+      "day_index": 200,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-10-31",
+      "day_index": 201,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-01",
+      "day_index": 202,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-02",
+      "day_index": 203,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-03",
+      "day_index": 204,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-04",
+      "day_index": 205,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-05",
+      "day_index": 206,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-06",
+      "day_index": 207,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-07",
+      "day_index": 208,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-08",
+      "day_index": 209,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-09",
+      "day_index": 210,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-10",
+      "day_index": 211,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-11",
+      "day_index": 212,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-12",
+      "day_index": 213,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-13",
+      "day_index": 214,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-14",
+      "day_index": 215,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-15",
+      "day_index": 216,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-16",
+      "day_index": 217,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-17",
+      "day_index": 218,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-18",
+      "day_index": 219,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-19",
+      "day_index": 220,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-20",
+      "day_index": 221,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-21",
+      "day_index": 222,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-22",
+      "day_index": 223,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-23",
+      "day_index": 224,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-24",
+      "day_index": 225,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-25",
+      "day_index": 226,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-26",
+      "day_index": 227,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-27",
+      "day_index": 228,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-28",
+      "day_index": 229,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-29",
+      "day_index": 230,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-11-30",
+      "day_index": 231,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    },
+    {
+      "date": "2026-12-01",
+      "day_index": 232,
+      "planned_minutes": 88,
+      "completed": false,
+      "completed_minutes": null,
+      "source": null,
+      "state": "future"
+    }
+  ],
+  "weeks": [
+    [
+      {
+        "date": "2026-04-14",
+        "day_index": 1,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-15",
+        "day_index": 2,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-16",
+        "day_index": 3,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-17",
+        "day_index": 4,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-18",
+        "day_index": 5,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-19",
+        "day_index": 6,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-20",
+        "day_index": 7,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-04-21",
+        "day_index": 8,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-22",
+        "day_index": 9,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-23",
+        "day_index": 10,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-24",
+        "day_index": 11,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-25",
+        "day_index": 12,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-26",
+        "day_index": 13,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-27",
+        "day_index": 14,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-04-28",
+        "day_index": 15,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-29",
+        "day_index": 16,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-04-30",
+        "day_index": 17,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-01",
+        "day_index": 18,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-02",
+        "day_index": 19,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-03",
+        "day_index": 20,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-04",
+        "day_index": 21,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-05-05",
+        "day_index": 22,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-06",
+        "day_index": 23,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-07",
+        "day_index": 24,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-08",
+        "day_index": 25,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-09",
+        "day_index": 26,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-10",
+        "day_index": 27,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-11",
+        "day_index": 28,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-05-12",
+        "day_index": 29,
+        "planned_minutes": 88,
+        "completed": true,
+        "completed_minutes": 60,
+        "source": "lesson",
+        "state": "lesson"
+      },
+      {
+        "date": "2026-05-13",
+        "day_index": 30,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-14",
+        "day_index": 31,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-15",
+        "day_index": 32,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-16",
+        "day_index": 33,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-17",
+        "day_index": 34,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-18",
+        "day_index": 35,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-05-19",
+        "day_index": 36,
+        "planned_minutes": 88,
+        "completed": true,
+        "completed_minutes": 60,
+        "source": "lesson",
+        "state": "lesson"
+      },
+      {
+        "date": "2026-05-20",
+        "day_index": 37,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-21",
+        "day_index": 38,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-22",
+        "day_index": 39,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-23",
+        "day_index": 40,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-24",
+        "day_index": 41,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-25",
+        "day_index": 42,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-05-26",
+        "day_index": 43,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-27",
+        "day_index": 44,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-28",
+        "day_index": 45,
+        "planned_minutes": 88,
+        "completed": true,
+        "completed_minutes": 60,
+        "source": "lesson",
+        "state": "lesson"
+      },
+      {
+        "date": "2026-05-29",
+        "day_index": 46,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-30",
+        "day_index": 47,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-05-31",
+        "day_index": 48,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-01",
+        "day_index": 49,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-06-02",
+        "day_index": 50,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-03",
+        "day_index": 51,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-04",
+        "day_index": 52,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-05",
+        "day_index": 53,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-06",
+        "day_index": 54,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-07",
+        "day_index": 55,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-08",
+        "day_index": 56,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-06-09",
+        "day_index": 57,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-10",
+        "day_index": 58,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-11",
+        "day_index": 59,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-12",
+        "day_index": 60,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-13",
+        "day_index": 61,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-14",
+        "day_index": 62,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-15",
+        "day_index": 63,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-06-16",
+        "day_index": 64,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-17",
+        "day_index": 65,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-18",
+        "day_index": 66,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-19",
+        "day_index": 67,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-20",
+        "day_index": 68,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-21",
+        "day_index": 69,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-22",
+        "day_index": 70,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      }
+    ],
+    [
+      {
+        "date": "2026-06-23",
+        "day_index": 71,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-24",
+        "day_index": 72,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "missed"
+      },
+      {
+        "date": "2026-06-25",
+        "day_index": 73,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-06-26",
+        "day_index": 74,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-06-27",
+        "day_index": 75,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-06-28",
+        "day_index": 76,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-06-29",
+        "day_index": 77,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-06-30",
+        "day_index": 78,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-01",
+        "day_index": 79,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-02",
+        "day_index": 80,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-03",
+        "day_index": 81,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-04",
+        "day_index": 82,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-05",
+        "day_index": 83,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-06",
+        "day_index": 84,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-07-07",
+        "day_index": 85,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-08",
+        "day_index": 86,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-09",
+        "day_index": 87,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-10",
+        "day_index": 88,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-11",
+        "day_index": 89,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-12",
+        "day_index": 90,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-13",
+        "day_index": 91,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-07-14",
+        "day_index": 92,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-15",
+        "day_index": 93,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-16",
+        "day_index": 94,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-17",
+        "day_index": 95,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-18",
+        "day_index": 96,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-19",
+        "day_index": 97,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-20",
+        "day_index": 98,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-07-21",
+        "day_index": 99,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-22",
+        "day_index": 100,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-23",
+        "day_index": 101,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-24",
+        "day_index": 102,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-25",
+        "day_index": 103,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-26",
+        "day_index": 104,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-27",
+        "day_index": 105,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-07-28",
+        "day_index": 106,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-29",
+        "day_index": 107,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-30",
+        "day_index": 108,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-07-31",
+        "day_index": 109,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-01",
+        "day_index": 110,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-02",
+        "day_index": 111,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-03",
+        "day_index": 112,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-08-04",
+        "day_index": 113,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-05",
+        "day_index": 114,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-06",
+        "day_index": 115,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-07",
+        "day_index": 116,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-08",
+        "day_index": 117,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-09",
+        "day_index": 118,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-10",
+        "day_index": 119,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-08-11",
+        "day_index": 120,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-12",
+        "day_index": 121,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-13",
+        "day_index": 122,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-14",
+        "day_index": 123,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-15",
+        "day_index": 124,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-16",
+        "day_index": 125,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-17",
+        "day_index": 126,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-08-18",
+        "day_index": 127,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-19",
+        "day_index": 128,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-20",
+        "day_index": 129,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-21",
+        "day_index": 130,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-22",
+        "day_index": 131,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-23",
+        "day_index": 132,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-24",
+        "day_index": 133,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-08-25",
+        "day_index": 134,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-26",
+        "day_index": 135,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-27",
+        "day_index": 136,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-28",
+        "day_index": 137,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-29",
+        "day_index": 138,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-30",
+        "day_index": 139,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-08-31",
+        "day_index": 140,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-09-01",
+        "day_index": 141,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-02",
+        "day_index": 142,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-03",
+        "day_index": 143,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-04",
+        "day_index": 144,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-05",
+        "day_index": 145,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-06",
+        "day_index": 146,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-07",
+        "day_index": 147,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-09-08",
+        "day_index": 148,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-09",
+        "day_index": 149,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-10",
+        "day_index": 150,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-11",
+        "day_index": 151,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-12",
+        "day_index": 152,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-13",
+        "day_index": 153,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-14",
+        "day_index": 154,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-09-15",
+        "day_index": 155,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-16",
+        "day_index": 156,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-17",
+        "day_index": 157,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-18",
+        "day_index": 158,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-19",
+        "day_index": 159,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-20",
+        "day_index": 160,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-21",
+        "day_index": 161,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-09-22",
+        "day_index": 162,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-23",
+        "day_index": 163,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-24",
+        "day_index": 164,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-25",
+        "day_index": 165,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-26",
+        "day_index": 166,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-27",
+        "day_index": 167,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-28",
+        "day_index": 168,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-09-29",
+        "day_index": 169,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-09-30",
+        "day_index": 170,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-01",
+        "day_index": 171,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-02",
+        "day_index": 172,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-03",
+        "day_index": 173,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-04",
+        "day_index": 174,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-05",
+        "day_index": 175,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-10-06",
+        "day_index": 176,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-07",
+        "day_index": 177,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-08",
+        "day_index": 178,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-09",
+        "day_index": 179,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-10",
+        "day_index": 180,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-11",
+        "day_index": 181,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-12",
+        "day_index": 182,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-10-13",
+        "day_index": 183,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-14",
+        "day_index": 184,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-15",
+        "day_index": 185,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-16",
+        "day_index": 186,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-17",
+        "day_index": 187,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-18",
+        "day_index": 188,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-19",
+        "day_index": 189,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-10-20",
+        "day_index": 190,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-21",
+        "day_index": 191,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-22",
+        "day_index": 192,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-23",
+        "day_index": 193,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-24",
+        "day_index": 194,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-25",
+        "day_index": 195,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-26",
+        "day_index": 196,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-10-27",
+        "day_index": 197,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-28",
+        "day_index": 198,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-29",
+        "day_index": 199,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-30",
+        "day_index": 200,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-10-31",
+        "day_index": 201,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-01",
+        "day_index": 202,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-02",
+        "day_index": 203,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-11-03",
+        "day_index": 204,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-04",
+        "day_index": 205,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-05",
+        "day_index": 206,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-06",
+        "day_index": 207,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-07",
+        "day_index": 208,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-08",
+        "day_index": 209,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-09",
+        "day_index": 210,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-11-10",
+        "day_index": 211,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-11",
+        "day_index": 212,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-12",
+        "day_index": 213,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-13",
+        "day_index": 214,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-14",
+        "day_index": 215,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-15",
+        "day_index": 216,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-16",
+        "day_index": 217,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-11-17",
+        "day_index": 218,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-18",
+        "day_index": 219,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-19",
+        "day_index": 220,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-20",
+        "day_index": 221,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-21",
+        "day_index": 222,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-22",
+        "day_index": 223,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-23",
+        "day_index": 224,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-11-24",
+        "day_index": 225,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-25",
+        "day_index": 226,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-26",
+        "day_index": 227,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-27",
+        "day_index": 228,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-28",
+        "day_index": 229,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-29",
+        "day_index": 230,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      },
+      {
+        "date": "2026-11-30",
+        "day_index": 231,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ],
+    [
+      {
+        "date": "2026-12-01",
+        "day_index": 232,
+        "planned_minutes": 88,
+        "completed": false,
+        "completed_minutes": null,
+        "source": null,
+        "state": "future"
+      }
+    ]
+  ],
+  "completed_days": 3,
+  "planned_days_elapsed": 72,
+  "streak": 0,
+  "pace_warning": "Темп ниже плана — выполнено 0% дней за последние 14 дней. Необходимая нагрузка выросла до 8.8 ч/нед",
+  "can_mark_today": true,
+  "today_planned_minutes": 88,
+  "goal_start_date": "2026-04-14",
+  "goal_end_date": "2026-12-01"
+}

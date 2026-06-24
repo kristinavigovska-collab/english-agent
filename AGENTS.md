@@ -1,12 +1,21 @@
 # Agent context — English Lesson Analyzer
 
-**Read this first** in a new chat. Details: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/MIGRATIONS.md`.
+**Read this first** in a new chat. Details: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/MIGRATIONS.md`, `docs/PROGRAMS.md` (programs track).
 
 ## Product
 
 SaaS for an English school: Recall.ai bot joins lessons → transcript → Claude analysis → Supabase → student report (dashboard).
 
 **School model:** one Google Calendar on Recall (school account later). Student = guest email on calendar event. Not “invite agent by email”.
+
+**Two product tracks (important):**
+
+| Track | Status | Source of truth |
+|-------|--------|-----------------|
+| **Live lessons** | Backend **production-ready** | Recall webhook → `lessons` / `reports` in Supabase |
+| **Programs & subscriptions** | **UI only** (June 2026) | `PROGRAM_CATALOG` in `dashboard.js` + `localStorage` — **not** in DB yet |
+
+These tracks are **not wired together** in the database. A student can have lesson reports without enrollment, and `enrolled_program_id` in the browser does not affect the webhook pipeline.
 
 ## Live URLs
 
@@ -42,26 +51,55 @@ services/error_category_config.py   # Category catalog + normalization
 services/rubric_service.py       # CEFR / scoring helpers
 models/schemas.py                # Pydantic API + Claude models
 static/dashboard.html            # UI shell; demo at /dashboard, live at /api/dashboard/{id}
-static/dashboard.css
-static/dashboard.js              # Demo + live; sidebar goal/plan, curriculum, Activity tab, error badges
-scripts/migrations/              # 001–006 SQL (see docs/MIGRATIONS.md; 005–006 may need apply)
+static/dashboard.css             # Accent #6687FF; programs + analytics layout
+static/dashboard.js              # Demo + live; nav views, programs catalog, curriculum placeholders
+scripts/migrations/              # 001–007 SQL (see docs/MIGRATIONS.md)
 scripts/run_supabase_migration.py
 scripts/reprocess_lesson.py      # CLI: re-fetch transcript + re-run Claude
 scripts/test_webhook_sig.py      # Webhook signature smoke test
 tests/                           # test_goal_plan_service, test_error_pattern_service
 render.yaml
-docs/                            # STATUS, ARCHITECTURE, MIGRATIONS, LESSON_DAY, DEPLOY_RENDER
+docs/                            # STATUS, ARCHITECTURE, MIGRATIONS, PROGRAMS, LESSON_DAY, DEPLOY_RENDER
 ```
 
 ## Dashboard UI (June 2026)
 
-**Sidebar:** CEFR «Сейчас → Цель» always visible; collapsible **«Цель и план»** card (goal details + study plan + intensity presets). State in `localStorage` key `sidebar_goal_collapsed` (default expanded).
+### App navigation (`app-nav`)
 
-**Curriculum:** «Программа обучения» below goal/plan when goal is set — placeholder program in `dashboard.js` (replace with school API). Filters: Все / Пройденные / Предстоящие; «Все» = single scroll list anchored on current Class. Book-class / self-study overlays are stubs.
+Three top-level views (labels in **English**): **Home** · **Programs** · **Analytics**.
 
-**Main tabs:** Class summary · Краткое саммари · Детальный отчёт · **Активность** (metrics, breakdown, 16-week heatmap with day popover). Data from API `progress_tracker`; demo uses `buildDemoProgressTracker()`.
+- State: `localStorage` keys `app_nav_view` (`home` \| `programs` \| `analytics`), `app_nav_collapsed`
+- Shell: `#view-home`, `#view-programs`, `#view-analytics` in `dashboard.html`
+- Logic: `setAppNavView()`, `initAppNav()` in `dashboard.js`
 
-**Cache bust:** after editing `dashboard.js` / `dashboard.css`, bump `?v=` in `dashboard.html`.
+### Home (`#view-home`)
+
+**Sidebar:** CEFR «Сейчас → Цель»; collapsible **«Цель и план»** (`sidebar_goal_collapsed`). **«Программа обучения»** curriculum list — **placeholder** (`PLACEHOLDER_CEFR_CURRICULUM` in JS; not tied to Programs catalog).
+
+**Main tabs:** Class summary · Краткое саммари · Детальный отчёт. Lesson reports from API on live dashboard.
+
+Activity metrics moved to **Analytics** (not on Home).
+
+### Analytics (`#view-analytics`)
+
+Tabs: **Активность** (heatmap, metrics, breakdown) · **Общий прогресс** (goal/plan pace, intensity presets, alerts). Data from API `progress_tracker`, `study_plan`, `goal` on live load.
+
+### Programs (`#view-programs`)
+
+**Catalog:** category tabs (General / Business / Special), level chips, grid of `program-card` tiles. Button **«Посмотреть программу»** opens detail (not enroll).
+
+**Enrolled program hero:** first grid slot when `localStorage.enrolled_program_id` is set — same card size as catalog; **«Продолжить обучение»** → Home.
+
+**Program detail** (in-page, not a separate route): course description, format block (**30 min self-study + 30 min live**), horizontal **EUR plan cards** (free_trial, solo, light, standard, intensive). Plan buttons link to **`/checkout?plan={id}&program={program_id}`** — **route not implemented**.
+
+**Enrollment today:** `saveEnrolledProgramId()` / `getEnrolledProgramId()` → `localStorage` key `enrolled_program_id` only. **No** `GET/POST` programs API. **Do not** add new catalog truth in `dashboard.js` — next step is Supabase + API (see `docs/ARCHITECTURE.md` → Future).
+
+**Placeholder data:** `PROGRAM_CATALOG`, `PROGRAM_LEARNING_PLANS` at top of `dashboard.js` — replace with school API.
+
+### Design tokens
+
+- Primary accent: **`#6687FF`** (`--accent` in `dashboard.css`)
+- Cache bust: bump `?v=` on `dashboard.css` / `dashboard.js` in `dashboard.html` after static edits
 
 ## DB (Supabase)
 
@@ -74,6 +112,8 @@ Goal/plan on `students` (migrations 001–002): `target_cefr_level`, `target_dat
 `reports.grammar_errors`: `error`, `correction`, `explanation`, `error_category`.
 
 Also: `daily_progress` (003), `error_pattern_history` (004), `lessons.lesson_topic` (005). Full list: `docs/MIGRATIONS.md`.
+
+**Not in DB yet:** `programs`, `program_plans`, `student_enrollments`, `lessons.program_id`.
 
 ## Env vars (see `.env.example`)
 
@@ -110,22 +150,35 @@ Also: `daily_progress` (003), `error_pattern_history` (004), `lessons.lesson_top
 
 - [x] Live dashboard + expandable grammar + lesson topic plaque
 - [x] Student goal, study plan, intensity presets (`intensity_config`, migration 006)
-- [x] Sidebar: collapsible goal/plan card; curriculum program (placeholder data)
-- [x] Activity tab: metrics, usage breakdown, heatmap + day popover
+- [x] Sidebar: collapsible goal/plan; curriculum UI (placeholder classes)
+- [x] Analytics view: activity heatmap + general progress tab
+- [x] Programs view: catalog, detail page, EUR plan cards (UI only)
 - [x] Cross-lesson error patterns, stuck topics, plan multiplier
-- [x] API: `PATCH /goal`, `POST /practice`; migrations 001–004
+- [x] API: `PATCH /goal`, `POST /practice`; migrations 001–005 wired
 - [x] `lessons.lesson_topic` from Recall webhook / calendar metadata (migration 005)
 
 ## Next (Phase 2 — remaining)
 
 **Test student:** `kristina.vigovska@gmail.com` → Кристина, B2 goal (`services/student_profiles.py`).
 
+### P0 — live lesson
+
 1. **Recall:** Connect school/test Google; calendar **English Lessons** only; recording preferences on.
-2. **Agent rubric:** Tune CEFR / fluency prompts on real lesson transcripts.
-3. **Student access:** Magic link or email lookup (no auth today — UUID in URL is public).
-4. **Lesson test:** Calendar event + Meet + guest email → verify `reports` row + `lesson_topic`.
-5. **Curriculum:** Replace placeholder program in `dashboard.js` with school materials API.
-6. **Migrations:** Apply `005_add_lesson_topic.sql` and `006_add_study_intensity_preset.sql` on Supabase if not yet run.
+2. **Lesson test:** Calendar event + Meet + guest email → verify `reports` + `lesson_topic`.
+3. **Migrations:** Confirm **005** and **006** applied on Supabase prod.
+
+### P1 — programs backend (after UI)
+
+1. ~~Migration `007`~~ — `007_add_programs_catalog.sql` in repo; **apply on Supabase** (`docs/PROGRAMS.md`).
+2. `GET /api/programs`, `GET/POST /api/students/{id}/enrollment` — replace `localStorage.enrolled_program_id`.
+3. Wire sidebar **curriculum** to enrolled program (single source of truth).
+4. Optional `008+`: `curriculum_units`, `lessons.program_id` on webhook.
+
+### P2 — product
+
+- Student login (magic link); agent rubric tuning on real transcripts
+- Checkout / Stripe for per-program subscription
+- Replace curriculum + catalog placeholders with school materials API
 
 **Before a lesson:** `docs/LESSON_DAY.md`. Pitfalls: `docs/STATUS.md`.
 
@@ -135,6 +188,8 @@ Also: `daily_progress` (003), `error_pattern_history` (004), `lessons.lesson_top
 - Use Vercel (BackgroundTasks + long Claude calls — use Render)
 - Re-connect personal Gmail without updating Google Cloud **Test users**
 - Suggest implementing webhook verification — it exists; fix env/config instead
+- Treat `PROGRAM_CATALOG` or `localStorage.enrolled_program_id` as production enrollment
+- Add new program/pricing truth only in `dashboard.js` without a migration + API plan
 
 ## Commands
 
@@ -145,6 +200,8 @@ uvicorn main:app --reload --port 8000
 # Migrations (see docs/MIGRATIONS.md)
 python scripts/run_supabase_migration.py 005_add_lesson_topic.sql
 python scripts/run_supabase_migration.py 006_add_study_intensity_preset.sql
+python scripts/run_supabase_migration.py 007_add_programs_catalog.sql
+python scripts/run_supabase_migration.py 007_add_programs_catalog.sql
 
 # Ops / debug
 python scripts/reprocess_lesson.py --help

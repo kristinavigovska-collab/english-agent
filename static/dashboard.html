@@ -7,10 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260623-22" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260624-01" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
+  <p id="dash-config-error" class="dash-config-error" hidden>
+    Не удалось загрузить конфигурацию. Обновите страницу.
+  </p>
   <p id="dash-error" hidden></p>
 
   <div class="goal-overlay" id="goal-overlay" hidden>
@@ -166,6 +169,26 @@
         <button class="btn" type="button" id="btn-self-study-cancel">Закрыть</button>
         <button class="btn btn-primary" type="button" id="btn-self-study-confirm">Отметить выполненным</button>
       </div>
+    </div>
+  </div>
+
+  <div class="program-onboarding-overlay" id="program-onboarding-overlay" hidden>
+    <div
+      class="program-onboarding-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="program-onboarding-title"
+    >
+      <div class="program-onboarding-header">
+        <span class="program-onboarding-eyebrow">Program setup</span>
+        <button
+          type="button"
+          class="program-onboarding-close"
+          id="program-onboarding-close"
+          aria-label="Close"
+        >×</button>
+      </div>
+      <div id="program-onboarding-body"></div>
     </div>
   </div>
 
@@ -351,6 +374,9 @@
           <div class="curriculum-header">
             <h2 class="curriculum-title">Программа обучения</h2>
             <p class="curriculum-summary" id="curriculum-summary">—</p>
+            <button type="button" class="curriculum-change-enrollment" id="btn-change-enrollment" hidden>
+              Change program or level
+            </button>
             <div class="curriculum-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="curriculum-progress" aria-label="Прогресс программы обучения">
               <div class="curriculum-progress-bar">
                 <div class="curriculum-progress-fill" id="curriculum-progress-fill"></div>
@@ -1176,7 +1202,11 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard.js?v=20260623-19" defer></script>
+  <script src="/static/dashboard-api.js?v=20260624-01"></script>
+  <script src="/static/enrollment-state.js?v=20260624-01"></script>
+  <script src="/static/student-learning-context.js?v=20260624-01"></script>
+  <script src="/static/program-onboarding.js?v=20260624-01"></script>
+  <script src="/static/dashboard.js?v=20260624-01" defer></script>
 
 </body>
 </html>

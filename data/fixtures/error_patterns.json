@@ -1,0 +1,60 @@
+{
+  "patterns": [
+    {
+      "error_category": "third_person_singular",
+      "label": "Согласование 3-го лица ед.ч.",
+      "occurrences": [
+        {
+          "lesson_id": "demo-lesson-7",
+          "report_id": "demo-7",
+          "date": "2026-05-28",
+          "count_in_lesson": 1
+        }
+      ],
+      "first_seen_date": "2026-05-28",
+      "last_seen_date": "2026-05-28",
+      "total_occurrences": 1,
+      "consecutive_lessons_count": 1,
+      "max_consecutive_lessons": 1,
+      "status": "new",
+      "resolved_date": null,
+      "was_stuck": false
+    }
+  ],
+  "stuck_patterns": [],
+  "new_patterns": [
+    {
+      "error_category": "third_person_singular",
+      "label": "Согласование 3-го лица ед.ч.",
+      "occurrences": [
+        {
+          "lesson_id": "demo-lesson-7",
+          "report_id": "demo-7",
+          "date": "2026-05-28",
+          "count_in_lesson": 1
+        }
+      ],
+      "first_seen_date": "2026-05-28",
+      "last_seen_date": "2026-05-28",
+      "total_occurrences": 1,
+      "consecutive_lessons_count": 1,
+      "max_consecutive_lessons": 1,
+      "status": "new",
+      "resolved_date": null,
+      "was_stuck": false
+    }
+  ],
+  "stuck_topics": [],
+  "prioritized_weak_topics": [
+    {
+      "text": "Согласование 3-го лица ед.ч.",
+      "priority": "new",
+      "consecutive_lessons_count": 0
+    },
+    {
+      "text": "Past Simple vs Present Perfect",
+      "priority": "normal",
+      "consecutive_lessons_count": 0
+    }
+  ]
+}

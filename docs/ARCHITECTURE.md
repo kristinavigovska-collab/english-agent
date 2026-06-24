@@ -1,6 +1,30 @@
 # Architecture
 
-## Flow
+## Two product tracks
+
+The codebase serves **two related flows**. Only the first is backed by Supabase today.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TRACK A — Live lessons (PRODUCTION)                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Google Calendar → Recall bot → webhook → Claude → lessons + reports   │
+│ Dashboard Home: lesson tabs read GET /api/students/{id}/reports       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TRACK B — Programs & subscription (UI ONLY, June 2026)                │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Programs nav → catalog + detail + EUR plan cards (dashboard.js)       │
+│ Enrollment: localStorage enrolled_program_id — NOT in database        │
+│ Checkout: /checkout?plan=&program= — route NOT implemented            │
+│ Sidebar curriculum: separate placeholder (PLACEHOLDER_CEFR_CURRICULUM)  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Target state (not built):** enrollment in Supabase links student → program → plan; curriculum units map to Classes; optional `lessons.program_id` on webhook.
+
+## Flow — live lessons (Track A)
 
 ```
 Google Calendar (school) ──► Recall.ai bot joins Meet/Zoom
@@ -40,6 +64,7 @@ File: `routers/webhook.py`
 
 - Parses transcript (list or segments shape); merges partial + final
 - Student: `metadata.student_email` / calendar guest / `participants[0].email` / fallback `{bot_id}@recall.local`
+- Resolves `lesson_topic` from calendar / Recall metadata → `lessons.lesson_topic` (migration 005)
 - Background: `get_or_create_student` → `create_lesson` → `analyze_transcript` → `save_report` → sync `error_pattern_history` + `daily_progress` (lesson day)
 
 ## Claude output (stored in `reports`)
@@ -51,7 +76,7 @@ File: `routers/webhook.py`
 
 Student context from `services/student_profiles.py` (name, goal, target CEFR). Rubric helpers in `services/rubric_service.py`.
 
-## API
+## API (current)
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -63,6 +88,8 @@ Student context from `services/student_profiles.py` (name, goal, target CEFR). R
 | GET | `/api/dashboard/{id}` | HTML dashboard (injects `__STUDENT_ID__`, cache-busted static assets) |
 | GET | `/dashboard` | Static demo dashboard (embedded mock data in `dashboard.js`) |
 
+**Not implemented:** `/api/programs`, `/api/students/{id}/enrollment`, `/checkout`.
+
 Response shapes: `models/schemas.py` (`StudentReportsResponse`, `StudyPlanResponse`, `ProgressTrackerResponse`, `ErrorTrackingResponse`).
 
 ## Database (Supabase)
@@ -70,30 +97,69 @@ Response shapes: `models/schemas.py` (`StudentReportsResponse`, `StudyPlanRespon
 Core tables (initial setup — see `README.md`):
 
 - `students` — upsert by `email`
-- `lessons` — `recall_bot_id`, `transcript`, optional `lesson_topic` (not wired from calendar yet)
+- `lessons` — `recall_bot_id`, `transcript`, `lesson_topic` (from webhook, migration 005)
 - `reports` — Claude JSON fields per lesson
 
 Extended columns and tables — apply migrations in order (`docs/MIGRATIONS.md`):
 
 | Migration | Adds |
 |-----------|------|
-| `001` | `students`: `target_cefr_level`, `target_date`, `goal_label`, `goal_set_date` |
-| `002` | `students`: `goal_type`, `target_duration_weeks`, `scenario_description`, `goal_start_cefr_level`, tutor/practice schedule fields |
+| `001` | `students`: goal fields (`target_cefr_level`, `target_date`, …) |
+| `002` | `students`: goal type, duration, scenario, tutor/practice schedule |
 | `003` | `daily_progress` — per-day planned/completed minutes |
-| `004` | `error_pattern_history` — cross-lesson error categories, stuck/new status |
+| `004` | `error_pattern_history` — cross-lesson error categories |
+| `005` | `lessons.lesson_topic` |
+| `006` | `students.study_intensity_preset` |
 
-**Services:** `goal_plan_service.py`, `daily_progress_service.py`, `error_pattern_service.py` compute plan, tracker grid, and stuck-topic prioritization for API + dashboard.
+**Services:** `goal_plan_service.py`, `daily_progress_service.py`, `error_pattern_service.py`, `intensity_config.py` compute plan, tracker grid, and stuck-topic prioritization for API + dashboard.
 
-## Dashboard (static)
+### Programs schema (migration `007` — apply on Supabase; API not wired)
+
+| Table / column | Purpose |
+|----------------|---------|
+| `programs` | Catalog: TEXT id, category, level_id, title, description, classes/weeks, tags, optional `base_*` for special programs |
+| `program_plans` | Global tiers: free_trial, solo, light, standard, intensive (EUR in `price_cents`) |
+| `student_enrollments` | student_id, program_id, plan_id, status; one active/trial per student |
+| `curriculum_units` | **008+** — ordered Classes per program |
+| `lessons.program_id` | **008+** — optional FK: tie live lesson to enrolled program |
+
+Spec: `docs/PROGRAMS.md`. Seed ids match `PROGRAM_CATALOG` in `dashboard.js`.
+
+## Dashboard (static SPA)
 
 | Route | Mode |
 |-------|------|
 | `/dashboard` | Demo — mock reports, client-side plan/tracker math mirrors server |
 | `/api/dashboard/{student_id}` | Live — `dashboard.js` fetches `/api/students/{id}/reports` |
 
-UI highlights: goal strip above tabs, study plan progress, modal daily tracker (`tracker-teaser` → `tracker-overlay`), expandable grammar explanations, stuck-topic block (`error_tracking.stuck_topics`), grammar badges (stuck/new).
+### Navigation views
 
-Static cache bust: `dashboard.html` links `dashboard.js?v=…` — bump after JS changes.
+| View | DOM id | Content |
+|------|--------|---------|
+| Home | `#view-home` | Sidebar (goal, curriculum placeholder) + lesson report tabs |
+| Programs | `#view-programs` | Catalog, filters, program detail + plan pricing (JS placeholders) |
+| Analytics | `#view-analytics` | Activity heatmap + general progress / goal pace |
+
+State: `localStorage` (`app_nav_view`, `enrolled_program_id`, `sidebar_goal_collapsed`, …).
+
+### Programs UI data flow (today)
+
+```
+PROGRAM_CATALOG + PROGRAM_LEARNING_PLANS  (dashboard.js constants)
+        │
+        ▼
+renderProgramsPage() / renderProgramDetailPage()
+        │
+        ├── enrolled_program_id → localStorage (browser only)
+        └── plan CTA → window.location /checkout?plan=&program=  (404 until built)
+```
+
+Sidebar `renderCurriculumProgram()` uses **separate** `PLACEHOLDER_CEFR_CURRICULUM` — not derived from `PROGRAM_CATALOG`.
+
+### Design
+
+- Accent color: `#6687FF` (`--accent` in `dashboard.css`)
+- Cache bust: `dashboard.html` links `dashboard.js?v=…` — bump after JS/CSS changes
 
 ## External accounts
 
@@ -103,8 +169,10 @@ Static cache bust: `dashboard.html` links `dashboard.js?v=…` — bump after JS
 
 ## Future (not built)
 
+- Programs API (`GET /api/programs`, enrollment) — migration `007` SQL ready; see `docs/PROGRAMS.md`
+- Checkout / Stripe; per-program subscription billing
 - `schools`, teacher roles, RLS
 - Email magic link auth (today: anyone with `student_id` UUID sees dashboard)
-- `lessons.lesson_topic` from calendar event title / school materials
 - Auto-email “report ready” after webhook
 - Idempotent webhook / job queue (Render restarts can drop BackgroundTasks on crash — use `scripts/reprocess_lesson.py`)
+- Claude prompt: include enrolled program + current Class from curriculum
