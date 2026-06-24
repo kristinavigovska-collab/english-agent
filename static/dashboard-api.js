@@ -12,6 +12,65 @@
   var UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+  /** Live Server (:5500) — optional API proxy to uvicorn :8000 (not used in static preview mode) */
+  function apiOrigin() {
+    if (global.API_ORIGIN !== undefined && global.API_ORIGIN !== null) {
+      return String(global.API_ORIGIN).replace(/\/$/, "");
+    }
+    if (isStaticPreviewMode()) {
+      return "";
+    }
+    var loc = global.location;
+    if (!loc || !loc.hostname) return "";
+    var host = loc.hostname;
+    var port = loc.port;
+    var isLocal = host === "localhost" || host === "127.0.0.1";
+    if (loc.protocol === "file:") {
+      return "";
+    }
+    if (
+      isLocal &&
+      (port === "5500" || port === "5501" || port === "5502" || port === "3000")
+    ) {
+      return "";
+    }
+    return "";
+  }
+
+  function apiUrl(path) {
+    var normalized = path.charAt(0) === "/" ? path : "/" + path;
+    return apiOrigin() + normalized;
+  }
+
+  /** Live Server / static/dashboard.html — UI preview from local JSON fixtures */
+  function isStaticPreviewMode() {
+    if (global.STATIC_DASHBOARD_PREVIEW === true) return true;
+    if (global.STATIC_DASHBOARD_PREVIEW === false) return false;
+    var loc = global.location;
+    if (!loc) return false;
+    var host = loc.hostname;
+    var port = loc.port;
+    if (host !== "localhost" && host !== "127.0.0.1") return false;
+    return port === "5500" || port === "5501" || port === "5502";
+  }
+
+  function isStaticDevServer() {
+    return isStaticPreviewMode();
+  }
+
+  function staticAssetUrl(filename) {
+    var loc = global.location;
+    if (!loc || !loc.pathname) return "/static/" + filename;
+    if (/\/static\//i.test(loc.pathname)) {
+      return loc.pathname.replace(/[^/]+$/, filename);
+    }
+    return "/static/" + filename;
+  }
+
+  function isDemoApiBase(base) {
+    return /\/api\/demo$/i.test(String(base || ""));
+  }
+
   function isDemoStudentId(studentId) {
     var id = studentId || global.STUDENT_ID || "";
     return !id || id === "__STUDENT_ID__" || !UUID_RE.test(id);
@@ -22,11 +81,13 @@
       global.EnrollmentState &&
       global.EnrollmentState.current &&
       global.EnrollmentState.current.is_demo;
-    return isDemoStudentId(global.STUDENT_ID) || enrollmentDemo ? "/api/demo" : "/api";
+    return isDemoStudentId(global.STUDENT_ID) || enrollmentDemo
+      ? apiUrl("/api/demo")
+      : apiUrl("/api");
   }
 
   function liveApiBase() {
-    return "/api";
+    return apiUrl("/api");
   }
 
   function assertConfigLoaded(config) {
@@ -58,6 +119,46 @@
       err.textContent =
         "Не удалось загрузить конфигурацию. Обновите страницу.";
     }
+  }
+
+  function loadStaticPreviewConfig() {
+    if (CONFIG) return Promise.resolve(CONFIG);
+    return fetch(staticAssetUrl("demo-config.json"))
+      .then(function (res) {
+        if (!res.ok) throw new Error("demo-config.json not found");
+        return res.json();
+      })
+      .then(function (data) {
+        CONFIG = data;
+        configLoaded = true;
+        configError = null;
+        global.DashboardApi.CONFIG = CONFIG;
+        return CONFIG;
+      })
+      .catch(function (err) {
+        console.warn("[Preview] Using built-in config fallback:", err);
+        CONFIG = {
+          cefr_levels: ["A1", "A2", "B1", "B2", "C1", "C2"],
+          intensity_presets: {},
+          stuck_threshold_lessons: 3,
+          cefr_hours_per_level: {},
+          activity_heatmap_weeks: 16,
+          plan_disclaimer: "",
+          plan_disclaimer_short: "",
+        };
+        configLoaded = true;
+        global.DashboardApi.CONFIG = CONFIG;
+        return CONFIG;
+      });
+  }
+
+  function loadStaticPreviewBundle() {
+    return fetch(staticAssetUrl("demo-preview.json")).then(function (res) {
+      if (!res.ok) {
+        throw new Error("demo-preview.json not found (" + res.status + ")");
+      }
+      return res.json();
+    });
   }
 
   function loadAppConfig() {
@@ -109,7 +210,7 @@
 
   function fetchReportsBundle() {
     var base = getApiBase();
-    if (base === "/api/demo") {
+    if (isDemoApiBase(base)) {
       return fetch(base + "/reports").then(function (res) {
         if (!res.ok) {
           return res.json().then(function (body) {
@@ -134,7 +235,7 @@
 
   function fetchCurriculum(programId) {
     var base = getApiBase();
-    if (base === "/api/demo") {
+    if (isDemoApiBase(base)) {
       return fetch(base + "/curriculum").then(function (res) {
         if (!res.ok) throw new Error("curriculum fetch failed");
         return res.json();
@@ -154,7 +255,7 @@
   }
 
   function postDemoGoal(payload) {
-    return fetch("/api/demo/goal", {
+    return fetch(apiUrl("/api/demo/goal"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -244,9 +345,15 @@
     configError: configError,
     configLoaded: configLoaded,
     loadAppConfig: loadAppConfig,
+    loadStaticPreviewConfig: loadStaticPreviewConfig,
+    loadStaticPreviewBundle: loadStaticPreviewBundle,
+    isStaticPreviewMode: isStaticPreviewMode,
     assertConfigLoaded: assertConfigLoaded,
     getApiBase: getApiBase,
     liveApiBase: liveApiBase,
+    apiOrigin: apiOrigin,
+    apiUrl: apiUrl,
+    isStaticDevServer: isStaticDevServer,
     isDemoStudentId: isDemoStudentId,
     requireConfig: requireConfig,
     cfg: cfg,

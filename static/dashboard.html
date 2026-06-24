@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260624-05" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260624-16" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -207,10 +207,36 @@
         </svg>
       </span>
     </button>
+    <div class="app-topbar-actions" id="app-topbar-actions">
+      <button
+        type="button"
+        class="app-topbar-btn"
+        id="btn-topbar-notifications"
+        aria-label="Notifications"
+        title="Notifications"
+      >
+        <span class="app-topbar-btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4.75a4.25 4.25 0 00-4.25 4.25v2.18c0 .5-.17.99-.48 1.38l-1.02 1.28A1.25 1.25 0 007.38 15h9.24a1.25 1.25 0 001.01-2.06l-1.02-1.28a2.25 2.25 0 01-.48-1.38V9a4.25 4.25 0 00-4.25-4.25z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M10.25 17.25a1.75 1.75 0 003.5 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+      <button
+        type="button"
+        class="app-topbar-btn app-topbar-btn--profile"
+        id="btn-topbar-profile"
+        aria-label="Profile"
+        title="Profile"
+      >
+        <span class="app-topbar-profile-avatar" id="topbar-profile-avatar" aria-hidden="true">КВ</span>
+      </button>
+    </div>
     <nav class="app-nav" aria-label="Main navigation">
       <div class="app-nav-brand">
         <span class="app-nav-logo" aria-hidden="true">Y</span>
         <span class="app-nav-brand-text">Yappi</span>
+        <span class="app-nav-beta-badge">Beta</span>
       </div>
       <ul class="app-nav-list">
         <li>
@@ -257,6 +283,40 @@
           </button>
         </li>
       </ul>
+
+      <div class="app-nav-plan-widget" id="app-nav-plan-widget" hidden>
+        <div class="app-nav-plan-widget-card">
+          <p class="app-nav-plan-widget-title" id="app-nav-plan-title"></p>
+          <p class="app-nav-plan-widget-lead" id="app-nav-plan-lead"></p>
+          <button type="button" class="app-nav-plan-widget-btn" id="btn-nav-upgrade-plan">
+            Upgrade plan
+          </button>
+        </div>
+      </div>
+
+      <div class="app-nav-footer" id="app-nav-footer">
+        <ul class="app-nav-footer-list">
+          <li>
+            <button
+              type="button"
+              class="app-nav-item app-nav-item--footer"
+              id="btn-nav-gift"
+              title="Get a gift"
+            >
+              <span class="app-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3.5" y="9.5" width="17" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M12 9.5v11" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M3.5 13h17" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M12 9.5V6.75c0-1.35 1.1-2.25 2.25-2.25.8 0 1.5.45 1.85 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M12 9.5V6.75c0-1.35-1.1-2.25-2.25-2.25-.8 0-1.5.45-1.85 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="app-nav-label">Get a gift</span>
+            </button>
+          </li>
+        </ul>
+      </div>
     </nav>
 
     <div class="app-view" id="view-home">
@@ -1211,11 +1271,11 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard-api.js?v=20260624-05"></script>
+  <script src="/static/dashboard-api.js?v=20260624-07"></script>
   <script src="/static/enrollment-state.js?v=20260624-03"></script>
   <script src="/static/student-learning-context.js?v=20260624-03"></script>
   <script src="/static/program-onboarding.js?v=20260624-03"></script>
-  <script src="/static/dashboard.js?v=20260624-05" defer></script>
+  <script src="/static/dashboard.js?v=20260624-14" defer></script>
 
 </body>
 </html>

@@ -126,6 +126,8 @@
   var NAV_VIEW_KEY = "app_nav_view";
   var NAV_COLLAPSED_KEY = "app_nav_collapsed";
   var ENROLLED_PLAN_KEY = "enrolled_plan_id";
+  var SUBSCRIPTION_STORAGE_KEY = "english_agent_subscription_v1";
+  var FREE_PLAN_TRIAL_DAYS = 15;
 
   var state = {
     reports: [],
@@ -484,6 +486,91 @@
     }
   }
 
+  function readSubscription() {
+    try {
+      var raw = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function saveSubscription(sub) {
+    try {
+      localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(sub));
+    } catch (err) {
+      console.warn("[Subscription] Failed to persist:", err);
+    }
+  }
+
+  function ensureSubscription() {
+    var sub = readSubscription();
+    if (!sub) {
+      var end = new Date();
+      end.setDate(end.getDate() + FREE_PLAN_TRIAL_DAYS);
+      sub = {
+        plan_id: "free_trial",
+        plan_label: "Free plan",
+        trial_ends_at: end.toISOString().slice(0, 10),
+      };
+      saveSubscription(sub);
+    }
+    if (!sub.trial_ends_at && sub.trial_days) {
+      var started = parseIsoDate(sub.started_at) || new Date();
+      var trialEnd = new Date(started.getTime());
+      trialEnd.setDate(trialEnd.getDate() + Number(sub.trial_days));
+      sub.trial_ends_at = trialEnd.toISOString().slice(0, 10);
+      saveSubscription(sub);
+    }
+    return sub;
+  }
+
+  function subscriptionDaysLeft(sub) {
+    if (!sub || !sub.trial_ends_at) return FREE_PLAN_TRIAL_DAYS;
+    var end = parseIsoDate(sub.trial_ends_at);
+    if (!end) return FREE_PLAN_TRIAL_DAYS;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86400000));
+  }
+
+  function renderNavPlanWidget() {
+    var widget = document.getElementById("app-nav-plan-widget");
+    var titleEl = document.getElementById("app-nav-plan-title");
+    var leadEl = document.getElementById("app-nav-plan-lead");
+    if (!widget || !titleEl || !leadEl) return;
+
+    var sub = ensureSubscription();
+    if (!sub || sub.plan_id !== "free_trial") {
+      widget.hidden = true;
+      return;
+    }
+
+    var daysLeft = subscriptionDaysLeft(sub);
+    titleEl.innerHTML =
+      "Free plan ends in <strong>" +
+      daysLeft +
+      " " +
+      (daysLeft === 1 ? "day" : "days") +
+      "</strong>";
+    leadEl.textContent =
+      "Upgrade to unlock live classes, full analytics, and your study program.";
+    widget.hidden = false;
+  }
+
+  function initNavPlanWidget() {
+    renderNavPlanWidget();
+    var upgradeBtn = document.getElementById("btn-nav-upgrade-plan");
+    if (upgradeBtn && !upgradeBtn.dataset.bound) {
+      upgradeBtn.dataset.bound = "1";
+      upgradeBtn.addEventListener("click", function () {
+        state.programDetailId = null;
+        setAppNavView("programs");
+      });
+    }
+  }
+
   function maybeOpenRequiredOnboarding() {
     if (typeof EnrollmentState !== "undefined" && !EnrollmentState.isEnrolled()) {
       openProgramOnboarding({ required: true });
@@ -680,6 +767,7 @@
 
     setText("dash-name", state.studentName);
     setText("dash-avatar", initials(state.studentName));
+    setText("topbar-profile-avatar", initials(state.studentName));
     setText("dash-stat-lessons", String(state.reports.length));
     setText(
       "dash-stat-avg",
@@ -2769,6 +2857,13 @@
     }
   }
 
+  function hasGoalPlanUi() {
+    var section = document.getElementById("sidebar-goal-plan-section");
+    if (!section || section.hidden) return false;
+    var ctx = resolveMetricsContext();
+    return !!(ctx && ctx.studyPlan && hasGoalData(ctx.goal));
+  }
+
   function syncGoalPlanCollapse() {
     var section = document.getElementById("sidebar-goal-plan-section");
     var toggle = document.getElementById("goal-plan-toggle");
@@ -2776,7 +2871,7 @@
     var chip = document.getElementById("goal-plan-collapsed-chip");
     var panel = document.getElementById("goal-plan-panel");
     var sidebar = document.querySelector(".sidebar");
-    if (!section || !hasGoal()) return;
+    if (!section || !hasGoalPlanUi()) return;
 
     var collapsed = state.goalPlanCollapsed;
     section.classList.toggle("is-collapsed", collapsed);
@@ -3049,7 +3144,7 @@
     var toggle = document.getElementById("study-plan-mobile-toggle");
     if (!card || !toggle) return;
 
-    if (isMobileLayout() && hasGoal() && state.studyPlan) {
+    if (isMobileLayout() && hasGoalPlanUi()) {
       card.classList.add("is-collapsed");
       toggle.setAttribute("aria-expanded", "false");
     } else {
@@ -3701,7 +3796,11 @@
 
   function markCurriculumStubProgress(classNum, patch) {
     if (isDemo && (patch.lesson || patch.selfStudy)) {
-      fetch("/api/demo/curriculum/" + encodeURIComponent(classNum) + "/complete", {
+      fetch(
+        DashboardApi.apiUrl(
+          "/api/demo/curriculum/" + encodeURIComponent(classNum) + "/complete"
+        ),
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4067,7 +4166,7 @@
     applyIntensityToGoalState(presetKey);
     var payload = buildGoalPatchPayload({ study_intensity_preset: presetKey || null });
 
-    fetch("/api/students/" + encodeURIComponent(STUDENT_ID) + "/goal", {
+    fetch(DashboardApi.apiUrl("/api/students/" + encodeURIComponent(STUDENT_ID) + "/goal"), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -4392,7 +4491,7 @@
     }
     if (errorEl) errorEl.hidden = true;
 
-    fetch("/api/students/" + encodeURIComponent(STUDENT_ID) + "/goal", {
+    fetch(DashboardApi.apiUrl("/api/students/" + encodeURIComponent(STUDENT_ID) + "/goal"), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -5066,7 +5165,49 @@
     if (!isDemo) renderChart(state.reports.slice().reverse());
   }
 
+  function loadDashboardFromStaticPreview() {
+    var loadingEl = document.getElementById("dash-loading");
+    var errorEl = document.getElementById("dash-error");
+    var mainEl = document.querySelector(".main");
+    if (loadingEl) loadingEl.hidden = false;
+    if (mainEl) mainEl.style.visibility = "hidden";
+
+    return DashboardApi.loadStaticPreviewBundle()
+      .then(function (data) {
+        state.previewBundle = data;
+        DashboardApi.applyReportsBundle(state, data, { goalMetrics: false });
+        state.reports = sortReports(state.reports);
+        state.errorTracking = data.error_tracking || null;
+        if (data.curriculum) {
+          applyServerCurriculum(data.curriculum);
+        }
+        rebuildStudentLearningContext();
+        if (errorEl) errorEl.hidden = true;
+      })
+      .catch(function (err) {
+        console.error("[Preview] Static preview load failed:", err);
+        if (errorEl) {
+          errorEl.textContent =
+            "Не удалось загрузить demo-preview.json рядом с dashboard.html. " +
+            (err.message || "");
+          errorEl.hidden = false;
+        }
+      })
+      .then(function () {
+        finishDashboardRender();
+      })
+      .finally(function () {
+        refreshAnalyticsPanels();
+        if (loadingEl) loadingEl.hidden = true;
+        if (mainEl) mainEl.style.visibility = "";
+      });
+  }
+
   function loadDashboardFromApi() {
+    if (DashboardApi.isStaticPreviewMode()) {
+      return loadDashboardFromStaticPreview();
+    }
+
     var loadingEl = document.getElementById("dash-loading");
     var errorEl = document.getElementById("dash-error");
     var mainEl = document.querySelector(".main");
@@ -5132,6 +5273,7 @@
     initStudyPlanCollapse();
     initActivityHeatmapPopover();
     initAppNav();
+    initNavPlanWidget();
     initProgramsPage();
 
     document.querySelectorAll("#view-home .tab, #view-analytics .analytics-tab").forEach(function (tab) {
@@ -5155,9 +5297,14 @@
       dashErr.textContent = "Не удалось загрузить скрипты дашборда. Обновите страницу.";
     }
   } else {
-    DashboardApi.loadAppConfig().finally(function () {
+    var boot = function () {
       bootstrapDashboard();
-    });
+    };
+    if (DashboardApi.isStaticPreviewMode()) {
+      DashboardApi.loadStaticPreviewConfig().finally(boot);
+    } else {
+      DashboardApi.loadAppConfig().finally(boot);
+    }
   }
 
   if (typeof ProgramOnboarding !== "undefined") {

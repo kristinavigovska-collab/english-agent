@@ -171,6 +171,23 @@ def main() -> None:
     )
     print(f"Wrote fixtures to {FIXTURES}")
 
+    static_dir = ROOT / "static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    from services import demo_state
+    from services.app_config import get_public_config
+
+    preview_bundle = demo_state.build_bundle()
+    preview_bundle["curriculum"] = curriculum
+    (static_dir / "demo-preview.json").write_text(
+        json.dumps(preview_bundle, ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
+    (static_dir / "demo-config.json").write_text(
+        json.dumps(get_public_config(), ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
+    print(f"Wrote static/demo-preview.json and static/demo-config.json")
+
 
 if __name__ == "__main__":
     main()

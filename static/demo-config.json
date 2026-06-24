@@ -1,0 +1,80 @@
+{
+  "cefr_levels": [
+    "A1",
+    "A2",
+    "B1",
+    "B2",
+    "C1",
+    "C2"
+  ],
+  "cefr_level_names": {
+    "A1": "Beginner",
+    "A2": "Elementary",
+    "B1": "Intermediate",
+    "B2": "Upper-Intermediate",
+    "C1": "Advanced",
+    "C2": "Proficiency"
+  },
+  "cefr_hours_per_level": {
+    "A1_A2": 180,
+    "A2_B1": 190,
+    "B1_B2": 200,
+    "B2_C1": 210,
+    "C1_C2": 220
+  },
+  "cefr_hours_default": 190,
+  "scenario_based_coefficient": 0.5,
+  "stuck_threshold_lessons": 3,
+  "resolved_absence_lessons": 2,
+  "stuck_multiplier": 1.1,
+  "stuck_load_min_categories": 2,
+  "intensity_presets": {
+    "once_week": {
+      "label": "1 раз в неделю",
+      "classes_per_week": 1.0,
+      "tutor_lessons_per_week": 1,
+      "practice_days_per_week": 1
+    },
+    "few_times_week": {
+      "label": "2–3 раза в неделю",
+      "classes_per_week": 2.5,
+      "tutor_lessons_per_week": 3,
+      "practice_days_per_week": 3
+    },
+    "daily": {
+      "label": "Каждый день",
+      "classes_per_week": 7.0,
+      "tutor_lessons_per_week": 7,
+      "practice_days_per_week": 7
+    }
+  },
+  "plan_disclaimer": "Расчёт на основе средних нормативов CEFR (~190 ч/уровень), уточняется по мере вашего прогресса",
+  "plan_disclaimer_short": "На основе нормативов CEFR",
+  "duration_weeks_min": 1,
+  "duration_weeks_max": 104,
+  "activity_heatmap_weeks": 16,
+  "min_lessons_for_forecast": 5,
+  "cefr_caption": "Уровень CEFR (международная шкала A1–C2)",
+  "error_category_labels": {
+    "third_person_singular": "Согласование 3-го лица ед.ч.",
+    "noun_plural": "Множественное число существительных",
+    "verb_preposition": "Предлоги после глаголов",
+    "tense_agreement": "Согласование времён",
+    "past_simple": "Past Simple",
+    "present_perfect": "Present Perfect / Past vs Perfect",
+    "conditionals": "Условные предложения",
+    "question_formation": "Построение вопросов",
+    "possessive": "Притяжательный падеж",
+    "articles": "Артикли (a/an/the)",
+    "comparatives": "Сравнительная и превосходная степень",
+    "gerunds_infinitives": "Gerund vs Infinitive",
+    "much_many": "Much vs Many / исчисляемость",
+    "word_order": "Порядок слов",
+    "fillers_coherence": "Слова-филлеры / связность речи",
+    "modals": "Модальные глаголы",
+    "other": "Прочее"
+  },
+  "default_tutor_lessons_per_week": 2,
+  "default_tutor_lesson_minutes": 60,
+  "default_practice_days_per_week": 6
+}
