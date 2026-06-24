@@ -196,27 +196,23 @@
     };
   }
 
-  function applyReportsBundle(state, data) {
+  function applyReportsBundle(state, data, options) {
+    options = options || {};
+    var applyGoalMetrics = options.goalMetrics !== false;
+
     state.reports = data.reports || [];
     state.studentName = data.student_name || data.student_email || "Студент";
-    state.goal = {
-      target_cefr_level: data.target_cefr_level || null,
-      target_date: data.target_date || null,
-      goal_label: data.goal_label || null,
-      goal_set_date: data.goal_set_date || null,
-      goal_type: data.goal_type || null,
-      target_duration_weeks: data.target_duration_weeks || null,
-      scenario_description: data.scenario_description || null,
-      goal_start_cefr_level: data.goal_start_cefr_level || null,
-      tutor_lessons_per_week: data.tutor_lessons_per_week || 2,
-      tutor_lesson_minutes: data.tutor_lesson_minutes || 60,
-      practice_days_per_week: data.practice_days_per_week || 6,
-      study_intensity_preset: data.study_intensity_preset || null,
-    };
-    state.studyPlan = data.study_plan || null;
-    state.progressTracker = data.progress_tracker || null;
-    state.errorTracking = data.error_tracking || null;
-    state.serverCurriculum = data.curriculum || null;
+
+    if (applyGoalMetrics) {
+      state.goal = goalFieldsFromBundle(data);
+      state.studyPlan = data.study_plan || null;
+      state.progressTracker = data.progress_tracker || null;
+      state.errorTracking = data.error_tracking || null;
+    }
+
+    if (data.curriculum) {
+      state.serverCurriculum = data.curriculum;
+    }
     return state;
   }
 

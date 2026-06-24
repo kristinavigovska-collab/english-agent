@@ -575,6 +575,10 @@
       else renderProgramsPage();
     }
 
+    if (view === "analytics") {
+      refreshAnalyticsPanels();
+    }
+
     try {
       localStorage.setItem(NAV_VIEW_KEY, view);
     } catch (e) {
@@ -625,6 +629,9 @@
     root.querySelectorAll(".tab-panel").forEach(function (panel) {
       panel.classList.toggle("active", panel.id === "panel-" + target);
     });
+    if (root.id === "view-analytics") {
+      refreshAnalyticsPanels();
+    }
   }
 
   function sortReports(reports) {
@@ -750,8 +757,12 @@
     return !hasGoal() || !state.studyPlan || !state.progressTracker;
   }
 
+  function hasLiveMetrics() {
+    return hasGoal() && state.studyPlan && state.progressTracker;
+  }
+
   function resolveMetricsContext() {
-    if (hasGoal() && state.studyPlan && state.progressTracker) {
+    if (hasLiveMetrics()) {
       return {
         goal: state.goal,
         studyPlan: state.studyPlan,
@@ -777,6 +788,28 @@
     return null;
   }
 
+  function refreshAnalyticsPanels() {
+    renderActivity();
+    renderAnalyticsGoalPlan();
+    renderStudyPlan();
+    renderStudentGoal();
+  }
+
+  function ensurePreviewBundle() {
+    if (state.previewBundle) {
+      return Promise.resolve(state.previewBundle);
+    }
+    return DashboardApi.fetchPreviewBundle()
+      .then(function (data) {
+        state.previewBundle = data;
+        return data;
+      })
+      .catch(function (err) {
+        console.warn("[Preview] Failed to load preview dashboard:", err);
+        return null;
+      });
+  }
+
   function setPreviewBanners(isPreview) {
     ["activity-preview-banner", "analytics-preview-banner", "sidebar-preview-banner"].forEach(
       function (id) {
@@ -791,24 +824,10 @@
   }
 
   function loadPreviewBundleIfNeeded() {
-    if (!needsAnalyticsPreview()) {
-      state.previewBundle = null;
-      setPreviewBanners(false);
-      return Promise.resolve();
-    }
-    if (state.previewBundle) {
-      setPreviewBanners(true);
-      return Promise.resolve();
-    }
-    return DashboardApi.fetchPreviewBundle()
-      .then(function (data) {
-        state.previewBundle = data;
-        setPreviewBanners(true);
-      })
-      .catch(function (err) {
-        console.warn("[Preview] Failed to load preview dashboard:", err);
-        setPreviewBanners(false);
-      });
+    return ensurePreviewBundle().then(function () {
+      var ctx = resolveMetricsContext();
+      setPreviewBanners(!!ctx && ctx.isPreview);
+    });
   }
 
   function reportChronoDate(report) {
@@ -1306,6 +1325,8 @@
     if (!ctx) {
       setPreviewBanners(false);
       emptyEl.hidden = false;
+      emptyEl.textContent =
+        "Задайте цель обучения, чтобы видеть календарь активности и статистику занятий.";
       contentEl.hidden = true;
       return;
     }
@@ -1674,6 +1695,8 @@
     var ctx = resolveMetricsContext();
     if (!ctx) {
       emptyEl.hidden = false;
+      emptyEl.textContent =
+        "Задайте цель обучения в профиле, чтобы видеть связь темпа занятий с достижением цели.";
       contentEl.hidden = true;
       renderGoalPaceAlerts([]);
       return;
@@ -1686,7 +1709,19 @@
     var plan = ctx.studyPlan;
     var goal = ctx.goal;
     var insights = buildGoalPaceInsights(ctx);
-    if (!insights) return;
+    if (!insights) {
+      setText("analytics-goal-lead", formatAnalyticsGoalLead(goal));
+      setText(
+        "analytics-goal-target",
+        goal.goal_type === "scenario_based" && goal.scenario_description
+          ? goal.scenario_description
+          : "Уровень " + (goal.target_cefr_level || "—")
+      );
+      setText("analytics-goal-deadline", "к " + formatDateLocal(goal.target_date));
+      setText("analytics-goal-remaining", formatRemainingDaysShort(goal.target_date));
+      renderGoalPaceAlerts([]);
+      return;
+    }
 
     renderGoalPaceAlerts(ctx.isPreview ? [] : insights.alerts);
 
@@ -3958,13 +3993,15 @@
   }
 
   function applyDemoGoalFromServer(data) {
-    DashboardApi.applyReportsBundle(state, data);
+    DashboardApi.applyReportsBundle(state, data, { goalMetrics: true });
     state.reports = sortReports(state.reports);
     if (data.curriculum) {
       applyServerCurriculum(data.curriculum);
     }
     rebuildStudentLearningContext();
+    setPreviewBanners(false);
     renderStudentOverview();
+    refreshAnalyticsPanels();
   }
 
   function applyIntensityToGoalState(presetKey) {
@@ -5010,6 +5047,14 @@
   }
 
   function finishDashboardRender() {
+    if (isDemo && !hasGoal() && state.previewBundle && !state.errorTracking) {
+      state.errorTracking = state.previewBundle.error_tracking || null;
+    }
+
+    var ctx = resolveMetricsContext();
+    setPreviewBanners(!!ctx && ctx.isPreview);
+    refreshAnalyticsPanels();
+
     renderStudentOverview();
     maybeOpenRequiredOnboarding();
     if (!state.reports.length) {
@@ -5028,17 +5073,27 @@
     if (loadingEl) loadingEl.hidden = false;
     if (mainEl) mainEl.style.visibility = "hidden";
 
-    return DashboardApi.fetchReportsBundle()
+    var previewPromise = ensurePreviewBundle();
+
+    var livePromise = DashboardApi.fetchReportsBundle()
       .then(function (data) {
         if (!isDemo) {
           document.querySelectorAll(".demo-only").forEach(function (el) {
             el.hidden = true;
           });
         }
-        DashboardApi.applyReportsBundle(state, data);
+
+        var applyGoalMetrics = !isDemo || hasGoal();
+        DashboardApi.applyReportsBundle(state, data, { goalMetrics: applyGoalMetrics });
         state.reports = sortReports(state.reports);
+
+        if (applyGoalMetrics && data.error_tracking) {
+          state.errorTracking = data.error_tracking;
+        }
+
         rebuildStudentLearningContext();
-        if (data.curriculum) {
+
+        if (data.curriculum && applyGoalMetrics) {
           applyServerCurriculum(data.curriculum);
           return null;
         }
@@ -5046,23 +5101,24 @@
         if (!enrollment) return null;
         return DashboardApi.fetchCurriculum(enrollment.program_id).then(applyServerCurriculum);
       })
-      .then(function () {
-        return loadPreviewBundleIfNeeded();
-      })
-      .then(function () {
-        finishDashboardRender();
-      })
       .catch(function (err) {
         if (errorEl) {
           errorEl.textContent =
             "Не удалось загрузить отчёты: " + (err.message || "ошибка сети");
           errorEl.hidden = false;
         }
-        return loadPreviewBundleIfNeeded().then(function () {
-          finishDashboardRender();
-        });
+        return null;
+      });
+
+    return Promise.all([previewPromise, livePromise])
+      .then(function () {
+        finishDashboardRender();
+      })
+      .catch(function () {
+        finishDashboardRender();
       })
       .finally(function () {
+        refreshAnalyticsPanels();
         if (loadingEl) loadingEl.hidden = true;
         if (mainEl) mainEl.style.visibility = "";
       });
@@ -5088,15 +5144,7 @@
     initLessonNavigation();
     initCurriculumFilters();
     initCurriculumActions();
-
-    if (DashboardApi.CONFIG) {
-      loadDashboardFromApi();
-    } else {
-      var loadingEl = document.getElementById("dash-loading");
-      var mainEl = document.querySelector(".main");
-      if (loadingEl) loadingEl.hidden = true;
-      if (mainEl) mainEl.style.visibility = "";
-    }
+    loadDashboardFromApi();
   }
 
   if (typeof DashboardApi === "undefined") {
@@ -5107,7 +5155,7 @@
       dashErr.textContent = "Не удалось загрузить скрипты дашборда. Обновите страницу.";
     }
   } else {
-    DashboardApi.loadAppConfig().then(function () {
+    DashboardApi.loadAppConfig().finally(function () {
       bootstrapDashboard();
     });
   }
