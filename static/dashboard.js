@@ -173,7 +173,29 @@
     serverCurriculum: null,
     previewBundle: null,
     programCatalog: null,
+    bookClassFlow: null,
   };
+
+  var STUB_BOOKING_TEACHERS = [
+    {
+      id: "tutor-anna",
+      name: "Anna K.",
+      note: "General & Business · B2–C1",
+      slots: ["Сегодня 18:00", "Завтра 10:30", "Завтра 19:00"],
+    },
+    {
+      id: "tutor-james",
+      name: "James R.",
+      note: "IELTS & Interview prep",
+      slots: ["Сегодня 17:00", "Завтра 12:00", "Пт 09:30"],
+    },
+    {
+      id: "tutor-maria",
+      name: "Maria S.",
+      note: "Beginner – Intermediate",
+      slots: ["Завтра 08:30", "Завтра 16:00", "Сб 11:00"],
+    },
+  ];
 
   var PROGRAM_LEVELS = {
     beginner: { id: "beginner", label: "Beginner", cefr: "A1", order: 1 },
@@ -3357,10 +3379,54 @@
       }
     }
     if (currentIdx < 0 && items.length) currentIdx = items.length - 1;
-    items.forEach(function (item, idx) {
-      item.isCurrent = idx === currentIdx;
+    applyNextStepFlags(items);
+    return items;
+  }
+
+  function getNextStepClassItem(items) {
+    if (!items || !items.length) return null;
+    var maxLessonDone = 0;
+    items.forEach(function (item) {
+      if (item.lessonCompleted && item.classNum > maxLessonDone) {
+        maxLessonDone = item.classNum;
+      }
+    });
+    var targetNum = maxLessonDone > 0 ? maxLessonDone + 1 : 1;
+    var nextItem = null;
+    items.forEach(function (item) {
+      if (item.classNum === targetNum && !item.completed) nextItem = item;
+    });
+    if (!nextItem) {
+      nextItem =
+        items.find(function (item) {
+          return !item.completed;
+        }) || null;
+    }
+    return nextItem;
+  }
+
+  function applyNextStepFlags(items) {
+    var nextItem = getNextStepClassItem(items);
+    items.forEach(function (item) {
+      var isNext = !!(nextItem && item.classNum === nextItem.classNum);
+      item.isNextStep = isNext;
+      item.isCurrent = isNext;
     });
     return items;
+  }
+
+  function normalizeCurriculumItems(items) {
+    if (!items || !items.length) return items || [];
+    items.forEach(function (item) {
+      var stub = state.curriculumStubProgress[item.classNum];
+      if (!stub) return;
+      if (stub.lesson) item.lessonCompleted = true;
+      if (stub.selfStudy) item.selfStudyCompleted = true;
+      item.completed = item.lessonCompleted && item.selfStudyCompleted;
+      item.hasProgress = item.lessonCompleted || item.selfStudyCompleted;
+    });
+    applySequentialCurriculumBackfill(items);
+    return applyNextStepFlags(items);
   }
 
   /** If Class N has a completed lesson, mark 1…N−1 as done (sequential program). */
@@ -3392,8 +3458,9 @@
   }
 
   function getClassRowPhase(item) {
-    if (item.isCurrent) return "current";
-    if (item.lessonCompleted || item.selfStudyCompleted) return "passed";
+    if (item.isNextStep || item.isCurrent) return "current";
+    if (item.lessonCompleted && item.selfStudyCompleted) return "passed";
+    if (item.lessonCompleted || item.selfStudyCompleted) return "partial";
     return "future";
   }
 
@@ -3530,6 +3597,25 @@
       );
     }
 
+    if (phase === "partial") {
+      if (item.lessonCompleted) {
+        parts.push(renderCurriculumLessonStatus(item));
+      } else {
+        parts.push(renderCurriculumActionBtn("lesson", item.classNum, item.title, false));
+      }
+      if (item.selfStudyCompleted) {
+        parts.push(renderCurriculumStatusPill("selfStudy", true));
+      } else {
+        parts.push(renderCurriculumActionBtn("selfStudy", item.classNum, item.title, false));
+      }
+      return (
+        '<div class="curriculum-actions curriculum-actions--buttons curriculum-actions--mixed">' +
+        parts.join("") +
+        "</div>"
+      );
+    }
+
+    // current — следующий Class в программе
     if (item.lessonCompleted) {
       parts.push(renderCurriculumLessonStatus(item));
     } else {
@@ -3754,6 +3840,15 @@
     } else if (scrollEl) {
       scrollEl.scrollTop = 0;
     }
+
+    var selectedReport = state.reports.find(function (r) {
+      return r.id === state.selectedId;
+    });
+    var isLatest =
+      state.reports.length > 0 &&
+      selectedReport &&
+      selectedReport.id === state.reports[0].id;
+    renderNextStepBanner(selectedReport || null, isLatest);
   }
 
   function updateCurriculumReportLinks() {
@@ -3794,12 +3889,131 @@
       state.curriculumStubProgress[classNum] || {},
       patch
     );
+    normalizeCurriculumItems(state.curriculumItems);
     renderCurriculumProgram();
+  }
+
+  function resetBookClassFlow() {
+    state.bookClassFlow = { step: "teacher", teacherId: null, slot: null };
+    showBookClassStep("teacher");
+    var confirmBtn = document.getElementById("btn-book-class-confirm");
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+
+  function showBookClassStep(step) {
+    var teacherStep = document.getElementById("book-class-step-teacher");
+    var slotsStep = document.getElementById("book-class-step-slots");
+    if (teacherStep) teacherStep.hidden = step !== "teacher";
+    if (slotsStep) slotsStep.hidden = step !== "slots";
+  }
+
+  function renderBookClassTeachers() {
+    var list = document.getElementById("book-class-teacher-list");
+    if (!list) return;
+    list.innerHTML = STUB_BOOKING_TEACHERS.map(function (teacher) {
+      return (
+        '<button type="button" class="book-class-teacher-card" data-teacher-id="' +
+        esc(teacher.id) +
+        '" role="listitem">' +
+        '<span class="book-class-teacher-name">' +
+        esc(teacher.name) +
+        "</span>" +
+        '<span class="book-class-teacher-note">' +
+        esc(teacher.note) +
+        "</span>" +
+        "</button>"
+      );
+    }).join("");
+    list.querySelectorAll(".book-class-teacher-card").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectBookClassTeacher(btn.dataset.teacherId);
+      });
+    });
+  }
+
+  function selectBookClassTeacher(teacherId) {
+    state.bookClassFlow = state.bookClassFlow || {};
+    state.bookClassFlow.teacherId = teacherId;
+    state.bookClassFlow.slot = null;
+    state.bookClassFlow.step = "slots";
+    showBookClassStep("slots");
+    renderBookClassSlots(teacherId);
+    var confirmBtn = document.getElementById("btn-book-class-confirm");
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+
+  function renderBookClassSlots(teacherId) {
+    var teacher = STUB_BOOKING_TEACHERS.find(function (t) {
+      return t.id === teacherId;
+    });
+    var list = document.getElementById("book-class-slot-list");
+    var label = document.getElementById("book-class-slot-label");
+    if (!list || !teacher) return;
+    if (label) {
+      label.textContent = "Шаг 2 · Время с " + teacher.name;
+    }
+    list.innerHTML = teacher.slots
+      .map(function (slot, idx) {
+        return (
+          '<button type="button" class="book-class-slot-card" data-slot-index="' +
+          idx +
+          '" role="listitem">' +
+          esc(slot) +
+          "</button>"
+        );
+      })
+      .join("");
+    list.querySelectorAll(".book-class-slot-card").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        list.querySelectorAll(".book-class-slot-card").forEach(function (el) {
+          el.classList.remove("is-selected");
+        });
+        btn.classList.add("is-selected");
+        state.bookClassFlow.slot = teacher.slots[Number(btn.dataset.slotIndex)];
+        var confirmBtn = document.getElementById("btn-book-class-confirm");
+        if (confirmBtn) confirmBtn.disabled = false;
+      });
+    });
+  }
+
+  function getMaxLessonCompletedClassNum(items) {
+    var max = 0;
+    (items || []).forEach(function (item) {
+      if (item.lessonCompleted && item.classNum > max) max = item.classNum;
+    });
+    return max;
+  }
+
+  function renderNextStepBanner(report, isLatest) {
+    var banner = document.getElementById("class-next-step");
+    var leadEl = document.getElementById("class-next-step-lead");
+    if (!banner || !leadEl) return;
+
+    var nextItem = getNextStepClassItem(state.curriculumItems);
+    if (!nextItem || nextItem.completed) {
+      banner.hidden = true;
+      state.nextStepPending = null;
+      return;
+    }
+
+    var viewedClass = report ? findClassNumForReport(report) : null;
+    var maxLessonDone = getMaxLessonCompletedClassNum(state.curriculumItems);
+    var showBanner = isLatest || (viewedClass != null && viewedClass === maxLessonDone);
+    if (!showBanner) {
+      banner.hidden = true;
+      return;
+    }
+
+    state.nextStepPending = { classNum: nextItem.classNum, topic: nextItem.title };
+    leadEl.textContent = "Class " + nextItem.classNum + " · " + nextItem.title;
+    banner.hidden = false;
   }
 
   function openBookClassStub(classNum, topic) {
     state.curriculumStubPending = { classNum: classNum, topic: topic, action: "lesson" };
-    setText("book-class-topic", topic);
+    resetBookClassFlow();
+    setText("book-class-topic", "Class " + classNum + " · " + topic);
+    renderBookClassTeachers();
     var overlay = document.getElementById("book-class-overlay");
     if (overlay) overlay.hidden = false;
   }
@@ -3823,6 +4037,7 @@
       if (el) el.hidden = true;
     });
     state.curriculumStubPending = null;
+    resetBookClassFlow();
   }
 
   function initCurriculumActions() {
@@ -3839,12 +4054,38 @@
     bindClose("btn-self-study-close");
     bindClose("btn-self-study-cancel");
 
+    var bookBack = document.getElementById("btn-book-class-back");
+    if (bookBack) {
+      bookBack.addEventListener("click", function () {
+        resetBookClassFlow();
+        renderBookClassTeachers();
+      });
+    }
+
+    var nextBook = document.getElementById("btn-next-step-book");
+    if (nextBook) {
+      nextBook.addEventListener("click", function () {
+        var pending = state.nextStepPending;
+        if (!pending) return;
+        openBookClassStub(pending.classNum, pending.topic);
+      });
+    }
+
+    var nextSelf = document.getElementById("btn-next-step-self-study");
+    if (nextSelf) {
+      nextSelf.addEventListener("click", function () {
+        var pending = state.nextStepPending;
+        if (!pending) return;
+        openSelfStudyStub(pending.classNum, pending.topic);
+      });
+    }
+
     var bookConfirm = document.getElementById("btn-book-class-confirm");
     if (bookConfirm) {
       bookConfirm.addEventListener("click", function () {
         var pending = state.curriculumStubPending;
         if (!pending || pending.action !== "lesson") return;
-        // STUB: real booking flow will redirect to school scheduler and confirm via webhook.
+        if (!state.bookClassFlow || !state.bookClassFlow.slot) return;
         markCurriculumStubProgress(pending.classNum, { lesson: true });
         closeCurriculumStubOverlays();
       });
@@ -4654,6 +4895,7 @@
     setText("summary-score-ring", formatScore(report.fluency_score));
     setText("summary-score-num", formatScore(report.fluency_score));
     setText("summary-text", buildSummaryText(state.studentName, report));
+    renderNextStepBanner(report, isLatest);
   }
 
   function updateLessonContextBar(report, isLatest) {
@@ -5102,7 +5344,9 @@
     state.serverCurriculum = data;
     state.reportClassMap = buildReportClassMap(items, state.reports);
     attachClassIndexToReports(state.reports, state.reportClassMap);
-    state.curriculumItems = enrichCurriculumWithReportIds(items, state.reportClassMap);
+    state.curriculumItems = normalizeCurriculumItems(
+      enrichCurriculumWithReportIds(items, state.reportClassMap)
+    );
     if (state.learningContext && typeof EnglishAgentSLC !== "undefined") {
       EnglishAgentSLC.syncComputed(
         state.learningContext,

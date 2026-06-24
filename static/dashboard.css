@@ -3170,6 +3170,124 @@ button.curriculum-status-pill--report.is-active .class-action-icon {
   flex: 1;
 }
 
+.curriculum-stub-panel--wide {
+  max-width: 480px;
+}
+
+.book-class-step {
+  margin-bottom: 0.75rem;
+}
+
+.book-class-step-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.book-class-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.book-class-back:hover {
+  text-decoration: underline;
+}
+
+.book-class-teacher-list,
+.book-class-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.book-class-teacher-card,
+.book-class-slot-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.book-class-slot-card {
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.book-class-teacher-card:hover,
+.book-class-slot-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15);
+}
+
+.book-class-slot-card.is-selected {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.book-class-teacher-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.book-class-teacher-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.class-next-step {
+  margin-bottom: 1rem;
+  padding: 1rem 1.125rem;
+  border: 1px dashed var(--accent);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(99, 102, 241, 0.02));
+}
+
+.class-next-step-head {
+  margin-bottom: 0.75rem;
+}
+
+.class-next-step-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.class-next-step-lead {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.class-next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.class-next-step-actions .btn {
+  width: auto;
+  flex: 1;
+  min-width: 8rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

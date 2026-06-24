@@ -385,6 +385,7 @@
       selfStudyCompleted: !!item.self_study_completed,
       completed: !!item.completed,
       isCurrent: !!item.is_current,
+      isNextStep: !!item.is_current,
       lessonReportId: item.lesson_report_id || null,
       lessonDateIso: item.lesson_date_iso || null,
       hasProgress: !!item.has_progress,

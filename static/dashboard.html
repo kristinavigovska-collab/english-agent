@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-04" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-05" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -142,17 +142,29 @@
 
   <!-- STUB: replace with school scheduling integration (calendar / booking system). -->
   <div class="curriculum-stub-overlay" id="book-class-overlay" hidden>
-    <div class="curriculum-stub-panel" role="dialog" aria-labelledby="book-class-title" aria-modal="true">
+    <div class="curriculum-stub-panel curriculum-stub-panel--wide" role="dialog" aria-labelledby="book-class-title" aria-modal="true">
       <div class="curriculum-stub-header">
         <h2 id="book-class-title">Book Class</h2>
         <button class="curriculum-stub-close" type="button" id="btn-book-class-close" aria-label="Закрыть">×</button>
       </div>
-      <p class="curriculum-stub-lead">Переход к бронированию занятия с преподавателем.</p>
+      <p class="curriculum-stub-lead" id="book-class-lead">Забронируйте живой урок с преподавателем.</p>
       <p class="curriculum-stub-topic" id="book-class-topic"></p>
-      <p class="curriculum-stub-note">Заглушка — здесь будет интеграция с расписанием школы.</p>
+
+      <div class="book-class-step" id="book-class-step-teacher">
+        <p class="book-class-step-label">Шаг 1 · Выберите преподавателя</p>
+        <div class="book-class-teacher-list" id="book-class-teacher-list" role="list"></div>
+      </div>
+
+      <div class="book-class-step" id="book-class-step-slots" hidden>
+        <button type="button" class="book-class-back" id="btn-book-class-back">← Другой преподаватель</button>
+        <p class="book-class-step-label" id="book-class-slot-label">Шаг 2 · Выберите время</p>
+        <div class="book-class-slot-list" id="book-class-slot-list" role="list"></div>
+      </div>
+
+      <p class="curriculum-stub-note" id="book-class-note">После подтверждения слот будет зарезервирован (интеграция с расписанием школы — в разработке).</p>
       <div class="curriculum-stub-actions">
         <button class="btn" type="button" id="btn-book-class-cancel">Отмена</button>
-        <button class="btn btn-primary" type="button" id="btn-book-class-confirm">Подтвердить бронирование</button>
+        <button class="btn btn-primary" type="button" id="btn-book-class-confirm" disabled>Подтвердить бронирование</button>
       </div>
     </div>
   </div>
@@ -490,17 +502,28 @@
       <!-- Tab: Lesson report -->
       <div class="tab-panel active" id="panel-current" role="tabpanel">
 
-        <div class="lesson-topic-plaque">
-          <span class="lesson-topic-icon" aria-hidden="true">📋</span>
-          <div class="lesson-topic-content">
-            <span class="lesson-topic-label">Class summary</span>
-            <p class="lesson-topic-value" id="lesson-report-heading">
-              <span class="lesson-report-class" id="lesson-report-class">Класс 13</span>
-              <span class="lesson-report-sep" aria-hidden="true"> · </span>
-              <span class="lesson-report-topic" id="lesson-report-topic">Travel &amp; Past Tenses</span>
-            </p>
-          </div>
+      <div class="lesson-topic-plaque">
+        <span class="lesson-topic-icon" aria-hidden="true">📋</span>
+        <div class="lesson-topic-content">
+          <span class="lesson-topic-label">Class summary</span>
+          <p class="lesson-topic-value" id="lesson-report-heading">
+            <span class="lesson-report-class" id="lesson-report-class">Класс 13</span>
+            <span class="lesson-report-sep" aria-hidden="true"> · </span>
+            <span class="lesson-report-topic" id="lesson-report-topic">Travel &amp; Past Tenses</span>
+          </p>
         </div>
+      </div>
+
+      <section class="class-next-step card" id="class-next-step" hidden aria-label="Следующий шаг программы">
+        <div class="class-next-step-head">
+          <h2 class="class-next-step-title">Следующий шаг</h2>
+          <p class="class-next-step-lead" id="class-next-step-lead">—</p>
+        </div>
+        <div class="class-next-step-actions">
+          <button type="button" class="btn btn-primary" id="btn-next-step-book">Book Class</button>
+          <button type="button" class="btn btn-secondary" id="btn-next-step-self-study">Self-study</button>
+        </div>
+      </section>
 
         <section class="card stuck-patterns-card" id="stuck-patterns-card" hidden>
           <div class="card-header">
@@ -1257,7 +1280,7 @@
   <script src="/static/dashboard-api.js?v=20260625-04"></script>
   <script src="/static/enrollment-state.js?v=20260625-04"></script>
   <script src="/static/student-learning-context.js?v=20260625-04"></script>
-  <script src="/static/dashboard.js?v=20260625-04" defer></script>
+  <script src="/static/dashboard.js?v=20260625-05" defer></script>
 
 </body>
 </html>

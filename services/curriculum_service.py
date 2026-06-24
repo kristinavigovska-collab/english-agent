@@ -151,14 +151,31 @@ def build_curriculum(
                 item["lesson_date_iso"] = back.isoformat()
 
     current_idx = -1
-    for i, item in enumerate(items):
-        if not item["lesson_completed"] or not item["self_study_completed"]:
-            current_idx = i
-            break
-    if current_idx < 0 and items:
-        current_idx = len(items) - 1
-    for i, item in enumerate(items):
-        item["is_current"] = i == current_idx
+    max_lesson_done = 0
+    for item in items:
+        if item["lesson_completed"] and item["class_num"] > max_lesson_done:
+            max_lesson_done = item["class_num"]
+
+    next_step_num = max_lesson_done + 1 if max_lesson_done > 0 else 1
+    next_item = next((i for i in items if i["class_num"] == next_step_num), None)
+    if next_item and not next_item["completed"]:
+        current_num = next_step_num
+    else:
+        first_open = next((i for i in items if not i["completed"]), None)
+        if first_open:
+            current_num = first_open["class_num"]
+        elif items:
+            current_num = items[-1]["class_num"]
+        else:
+            current_num = 1
+
+    for item in items:
+        item["is_current"] = item["class_num"] == current_num
+
+    current_idx = next(
+        (i for i, item in enumerate(items) if item["class_num"] == current_num),
+        0,
+    )
 
     completed_classes = [
         {
