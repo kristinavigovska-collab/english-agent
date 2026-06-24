@@ -19,4 +19,4 @@ Study plan, error pattern tracking, intensity presets, and CEFR constants were d
 
 - Formula changes require updating Python + regenerating fixtures (`python scripts/generate_demo_fixtures.py`).
 - Dashboard must load config before init; missing config shows an error banner (no client fallback constants).
-- `data/programs_catalog.json` syncs from `PROGRAM_CATALOG` via `scripts/sync_programs_catalog.py`.
+- `data/programs_catalog.json` is the canonical **file** catalog; `scripts/sync_programs_catalog.py` validates JSON and upserts to Supabase. Runtime `GET /api/programs` reads DB first, JSON fallback. `PROGRAM_CATALOG` in `dashboard.js` is legacy until the client loads the API.

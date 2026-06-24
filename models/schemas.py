@@ -9,6 +9,8 @@ CEFR_LEVELS: tuple[str, ...] = ("A1", "A2", "B1", "B2", "C1", "C2")
 GoalType = Literal["general_level", "scenario_based"]
 StudyIntensityPreset = Literal["once_week", "few_times_week", "daily"]
 PlanStatus = Literal["on_track", "behind", "ahead"]
+ProgramPlanId = Literal["free_trial", "solo", "light", "standard", "intensive"]
+EnrollmentStatus = Literal["active", "trial", "paused", "cancelled", "expired"]
 
 
 class GrammarError(BaseModel):
@@ -197,3 +199,34 @@ class StudentReportsResponse(BaseModel):
     progress_tracker: Optional[ProgressTrackerResponse] = None
     error_tracking: Optional[ErrorTrackingResponse] = None
     reports: list[ReportResponse]
+
+
+class StudentEnrollmentUpdate(BaseModel):
+    program_id: str = Field(min_length=1, max_length=120)
+    plan_id: ProgramPlanId = "standard"
+    status: EnrollmentStatus = "active"
+
+    @field_validator("program_id")
+    @classmethod
+    def strip_program_id(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("program_id is required")
+        return trimmed
+
+
+class StudentEnrollmentResponse(BaseModel):
+    program_id: str
+    plan_id: str
+    status: str
+    level_id: str
+    level_cefr: Optional[str] = None
+    level_name: Optional[str] = None
+    program_name: Optional[str] = None
+    track_category: Optional[str] = None
+    enrolled_at: Optional[datetime] = None
+    student_confirmed: bool = True
+
+
+class StudentEnrollmentPayload(BaseModel):
+    enrollment: Optional[StudentEnrollmentResponse] = None

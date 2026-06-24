@@ -172,6 +172,7 @@
     learningContext: null,
     serverCurriculum: null,
     previewBundle: null,
+    programCatalog: null,
   };
 
   var PROGRAM_LEVELS = {
@@ -283,7 +284,8 @@
     },
   ];
 
-  // PLACEHOLDER catalog — replace with school programs API.
+  // PLACEHOLDER catalog — legacy UI fallback until dashboard loads GET /api/programs.
+  // Canonical file source: data/programs_catalog.json (sync via scripts/sync_programs_catalog.py).
   var PROGRAM_CATALOG = [
     {
       id: "general-beginner",
@@ -470,8 +472,10 @@
     },
   ];
 
-  if (typeof EnrollmentState !== "undefined") {
-    EnrollmentState.init(PROGRAM_CATALOG, PROGRAM_LEVELS);
+  function getProgramCatalog() {
+    return state.programCatalog && state.programCatalog.length
+      ? state.programCatalog
+      : PROGRAM_CATALOG;
   }
 
   function handleEnrollmentConfirmed() {
@@ -1976,7 +1980,7 @@
   }
 
   function getProgramById(programId) {
-    return PROGRAM_CATALOG.find(function (program) {
+    return getProgramCatalog().find(function (program) {
       return program.id === programId;
     }) || null;
   }
@@ -2024,6 +2028,65 @@
     }
   }
 
+  function applyServerEnrollment(serverEnrollment) {
+    if (!serverEnrollment || !serverEnrollment.program_id) return;
+    if (typeof EnrollmentState === "undefined") return;
+
+    EnrollmentState.current = {
+      program_id: serverEnrollment.program_id,
+      level_id: serverEnrollment.level_id,
+      level_cefr: serverEnrollment.level_cefr,
+      level_name: serverEnrollment.level_name,
+      program_name: serverEnrollment.program_name,
+      track_category: serverEnrollment.track_category,
+      enrolled_at: serverEnrollment.enrolled_at || new Date().toISOString(),
+      student_confirmed: true,
+      is_demo: false,
+    };
+    EnrollmentState.save();
+
+    if (serverEnrollment.plan_id) {
+      saveEnrolledPlanId(serverEnrollment.plan_id);
+      state.subscriptionPlanId = serverEnrollment.plan_id;
+    }
+  }
+
+  function loadProgramCatalogAndEnrollment() {
+    var catalogPromise = DashboardApi.fetchProgramsCatalog()
+      .then(function (programs) {
+        return programs && programs.length ? programs : PROGRAM_CATALOG;
+      })
+      .catch(function (err) {
+        console.warn("[Programs] Catalog load failed, using embedded fallback:", err);
+        return PROGRAM_CATALOG;
+      });
+
+    var enrollmentPromise = Promise.resolve(null);
+    if (
+      !DashboardApi.isStaticPreviewMode() &&
+      !DashboardApi.isDemoStudentId(STUDENT_ID)
+    ) {
+      enrollmentPromise = DashboardApi.fetchStudentEnrollment(STUDENT_ID)
+        .then(function (payload) {
+          return payload && payload.enrollment ? payload.enrollment : null;
+        })
+        .catch(function (err) {
+          console.warn("[Enrollment] Server load failed, using localStorage:", err);
+          return null;
+        });
+    }
+
+    return Promise.all([catalogPromise, enrollmentPromise]).then(function (results) {
+      state.programCatalog = results[0];
+      if (typeof EnrollmentState !== "undefined") {
+        EnrollmentState.init(state.programCatalog, PROGRAM_LEVELS);
+      }
+      if (results[1]) {
+        applyServerEnrollment(results[1]);
+      }
+    });
+  }
+
   /**
    * Единый канонический контекст дашборда (ADR-001, student-learning-context.js).
    * Вызывать после изменения goal, reports, studyPlan, enrollment.
@@ -2045,7 +2108,7 @@
       studyPlan: state.studyPlan,
       reports: state.reports,
       progressTracker: state.progressTracker,
-      programCatalog: PROGRAM_CATALOG,
+      programCatalog: getProgramCatalog(),
       programLevels: PROGRAM_LEVELS,
       enrollmentRecord: enrollmentRecord,
       enrolledPlanId: readEnrolledPlanId() || state.subscriptionPlanId,
@@ -2053,7 +2116,7 @@
     });
 
     EnglishAgentSLC.validate(state.learningContext, {
-      programCatalog: PROGRAM_CATALOG,
+      programCatalog: getProgramCatalog(),
     });
 
     refreshCurriculumState();
@@ -2067,7 +2130,7 @@
   }
 
   function getProgramsForCategory(category, levelFilter) {
-    return PROGRAM_CATALOG.filter(function (program) {
+    return getProgramCatalog().filter(function (program) {
       if (program.category !== category) return false;
       if (!levelFilter || levelFilter === "all") return true;
       if (program.category === "special") {
@@ -2097,7 +2160,7 @@
       allowed = ["intermediate", "upper_intermediate", "advanced"];
     } else {
       var seen = { all: true };
-      PROGRAM_CATALOG.filter(function (program) {
+      getProgramCatalog().filter(function (program) {
         return program.category === "special";
       }).forEach(function (program) {
         if (program.levelId && !seen[program.levelId]) {
@@ -3932,7 +3995,7 @@
         studyPlan: plan,
         reports: reports,
         progressTracker: progressTracker,
-        programCatalog: PROGRAM_CATALOG,
+        programCatalog: getProgramCatalog(),
         programLevels: PROGRAM_LEVELS,
         enrollmentRecord:
           typeof EnrollmentState !== "undefined" && EnrollmentState.isEnrolled()
@@ -5298,22 +5361,24 @@
     }
   } else {
     var boot = function () {
-      bootstrapDashboard();
+      loadProgramCatalogAndEnrollment()
+        .finally(function () {
+          if (typeof ProgramOnboarding !== "undefined") {
+            ProgramOnboarding.init({
+              catalog: getProgramCatalog(),
+              levels: PROGRAM_LEVELS,
+              esc: esc,
+              onEnrolled: handleEnrollmentConfirmed,
+            });
+          }
+          bootstrapDashboard();
+        });
     };
     if (DashboardApi.isStaticPreviewMode()) {
       DashboardApi.loadStaticPreviewConfig().finally(boot);
     } else {
       DashboardApi.loadAppConfig().finally(boot);
     }
-  }
-
-  if (typeof ProgramOnboarding !== "undefined") {
-    ProgramOnboarding.init({
-      catalog: PROGRAM_CATALOG,
-      levels: PROGRAM_LEVELS,
-      esc: esc,
-      onEnrolled: handleEnrollmentConfirmed,
-    });
   }
 
   var changeEnrollmentBtn = document.getElementById("btn-change-enrollment");

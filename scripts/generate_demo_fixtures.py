@@ -186,7 +186,18 @@ def main() -> None:
         json.dumps(get_public_config(), ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
     )
-    print(f"Wrote static/demo-preview.json and static/demo-config.json")
+    from services.programs_catalog import read_catalog_json_file
+
+    (static_dir / "demo-programs.json").write_text(
+        json.dumps(
+            {"programs": read_catalog_json_file()},
+            ensure_ascii=False,
+            indent=2,
+            default=_json_default,
+        ),
+        encoding="utf-8",
+    )
+    print(f"Wrote static/demo-preview.json, demo-config.json, demo-programs.json")
 
 
 if __name__ == "__main__":

@@ -280,6 +280,43 @@
     });
   }
 
+  function fetchProgramsCatalog() {
+    if (isStaticPreviewMode()) {
+      return fetch(staticAssetUrl("demo-programs.json")).then(function (res) {
+        if (!res.ok) {
+          throw new Error("demo-programs.json not found (" + res.status + ")");
+        }
+        return res.json().then(function (data) {
+          return data.programs || [];
+        });
+      });
+    }
+    return fetch(liveApiBase() + "/programs").then(function (res) {
+      if (!res.ok) {
+        throw new Error("programs fetch failed (" + res.status + ")");
+      }
+      return res.json().then(function (data) {
+        return data.programs || [];
+      });
+    });
+  }
+
+  function fetchStudentEnrollment(studentId) {
+    return fetch(
+      liveApiBase() +
+        "/students/" +
+        encodeURIComponent(studentId) +
+        "/enrollment"
+    ).then(function (res) {
+      if (!res.ok) {
+        return res.json().then(function (body) {
+          throw new Error(body.detail || res.statusText);
+        });
+      }
+      return res.json();
+    });
+  }
+
   function goalFieldsFromBundle(data) {
     return {
       target_cefr_level: data.target_cefr_level || null,
@@ -359,6 +396,8 @@
     cfg: cfg,
     fetchReportsBundle: fetchReportsBundle,
     fetchCurriculum: fetchCurriculum,
+    fetchProgramsCatalog: fetchProgramsCatalog,
+    fetchStudentEnrollment: fetchStudentEnrollment,
     postDemoGoal: postDemoGoal,
     fetchPreviewBundle: fetchPreviewBundle,
     goalFieldsFromBundle: goalFieldsFromBundle,

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from routers import config, demo, preview, reports, webhook
+from routers import config, demo, preview, programs, reports, webhook
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,6 +39,7 @@ app.include_router(webhook.router, prefix="/webhook", tags=["webhook"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(preview.router, prefix="/api", tags=["preview"])
 app.include_router(demo.router, prefix="/api", tags=["demo"])
+app.include_router(programs.router, prefix="/api", tags=["programs"])
 app.include_router(reports.router, prefix="/api", tags=["reports"])
 
 
