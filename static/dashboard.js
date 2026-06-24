@@ -484,9 +484,13 @@
     renderStudentOverview();
   }
 
-  function openProgramOnboarding(options) {
-    if (typeof ProgramOnboarding !== "undefined") {
-      ProgramOnboarding.open(options || {});
+  function goToProgramSelection(options) {
+    options = options || {};
+    setAppNavView("programs");
+    if (options.programId) {
+      openProgramDetail(options.programId);
+    } else {
+      closeProgramDetail();
     }
   }
 
@@ -574,13 +578,6 @@
       });
     }
   }
-
-  function maybeOpenRequiredOnboarding() {
-    if (typeof EnrollmentState !== "undefined" && !EnrollmentState.isEnrolled()) {
-      openProgramOnboarding({ required: true });
-    }
-  }
-
 
   function initAppNav() {
     var shell = document.querySelector(".app-shell");
@@ -2051,6 +2048,73 @@
     }
   }
 
+  function enrollProgramLocally(programId, planId, isDemo) {
+    var program = getProgramById(programId);
+    if (!program || typeof EnrollmentState === "undefined") return false;
+
+    var level = getProgramLevel(program.levelId);
+    var ok = EnrollmentState.enroll({
+      program_id: programId,
+      level_id: program.levelId,
+      level_cefr: level ? level.cefr : null,
+      level_name: level ? level.label : program.levelId,
+      student_confirmed: true,
+      is_demo: isDemo !== false,
+    });
+    if (!ok) return false;
+
+    saveEnrolledPlanId(planId);
+    state.subscriptionPlanId = planId;
+    return true;
+  }
+
+  function confirmProgramEnrollment(programId, planId) {
+    if (!programId || !planId) {
+      return Promise.reject(new Error("Program and plan are required"));
+    }
+    if (!getProgramById(programId)) {
+      return Promise.reject(new Error("Program not found"));
+    }
+
+    var isLive =
+      !DashboardApi.isStaticPreviewMode() &&
+      !DashboardApi.isDemoStudentId(STUDENT_ID);
+
+    function afterEnrollment() {
+      handleEnrollmentConfirmed();
+      if (state.programDetailId) renderProgramDetailPage();
+      renderProgramsPage();
+      setAppNavView("home");
+    }
+
+    if (!isLive) {
+      if (!enrollProgramLocally(programId, planId, true)) {
+        return Promise.reject(new Error("Enrollment failed"));
+      }
+      afterEnrollment();
+      return Promise.resolve();
+    }
+
+    var status = planId === "free_trial" ? "trial" : "active";
+    return DashboardApi.putStudentEnrollment(STUDENT_ID, {
+      program_id: programId,
+      plan_id: planId,
+      status: status,
+    })
+      .then(function (payload) {
+        if (payload && payload.enrollment) {
+          applyServerEnrollment(payload.enrollment);
+        } else if (!enrollProgramLocally(programId, planId, false)) {
+          throw new Error("Enrollment failed");
+        }
+        return DashboardApi.fetchCurriculum(programId);
+      })
+      .then(function (curriculum) {
+        if (curriculum) applyServerCurriculum(curriculum);
+        afterEnrollment();
+      });
+  }
+
   function loadProgramCatalogAndEnrollment() {
     var catalogPromise = DashboardApi.fetchProgramsCatalog()
       .then(function (programs) {
@@ -2701,7 +2765,7 @@
         var enrollBtn = event.target.closest(".program-enroll-btn");
         if (enrollBtn) {
           event.stopPropagation();
-          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
+          goToProgramSelection({ programId: enrollBtn.dataset.programId });
           return;
         }
         var continueBtn = event.target.closest(".program-continue-btn");
@@ -2724,7 +2788,7 @@
       currentSection.addEventListener("click", function (event) {
         var enrollBtn = event.target.closest(".program-enroll-btn");
         if (enrollBtn) {
-          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
+          goToProgramSelection({ programId: enrollBtn.dataset.programId });
           return;
         }
         var continueBtn = event.target.closest(".program-continue-btn");
@@ -2739,7 +2803,7 @@
       programsView.addEventListener("click", function (event) {
         var enrollBtn = event.target.closest(".program-enroll-btn");
         if (enrollBtn) {
-          openProgramOnboarding({ programId: enrollBtn.dataset.programId });
+          goToProgramSelection({ programId: enrollBtn.dataset.programId });
           return;
         }
 
@@ -2761,9 +2825,18 @@
           var planBtn = event.target.closest(".program-plan-card-btn");
           var checkoutProgramId = planBtn.dataset.programId || state.programDetailId;
           var checkoutPlanId = planBtn.dataset.planId;
-          if (checkoutProgramId && checkoutPlanId) {
-            goToProgramCheckout(checkoutProgramId, checkoutPlanId);
-          }
+          if (!checkoutProgramId || !checkoutPlanId) return;
+          planBtn.disabled = true;
+          confirmProgramEnrollment(checkoutProgramId, checkoutPlanId)
+            .catch(function (err) {
+              console.error("[Enrollment] Failed to save enrollment:", err);
+              window.alert(
+                "Не удалось записаться на программу: " + (err.message || "ошибка")
+              );
+            })
+            .finally(function () {
+              planBtn.disabled = false;
+            });
           return;
         }
 
@@ -3787,7 +3860,7 @@
       var chooseBtn = document.getElementById("btn-choose-program");
       if (chooseBtn) {
         chooseBtn.addEventListener("click", function () {
-          openProgramOnboarding();
+          goToProgramSelection();
         });
       }
       var changeBtn = document.getElementById("btn-change-enrollment");
@@ -5218,7 +5291,6 @@
     refreshAnalyticsPanels();
 
     renderStudentOverview();
-    maybeOpenRequiredOnboarding();
     if (!state.reports.length) {
       setHtml("grammar-list-current", emptyMsg("Пока нет отчётов по урокам."));
       setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
@@ -5363,14 +5435,6 @@
     var boot = function () {
       loadProgramCatalogAndEnrollment()
         .finally(function () {
-          if (typeof ProgramOnboarding !== "undefined") {
-            ProgramOnboarding.init({
-              catalog: getProgramCatalog(),
-              levels: PROGRAM_LEVELS,
-              esc: esc,
-              onEnrolled: handleEnrollmentConfirmed,
-            });
-          }
           bootstrapDashboard();
         });
     };
@@ -5384,7 +5448,7 @@
   var changeEnrollmentBtn = document.getElementById("btn-change-enrollment");
   if (changeEnrollmentBtn) {
     changeEnrollmentBtn.addEventListener("click", function () {
-      openProgramOnboarding({ changeMode: true });
+      goToProgramSelection();
     });
   }
 })();

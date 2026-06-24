@@ -317,6 +317,27 @@
     });
   }
 
+  function putStudentEnrollment(studentId, payload) {
+    return fetch(
+      liveApiBase() +
+        "/students/" +
+        encodeURIComponent(studentId) +
+        "/enrollment",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      }
+    ).then(function (res) {
+      if (!res.ok) {
+        return res.json().then(function (body) {
+          throw new Error(body.detail || res.statusText);
+        });
+      }
+      return res.json();
+    });
+  }
+
   function goalFieldsFromBundle(data) {
     return {
       target_cefr_level: data.target_cefr_level || null,
@@ -398,6 +419,7 @@
     fetchCurriculum: fetchCurriculum,
     fetchProgramsCatalog: fetchProgramsCatalog,
     fetchStudentEnrollment: fetchStudentEnrollment,
+    putStudentEnrollment: putStudentEnrollment,
     postDemoGoal: postDemoGoal,
     fetchPreviewBundle: fetchPreviewBundle,
     goalFieldsFromBundle: goalFieldsFromBundle,
