@@ -648,25 +648,9 @@
   }
 
   function renderStudentOverview() {
-    var latest = getLatestReport();
-
     setText("dash-name", state.studentName);
     setText("dash-avatar", initials(state.studentName));
     setText("topbar-profile-avatar", initials(state.studentName));
-    setText("dash-stat-lessons", String(state.reports.length));
-    setText(
-      "dash-stat-avg",
-      state.reports.length
-        ? formatScore(
-            average(
-              state.reports.map(function (r) {
-                return r.fluency_score;
-              })
-            )
-          ) + " / 10"
-        : "—"
-    );
-    setText("dash-stat-cefr", latest ? latest.vocabulary_level || "—" : "—");
     renderSidebarProfilePrograms();
     renderStudentGoal();
     renderSidebarGoalCompact();
@@ -5428,12 +5412,9 @@
       refreshCurriculumState();
     }
 
-    var lessonDate = report.lesson_date || report.created_at;
     var classNum = findClassNumForReport(report);
     var topic = formatLessonTopic(report);
 
-    setText("dash-date-label", isPrimary ? "Дата последнего урока" : "Дата урока");
-    setText("dash-last-date", formatDate(lessonDate));
     setText("lesson-report-class", classNum ? formatReportClassLabel(classNum) : "Класс —");
     setText("lesson-report-topic", topic);
     var topicLabel = document.querySelector(".lesson-topic-label");
