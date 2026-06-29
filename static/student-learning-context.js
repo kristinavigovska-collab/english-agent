@@ -118,7 +118,7 @@
 
   function buildEnrollmentFromRecord(record, program, input) {
     var programLevels = input.programLevels || {};
-    var planTier = normalizePlanTier(input.enrolledPlanId);
+    var planTier = normalizePlanTier(record.plan_id || input.enrolledPlanId);
     var levelLabel =
       record.level_name && record.level_cefr
         ? record.level_name + " (" + record.level_cefr + ")"

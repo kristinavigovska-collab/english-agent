@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-06" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-09" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -322,22 +322,74 @@
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="avatar" id="dash-avatar">КВ</div>
-        <h1 class="sidebar-name" id="dash-name">Кристина Виговская</h1>
+        <div class="sidebar-profile-text">
+          <div class="sidebar-profile-name-row">
+            <h1 class="sidebar-name" id="dash-name">Кристина Виговская</h1>
+            <button
+              type="button"
+              class="sidebar-profile-switch"
+              id="btn-profile-program-switch"
+              hidden
+              aria-expanded="false"
+              aria-controls="sidebar-program-menu"
+              aria-label="Сменить программу"
+            >
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="sidebar-program-row" id="sidebar-program-row"></div>
+          <ul class="sidebar-program-menu" id="sidebar-program-menu" role="listbox" hidden></ul>
+        </div>
       </div>
 
-      <section class="sidebar-goal-section cefr-journey" aria-label="Цель обучения">
-        <div class="cefr-journey-levels">
-          <div class="cefr-level-block">
-            <span class="cefr-level-caption">Сейчас</span>
-            <span class="cefr-level-value" id="dash-cefr-current">B1</span>
+      <section class="sidebar-goal-compact" id="sidebar-goal-compact" aria-label="Цель обучения">
+        <div class="sidebar-goal-compact-head">
+          <span class="sidebar-goal-compact-label" id="sidebar-goal-compact-caption">Цель</span>
+          <div class="sidebar-goal-compact-levels">
+            <span class="goal-level-pill" id="sidebar-goal-current">—</span>
+            <span class="goal-level-arrow" aria-hidden="true">→</span>
+            <span class="goal-level-pill goal-level-pill--target" id="sidebar-goal-target">—</span>
           </div>
-          <div class="cefr-journey-arrow" aria-hidden="true">→</div>
-          <div class="cefr-level-block cefr-level-target" id="cefr-target-block">
-            <span class="cefr-level-caption" id="cefr-target-caption">Цель</span>
-            <span class="cefr-level-value cefr-level-value-target" id="dash-cefr-target">—</span>
+        </div>
+        <div class="sidebar-goal-compact-progress" id="sidebar-goal-compact-progress" hidden>
+          <div
+            class="sidebar-goal-compact-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            id="sidebar-goal-progress-bar"
+          >
+            <div class="sidebar-goal-compact-fill" id="sidebar-goal-progress-fill"></div>
+          </div>
+          <div class="sidebar-goal-compact-meta">
+            <span class="sidebar-goal-progress-pct" id="sidebar-goal-progress-pct">—</span>
+            <span class="sidebar-goal-pace" id="sidebar-goal-pace-status">—</span>
           </div>
         </div>
       </section>
+
+      <section class="sidebar-lesson-package" id="sidebar-lesson-package" aria-label="Пакет уроков">
+        <div class="lesson-package-head">
+          <span class="lesson-package-name" id="lesson-package-name">Пакет Стандарт</span>
+          <span class="lesson-package-remaining" id="lesson-package-remaining">3 урока осталось</span>
+        </div>
+        <div
+          class="lesson-package-bar"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="8"
+          aria-valuenow="5"
+          id="lesson-package-progress-bar"
+        >
+          <div class="lesson-package-fill" id="lesson-package-fill"></div>
+        </div>
+        <p class="lesson-package-detail" id="lesson-package-detail">5 из 8 уроков с преподавателем использовано</p>
+      </section>
+
+      <button type="button" class="btn sidebar-buy-lessons-btn" id="btn-buy-lessons">+ Докупить уроки</button>
 
       <section
         class="sidebar-goal-plan-section"
@@ -345,9 +397,6 @@
         hidden
         aria-label="Цель и план обучения"
       >
-        <p class="dashboard-preview-banner dashboard-preview-banner--sidebar" id="sidebar-preview-banner" hidden>
-          Пример плана — появится после постановки цели.
-        </p>
         <div class="goal-plan-card">
           <button
             type="button"
@@ -453,8 +502,6 @@
           </div>
         </div>
       </section>
-
-      <button class="goal-cta" type="button" id="btn-set-goal-cta" hidden>Задать цель обучения</button>
 
       <div class="divider"></div>
 
@@ -1278,9 +1325,9 @@
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
   <script src="/static/dashboard-api.js?v=20260625-04"></script>
-  <script src="/static/enrollment-state.js?v=20260625-04"></script>
-  <script src="/static/student-learning-context.js?v=20260625-04"></script>
-  <script src="/static/dashboard.js?v=20260625-06" defer></script>
+  <script src="/static/enrollment-state.js?v=20260625-09"></script>
+  <script src="/static/student-learning-context.js?v=20260625-09"></script>
+  <script src="/static/dashboard.js?v=20260625-10" defer></script>
 
 </body>
 </html>
