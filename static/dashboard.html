@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-57" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-61" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -527,29 +527,16 @@
 
       <div class="lesson-context-bar" id="lesson-context-bar" hidden>
         <span id="lesson-context-label">Просмотр урока</span>
-        <button class="btn-link" type="button" id="btn-lesson-latest">Актуальный AI Report</button>
+        <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
       </div>
 
-      <nav class="tabs" role="tablist">
-        <button class="tab active" type="button" role="tab" data-tab="current" aria-selected="true">AI Report</button>
-        <button class="tab" type="button" role="tab" data-tab="summary" aria-selected="false">Краткое саммари</button>
-        <button class="tab" type="button" role="tab" data-tab="detailed" aria-selected="false">Детальный отчёт</button>
+      <nav class="tabs" role="tablist" aria-label="Разделы Home">
+        <button class="tab active" type="button" role="tab" data-tab="step" id="tab-home-step" aria-selected="true">Текущий шаг</button>
+        <button class="tab" type="button" role="tab" data-tab="breakdown" id="tab-home-breakdown" aria-selected="false" aria-label="Разбор урока" hidden>Разбор</button>
       </nav>
 
-      <!-- Tab: Lesson report -->
-      <div class="tab-panel active" id="panel-current" role="tabpanel">
-
-      <div class="lesson-topic-plaque">
-        <span class="lesson-topic-icon" aria-hidden="true">📋</span>
-        <div class="lesson-topic-content">
-          <span class="lesson-topic-label">AI Report</span>
-          <p class="lesson-topic-value" id="lesson-report-heading">
-            <span class="lesson-report-class" id="lesson-report-class">Класс 13</span>
-            <span class="lesson-report-sep" aria-hidden="true"> · </span>
-            <span class="lesson-report-topic" id="lesson-report-topic">Travel &amp; Past Tenses</span>
-          </p>
-        </div>
-      </div>
+      <!-- Tab: Current step (actions) -->
+      <div class="tab-panel active" id="panel-step" role="tabpanel">
 
       <section class="class-next-step card" id="class-next-step" hidden aria-label="Текущий шаг программы">
         <div class="class-next-step-head">
@@ -581,6 +568,65 @@
             </h2>
           </div>
           <ul class="stuck-topics-list" id="stuck-topics-list"></ul>
+        </section>
+
+      </div>
+
+      <!-- Tab: Lesson breakdown (per-class AI report) -->
+      <div class="tab-panel" id="panel-breakdown" role="tabpanel">
+
+        <div class="lesson-topic-plaque" id="lesson-topic-plaque">
+          <span class="lesson-topic-icon" aria-hidden="true">📋</span>
+          <div class="lesson-topic-content">
+            <p class="lesson-topic-value" id="lesson-report-heading">Разбор урока</p>
+            <p class="lesson-report-meta" id="lesson-report-meta">—</p>
+          </div>
+        </div>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-icon icon-summary">📝</span>
+              Краткое саммари урока
+            </h2>
+            <span class="score-badge"><span class="num" id="summary-score-num">7</span>/10</span>
+          </div>
+          <div class="summary-score">
+            <div class="summary-score-ring">
+              <div class="summary-score-ring-inner" id="summary-score-ring">7</div>
+            </div>
+            <p class="summary-text" id="summary-text">
+              Кристина уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
+              Основные зоны роста — грамматика времен (Past Simple vs Present Perfect) и произношение
+              звуков /θ/ и /iː/. Словарный запас на уровне B1, заметен прогресс за последний месяц (+1.2 балла).
+            </p>
+          </div>
+          <div class="summary-highlights">
+            <div class="highlight-box win">
+              <h4>Сильные стороны</h4>
+              <ul id="highlight-strengths">
+                <li>Уверенно поддерживает разговор на тему путешествий</li>
+                <li>Активное участие в диалоге</li>
+                <li>Хороший тематический словарь</li>
+              </ul>
+            </div>
+            <div class="highlight-box focus">
+              <h4>Зоны роста</h4>
+              <ul id="highlight-focus">
+                <li>Past Simple vs Present Perfect</li>
+                <li>Звук /θ/ в «thought», «three»</li>
+                <li>Ed/-ing adjectives (bored/boring)</li>
+              </ul>
+            </div>
+            <div class="highlight-box practice">
+              <h4>Что попрактиковать</h4>
+              <ul id="highlight-practice">
+                <li>Gap-fill: 15 предложений на времена</li>
+                <li>Minimal pairs: think/sink</li>
+                <li>Role-play: booking a hotel</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         <section class="card">
@@ -820,218 +866,6 @@
 
       </div>
 
-      <!-- Tab: Summary -->
-      <div class="tab-panel" id="panel-summary" role="tabpanel">
-        <section class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <span class="card-icon icon-summary">📝</span>
-              Краткое саммари урока
-            </h2>
-            <span class="score-badge"><span class="num" id="summary-score-num">7</span>/10</span>
-          </div>
-          <div class="summary-score">
-            <div class="summary-score-ring">
-              <div class="summary-score-ring-inner" id="summary-score-ring">7</div>
-            </div>
-            <p class="summary-text" id="summary-text">
-              Кристина уверенно обсуждала тему путешествий и демонстрирует хорошую беглость речи (8/10).
-              Основные зоны роста — грамматика времен (Past Simple vs Present Perfect) и произношение
-              звуков /θ/ и /iː/. Словарный запас на уровне B1, заметен прогресс за последний месяц (+1.2 балла).
-            </p>
-          </div>
-          <div class="summary-highlights">
-            <div class="highlight-box win">
-              <h4>Сильные стороны</h4>
-              <ul id="highlight-strengths">
-                <li>Уверенно поддерживает разговор на тему путешествий</li>
-                <li>Активное участие в диалоге</li>
-                <li>Хороший тематический словарь</li>
-              </ul>
-            </div>
-            <div class="highlight-box focus">
-              <h4>Зоны роста</h4>
-              <ul id="highlight-focus">
-                <li>Past Simple vs Present Perfect</li>
-                <li>Звук /θ/ в «thought», «three»</li>
-                <li>Ed/-ing adjectives (bored/boring)</li>
-              </ul>
-            </div>
-            <div class="highlight-box practice">
-              <h4>Что попрактиковать</h4>
-              <ul id="highlight-practice">
-                <li>Gap-fill: 15 предложений на времена</li>
-                <li>Minimal pairs: think/sink</li>
-                <li>Role-play: booking a hotel</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- Tab: Detailed report -->
-      <div class="tab-panel" id="panel-detailed" role="tabpanel">
-
-        <section class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <span class="card-icon icon-chart">📈</span>
-              Прогресс по урокам
-            </h2>
-            <span class="trend-up demo-only">↑ +1.2 за месяц</span>
-          </div>
-          <div class="chart-wrap" id="chart-dynamic" hidden></div>
-          <div class="chart-wrap demo-only">
-            <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">
-              <defs>
-                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#6687FF" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#6687FF" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <line class="chart-grid-line" x1="40" y1="20"  x2="560" y2="20"/>
-              <line class="chart-grid-line" x1="40" y1="65"  x2="560" y2="65"/>
-              <line class="chart-grid-line" x1="40" y1="110" x2="560" y2="110"/>
-              <line class="chart-grid-line" x1="40" y1="155" x2="560" y2="155"/>
-              <text x="30" y="24"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">10</text>
-              <text x="30" y="69"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">7.5</text>
-              <text x="30" y="114" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">5</text>
-              <text x="30" y="159" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">2.5</text>
-              <path class="chart-area" d="M 40,90.2 L 127,84.8 L 214,80.75 L 301,75.35 L 388,69.95 L 475,63.2 L 562,60.5 L 562,170 L 40,170 Z"/>
-              <polyline class="chart-line" points="40,90.2 127,84.8 214,80.75 301,75.35 388,69.95 475,63.2 562,60.5"/>
-              <circle class="chart-dot" cx="40"  cy="90.2"  r="4"/>
-              <circle class="chart-dot" cx="127" cy="84.8"  r="4"/>
-              <circle class="chart-dot" cx="214" cy="80.75" r="4"/>
-              <circle class="chart-dot" cx="301" cy="75.35" r="4"/>
-              <circle class="chart-dot" cx="388" cy="69.95" r="4"/>
-              <circle class="chart-dot" cx="475" cy="63.2"  r="4"/>
-              <circle class="chart-dot" cx="562" cy="60.5"  r="5" style="fill:#6687FF;stroke:#fff;stroke-width:2.5"/>
-              <text x="562" y="48" text-anchor="middle" fill="#6687FF" font-size="13" font-weight="700" font-family="Inter,sans-serif">7.0</text>
-            </svg>
-            <div class="chart-labels">
-              <span>14 апр</span>
-              <span>21 апр</span>
-              <span>28 апр</span>
-              <span>5 мая</span>
-              <span>12 мая</span>
-              <span>19 мая</span>
-              <span>28 мая</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <span class="card-icon icon-grammar">✏️</span>
-              Грамматические ошибки — детально
-            </h2>
-            <span class="score-badge amber" id="badge-grammar-detailed"><span class="num">6</span> ошибок</span>
-          </div>
-          <ul class="error-list" id="grammar-list-detailed">
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«I have went to Paris last year»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«I went to Paris last year»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«She don't like spicy food»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«She doesn't like spicy food»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«I am living here since 2020»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«I have lived here since 2020»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«More better than before»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«Much better than before»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.</div>
-            </li>
-          </ul>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <span class="card-icon icon-vocab">📚</span>
-              Словарный запас — детально
-            </h2>
-            <span class="score-badge" id="badge-vocab-detailed"><span class="num">7</span>/10</span>
-          </div>
-          <p class="cefr-caption">Уровень CEFR (международная шкала A1–C2)</p>
-          <div class="demo-only vocab-section">
-            <h4>Использованы неправильно</h4>
-            <ul class="misused-list">
-              <li><span class="wrong">boring</span><span class="arrow">→</span><span class="right">bored</span></li>
-              <li><span class="wrong">funny</span><span class="arrow">→</span><span class="right">fun</span></li>
-              <li><span class="wrong">actually</span><span class="arrow">→</span><span class="right">currently</span></li>
-            </ul>
-          </div>
-          <div class="demo-only vocab-section">
-            <h4>Новые слова</h4>
-            <div class="new-words">
-              <div class="word-chip"><strong>itinerary</strong><span>маршрут поездки</span></div>
-              <div class="word-chip"><strong>layover</strong><span>пересадка</span></div>
-              <div class="word-chip"><strong>scenic</strong><span>живописный</span></div>
-              <div class="word-chip"><strong>backpacking</strong><span>с рюкзаком</span></div>
-              <div class="word-chip"><strong>off the beaten path</strong><span>вдали от туристов</span></div>
-            </div>
-          </div>
-        </section>
-
-        <div class="grid-2 demo-only">
-          <section class="card">
-            <div class="card-header">
-              <h2 class="card-title">
-                <span class="card-icon icon-fluency">💬</span>
-                Беглость речи
-              </h2>
-              <span class="score-badge green" id="badge-fluency-detailed"><span class="num">8</span>/10</span>
-            </div>
-            <div class="metrics">
-              <div class="metric"><div class="val">112</div><div class="lbl">слов/мин</div></div>
-              <div class="metric"><div class="val">1.4с</div><div class="lbl">средняя пауза</div></div>
-              <div class="metric"><div class="val">9.2</div><div class="lbl">слов в предложении</div></div>
-            </div>
-          </section>
-          <section class="card">
-            <div class="card-header">
-              <h2 class="card-title">
-                <span class="card-icon icon-pronounce">🎙️</span>
-                Произношение
-              </h2>
-              <span class="score-badge amber"><span class="num">6</span>/10</span>
-            </div>
-            <div class="pronounce-words">
-              <span class="pronounce-word">thought</span>
-              <span class="pronounce-word">world</span>
-              <span class="pronounce-word">beach</span>
-              <span class="pronounce-word">vocabulary</span>
-              <span class="pronounce-word">comfortable</span>
-            </div>
-          </section>
-        </div>
-
-      </div>
-
     </div>
   </div>
     </div>
@@ -1092,7 +926,8 @@
           <h1 class="analytics-page-title">Аналитика</h1>
           <nav class="analytics-tabs" role="tablist" aria-label="Разделы аналитики">
             <button class="analytics-tab active" type="button" role="tab" data-tab="activity" aria-selected="true">Активность</button>
-            <button class="analytics-tab" type="button" role="tab" data-tab="progress" aria-selected="false">Общий прогресс</button>
+            <button class="analytics-tab" type="button" role="tab" data-tab="lessons" aria-selected="false">Прогресс по урокам</button>
+            <button class="analytics-tab" type="button" role="tab" data-tab="progress" aria-selected="false">Цель и план</button>
           </nav>
         </div>
 
@@ -1187,6 +1022,84 @@
             </div>
           </div>
           </div>
+        </div>
+
+        <div class="tab-panel" id="panel-lessons" role="tabpanel">
+          <p class="dashboard-preview-banner" id="lessons-preview-banner" hidden>
+            Пример — динамика по всем урокам с преподавателем после начала обучения.
+          </p>
+          <p class="analytics-lessons-empty" id="analytics-lessons-empty" hidden>
+            Пока нет отчётов по урокам — график появится после первого занятия с преподавателем.
+          </p>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-chart">📈</span>
+                Беглость речи по урокам
+              </h2>
+              <span class="trend-up demo-only" id="lessons-trend-badge">↑ +1.2 за месяц</span>
+            </div>
+            <p class="analytics-lessons-lead">
+              Динамика по всем live-урокам с преподавателем — не привязана к выбранному Class в сайдбаре.
+            </p>
+            <div class="chart-wrap" id="chart-dynamic" hidden></div>
+            <div class="chart-wrap demo-only" id="chart-demo-static">
+              <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet" aria-label="График прогресса">
+                <defs>
+                  <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6687FF" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#6687FF" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <line class="chart-grid-line" x1="40" y1="20"  x2="560" y2="20"/>
+                <line class="chart-grid-line" x1="40" y1="65"  x2="560" y2="65"/>
+                <line class="chart-grid-line" x1="40" y1="110" x2="560" y2="110"/>
+                <line class="chart-grid-line" x1="40" y1="155" x2="560" y2="155"/>
+                <text x="30" y="24"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">10</text>
+                <text x="30" y="69"  text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">7.5</text>
+                <text x="30" y="114" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">5</text>
+                <text x="30" y="159" text-anchor="end" fill="#9ca3af" font-size="11" font-family="Inter,sans-serif">2.5</text>
+                <path class="chart-area" d="M 40,90.2 L 127,84.8 L 214,80.75 L 301,75.35 L 388,69.95 L 475,63.2 L 562,60.5 L 562,170 L 40,170 Z"/>
+                <polyline class="chart-line" points="40,90.2 127,84.8 214,80.75 301,75.35 388,69.95 475,63.2 562,60.5"/>
+                <circle class="chart-dot" cx="40"  cy="90.2"  r="4"/>
+                <circle class="chart-dot" cx="127" cy="84.8"  r="4"/>
+                <circle class="chart-dot" cx="214" cy="80.75" r="4"/>
+                <circle class="chart-dot" cx="301" cy="75.35" r="4"/>
+                <circle class="chart-dot" cx="388" cy="69.95" r="4"/>
+                <circle class="chart-dot" cx="475" cy="63.2"  r="4"/>
+                <circle class="chart-dot" cx="562" cy="60.5"  r="5" style="fill:#6687FF;stroke:#fff;stroke-width:2.5"/>
+                <text x="562" y="48" text-anchor="middle" fill="#6687FF" font-size="13" font-weight="700" font-family="Inter,sans-serif">7.0</text>
+              </svg>
+              <div class="chart-labels">
+                <span>14 апр</span>
+                <span>21 апр</span>
+                <span>28 апр</span>
+                <span>5 мая</span>
+                <span>12 мая</span>
+                <span>19 мая</span>
+                <span>28 мая</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" id="lessons-vocab-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span class="card-icon icon-vocab">📚</span>
+                Словарный уровень по урокам
+              </h2>
+            </div>
+            <p class="analytics-lessons-lead">
+              Как менялся CEFR по словарному запасу от урока к уроку (пример).
+            </p>
+            <ul class="lessons-vocab-timeline" id="lessons-vocab-timeline">
+              <li><span class="lessons-vocab-date">14 апр</span><span class="lessons-vocab-level">A2</span></li>
+              <li><span class="lessons-vocab-date">28 апр</span><span class="lessons-vocab-level">A2</span></li>
+              <li><span class="lessons-vocab-date">12 мая</span><span class="lessons-vocab-level">B1</span></li>
+              <li><span class="lessons-vocab-date">28 мая</span><span class="lessons-vocab-level">B1</span></li>
+            </ul>
+          </section>
         </div>
 
         <div class="tab-panel" id="panel-progress" role="tabpanel">
@@ -1328,7 +1241,7 @@
   <script src="/static/dashboard-api.js?v=20260625-16"></script>
   <script src="/static/enrollment-state.js?v=20260625-09"></script>
   <script src="/static/student-learning-context.js?v=20260625-16"></script>
-  <script src="/static/dashboard.js?v=20260625-55" defer></script>
+  <script src="/static/dashboard.js?v=20260625-62" defer></script>
 
 </body>
 </html>

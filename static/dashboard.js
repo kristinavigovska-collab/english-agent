@@ -534,7 +534,16 @@
     if (latestBtn) {
       latestBtn.addEventListener("click", function () {
         var primary = getPrimaryReport();
-        if (primary) selectLesson(primary.id);
+        if (primary) {
+          selectLesson(primary.id, { preferredTab: "step" });
+          return;
+        }
+        var stepItem = getCurrentStepClassItem();
+        if (stepItem) {
+          setAppNavView("home");
+          activateTab("step", document.getElementById("view-home"));
+          renderHomeNavTabs();
+        }
       });
     }
   }
@@ -627,6 +636,11 @@
     );
   }
 
+  function updateHomeTabsForLesson(isPrimary) {
+    var stepTab = document.getElementById("tab-home-step");
+    if (stepTab) stepTab.hidden = !isPrimary;
+  }
+
   function selectLesson(reportId, options) {
     options = options || {};
     var report = state.reports.find(function (r) {
@@ -640,10 +654,14 @@
     renderLessonReport(report, isPrimary);
     updateLessonContextBar(report, isPrimary);
     updateCurriculumReportLinks();
+    updateHomeTabsForLesson(isPrimary);
 
     if (options.switchTab !== false) {
       setAppNavView("home");
-      activateTab("current", document.getElementById("view-home"));
+      var tab = options.preferredTab || (isPrimary ? "step" : "breakdown");
+      activateTab(tab, document.getElementById("view-home"));
+    } else if (!isPrimary) {
+      activateTab("breakdown", document.getElementById("view-home"));
     }
   }
 
@@ -752,6 +770,7 @@
     renderAnalyticsGoalPlan();
     renderStudyPlan();
     renderStudentGoal();
+    renderLessonsProgressPanel();
   }
 
   function ensurePreviewBundle() {
@@ -3523,6 +3542,15 @@
       return;
     }
 
+    if (
+      typeof DashboardApi !== "undefined" &&
+      DashboardApi.isStaticPreviewMode() &&
+      state.serverCurriculum
+    ) {
+      applyServerCurriculum(state.serverCurriculum);
+      return;
+    }
+
     if (state.serverCurriculum && state.serverCurriculum.program_id === enrollment.program_id) {
       applyServerCurriculum(state.serverCurriculum);
       return;
@@ -3546,7 +3574,7 @@
 
   function formatReportClassLabel(classNum) {
     if (!classNum) return "";
-    return "Класс " + classNum;
+    return "Class " + classNum;
   }
 
   function applyCurriculumCompletions(items, reports, progressTracker) {
@@ -3815,7 +3843,9 @@
         active +
         '" data-report-id="' +
         esc(item.lessonReportId) +
-        '" aria-label="AI Report — отчёт AI-агента с урока">' +
+        '" aria-label="AI Report — разбор урока ' +
+        esc(formatReportClassLabel(item.classNum)) +
+        '">' +
         classActionCheckIcon() +
         '<span class="curriculum-status-text">' +
         esc(reportLabel) +
@@ -4039,7 +4069,7 @@
     rootEl.querySelectorAll(".curriculum-status-pill--report").forEach(function (btn) {
       btn.addEventListener("click", function () {
         setAppNavView("home");
-        selectLesson(btn.dataset.reportId);
+        selectLesson(btn.dataset.reportId, { preferredTab: "breakdown" });
       });
     });
     rootEl.querySelectorAll(".class-action-btn:not([disabled])").forEach(function (btn) {
@@ -4294,8 +4324,8 @@
   function buildStepCardViewModel(item) {
     var actions = getCurriculumStepActions(item);
     var pct = actions.practicePercent;
-    var eyebrow = item.isNext && !item.isCurrent ? "Следующая" : "Текущий";
-    var title = "Тема " + item.classNum + " · " + item.title;
+    var eyebrow = item.isNext && !item.isCurrent ? "Следующая" : "Текущий шаг";
+    var title = formatReportClassLabel(item.classNum) + " · " + item.title;
     var hasAiReport = actions.showAiReport;
     var hasReportPreview = actions.showAiReportPreview;
     var badge = null;
@@ -4524,7 +4554,9 @@
     if (eyebrowEl) eyebrowEl.textContent = view.eyebrow;
     banner.setAttribute(
       "aria-label",
-      view.eyebrow === "Следующая" ? "Следующая тема программы" : "Текущий шаг программы"
+      view.eyebrow === "Следующая"
+        ? "Следующая тема программы"
+        : "Текущий шаг · " + formatReportClassLabel(view.classNum)
     );
 
     if (titleEl) titleEl.textContent = view.title;
@@ -4571,6 +4603,7 @@
       updateCurriculumReportLinks();
     }
 
+    renderHomeNavTabs(report || null);
     banner.hidden = false;
   }
 
@@ -4650,7 +4683,7 @@
       nextReport.addEventListener("click", function () {
         var pending = state.nextStepPending;
         if (!pending || !pending.reportId) return;
-        selectLesson(pending.reportId);
+        selectLesson(pending.reportId, { preferredTab: "breakdown" });
       });
     }
 
@@ -5407,6 +5440,72 @@
     return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   }
 
+  function getCurrentStepClassItem() {
+    var item = getNextStepClassItem(state.curriculumItems);
+    if (!item || item.completed) return null;
+    return item;
+  }
+
+  function getCurrentStepClassNum() {
+    var item = getCurrentStepClassItem();
+    return item ? item.classNum : null;
+  }
+
+  function formatLessonBreakdownTitle(classNum) {
+    var classPart = classNum ? formatReportClassLabel(classNum) : "Class —";
+    var stepNum = getCurrentStepClassNum();
+    if (stepNum && classNum && classNum < stepNum) {
+      return "Разбор предыдущего урока " + classPart;
+    }
+    return "Разбор урока " + classPart;
+  }
+
+  function renderHomeNavTabs(selectedReport) {
+    var stepTab = document.getElementById("tab-home-step");
+    var breakdownTab = document.getElementById("tab-home-breakdown");
+    var stepItem = getCurrentStepClassItem();
+    var primary = getPrimaryReport();
+    var report = selectedReport || getSelectedReport() || primary;
+    var viewingArchive = !!(report && !isPrimaryLessonReport(report));
+
+    if (stepTab) {
+      if (viewingArchive) {
+        stepTab.hidden = true;
+      } else if (stepItem) {
+        var stepLabel = "Текущий шаг · " + formatReportClassLabel(stepItem.classNum);
+        stepTab.textContent = stepLabel;
+        stepTab.setAttribute(
+          "aria-label",
+          stepLabel + " · " + (stepItem.title || "")
+        );
+        stepTab.hidden = false;
+      } else {
+        stepTab.textContent = "Текущий шаг";
+        stepTab.setAttribute("aria-label", "Текущий шаг");
+        stepTab.hidden = false;
+      }
+    }
+
+    if (!breakdownTab) return;
+
+    if (!report || !state.reports.length) {
+      breakdownTab.hidden = true;
+      return;
+    }
+
+    var classNum = findClassNumForReport(report);
+    breakdownTab.hidden = false;
+    breakdownTab.textContent = classNum
+      ? formatReportClassLabel(classNum)
+      : "Разбор";
+    var ariaParts = [formatLessonBreakdownTitle(classNum)];
+    var topic = formatLessonTopic(report);
+    var lessonDate = report.lesson_date || report.created_at;
+    if (topic && topic !== "—") ariaParts.push(topic);
+    if (lessonDate) ariaParts.push(formatDate(lessonDate));
+    breakdownTab.setAttribute("aria-label", ariaParts.join(" · "));
+  }
+
   function renderLessonReport(report, isPrimary) {
     if (!state.curriculumItems.length && getActiveEnrollment()) {
       refreshCurriculumState();
@@ -5414,32 +5513,40 @@
 
     var classNum = findClassNumForReport(report);
     var topic = formatLessonTopic(report);
+    var lessonDate = report.lesson_date || report.created_at;
+    var breakdownTitle = formatLessonBreakdownTitle(classNum);
 
-    setText("lesson-report-class", classNum ? formatReportClassLabel(classNum) : "Класс —");
-    setText("lesson-report-topic", topic);
-    var topicLabel = document.querySelector(".lesson-topic-label");
-    if (topicLabel) {
-      topicLabel.textContent = isPrimary
-        ? "AI Report · отчёт AI-агента с урока"
-        : "AI Report · архив урока";
+    setText("lesson-report-heading", breakdownTitle);
+
+    var metaEl = document.getElementById("lesson-report-meta");
+    if (metaEl) {
+      var metaParts = [];
+      if (topic && topic !== "—") metaParts.push(topic);
+      if (lessonDate) metaParts.push(formatDate(lessonDate));
+      var stepNum = getCurrentStepClassNum();
+      if (classNum && stepNum && classNum < stepNum) {
+        metaParts.push("предыдущий live-урок перед " + formatReportClassLabel(stepNum));
+      }
+      if (classNum === 1) {
+        metaParts.push("первый live-урок в программе · review report");
+      } else if (
+        !isPrimaryLessonReport(report) ||
+        (classNum && stepNum && classNum !== stepNum)
+      ) {
+        metaParts.unshift("Архив");
+      }
+      metaEl.textContent = metaParts.length ? metaParts.join(" · ") : "—";
     }
-    var heading = document.getElementById("lesson-report-heading");
-    if (heading) {
-      var sep = heading.querySelector(".lesson-report-sep");
-      if (sep) sep.hidden = !classNum || !topic || topic === "—";
-    }
+
+    renderHomeNavTabs(report);
 
     renderGrammarList("grammar-list-current", report.grammar_errors);
-    renderGrammarList("grammar-list-detailed", report.grammar_errors);
     renderStuckTopics(state.errorTracking);
     renderPrioritizedWeakTopics(report.prioritized_weak_topics || []);
 
     setBadge("badge-grammar-current", grammarBadge(report.grammar_errors), true);
     setBadge("badge-vocab-current", report.vocabulary_level || "—", false);
     setBadge("badge-fluency-current", formatScore(report.fluency_score), true);
-    setBadge("badge-grammar-detailed", grammarBadge(report.grammar_errors), true);
-    setBadge("badge-vocab-detailed", report.vocabulary_level || "—", false);
-    setBadge("badge-fluency-detailed", formatScore(report.fluency_score), true);
 
     var vocabLive = document.getElementById("vocab-live");
     if (vocabLive) {
@@ -5479,6 +5586,7 @@
   function updateLessonContextBar(report, isPrimary) {
     var bar = document.getElementById("lesson-context-bar");
     var label = document.getElementById("lesson-context-label");
+    var backBtn = document.getElementById("btn-lesson-latest");
     if (!bar || !label) return;
 
     if (isPrimary || !report) {
@@ -5490,6 +5598,12 @@
     var classNum = findClassNumForReport(report);
     var classPart = classNum ? formatReportClassLabel(classNum) + " · " : "";
     label.textContent = "Архив · " + classPart + formatDate(lessonDate);
+    if (backBtn) {
+      var stepItem = getCurrentStepClassItem();
+      backBtn.textContent = stepItem
+        ? "К текущему шагу · " + formatReportClassLabel(stepItem.classNum)
+        : "К текущему шагу";
+    }
     bar.hidden = false;
   }
 
@@ -5656,22 +5770,20 @@
   }
 
   function initGrammarToggles() {
-    ["grammar-list-current", "grammar-list-detailed"].forEach(function (listId) {
-      var list = document.getElementById(listId);
-      if (!list || list.dataset.grammarBound) return;
-      list.dataset.grammarBound = "1";
-      list.addEventListener("click", function (e) {
-        var btn = e.target.closest(".error-explain-toggle");
-        if (!btn) return;
-        var item = btn.closest(".error-item");
-        if (!item) return;
-        var panel = item.querySelector(".error-explanation");
-        if (!panel) return;
-        var expanded = btn.getAttribute("aria-expanded") === "true";
-        btn.setAttribute("aria-expanded", expanded ? "false" : "true");
-        panel.hidden = expanded;
-        item.classList.toggle("is-open", !expanded);
-      });
+    var list = document.getElementById("grammar-list-current");
+    if (!list || list.dataset.grammarBound) return;
+    list.dataset.grammarBound = "1";
+    list.addEventListener("click", function (e) {
+      var btn = e.target.closest(".error-explain-toggle");
+      if (!btn) return;
+      var item = btn.closest(".error-item");
+      if (!item) return;
+      var panel = item.querySelector(".error-explanation");
+      if (!panel) return;
+      var expanded = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", expanded ? "false" : "true");
+      panel.hidden = expanded;
+      item.classList.toggle("is-open", !expanded);
     });
   }
 
@@ -5802,6 +5914,79 @@
       '<div class="chart-labels">' +
       labels +
       "</div>";
+  }
+
+  function renderLessonsVocabTimeline(reports, listEl) {
+    listEl = listEl || document.getElementById("lessons-vocab-timeline");
+    if (!listEl) return;
+    if (!reports || !reports.length) {
+      listEl.innerHTML = "";
+      return;
+    }
+    listEl.innerHTML = reports
+      .map(function (r) {
+        var date = formatDateShort(r.lesson_date || r.created_at);
+        var level = esc(r.vocabulary_level || "—");
+        return (
+          '<li><span class="lessons-vocab-date">' +
+          esc(date) +
+          '</span><span class="lessons-vocab-level">' +
+          level +
+          "</span></li>"
+        );
+      })
+      .join("");
+  }
+
+  function updateLessonsTrendBadge(reports, badgeEl) {
+    if (!badgeEl || !reports || reports.length < 2) {
+      if (badgeEl) badgeEl.hidden = true;
+      return;
+    }
+    var first = Number(reports[0].fluency_score) || 0;
+    var last = Number(reports[reports.length - 1].fluency_score) || 0;
+    var delta = last - first;
+    if (Math.abs(delta) < 0.05) {
+      badgeEl.hidden = true;
+      return;
+    }
+    badgeEl.hidden = false;
+    badgeEl.classList.remove("trend-up", "trend-down");
+    badgeEl.classList.add(delta > 0 ? "trend-up" : "trend-down");
+    badgeEl.textContent =
+      (delta > 0 ? "↑ +" : "↓ ") + formatScore(Math.abs(delta)) + " за период";
+  }
+
+  function renderLessonsProgressPanel() {
+    var emptyEl = document.getElementById("analytics-lessons-empty");
+    var demoChart = document.getElementById("chart-demo-static");
+    var dynamicWrap = document.getElementById("chart-dynamic");
+    var previewBanner = document.getElementById("lessons-preview-banner");
+    var vocabCard = document.getElementById("lessons-vocab-card");
+    var trendBadge = document.getElementById("lessons-trend-badge");
+
+    var reports = state.reports || [];
+    var chronological = reports.slice().reverse();
+    var hasLiveReports = !isDemo && reports.length > 0;
+
+    if (previewBanner) previewBanner.hidden = !isDemo;
+    if (emptyEl) emptyEl.hidden = isDemo || reports.length > 0;
+    if (demoChart) demoChart.hidden = hasLiveReports;
+
+    if (hasLiveReports) {
+      renderChart(chronological);
+      renderLessonsVocabTimeline(chronological);
+      updateLessonsTrendBadge(chronological, trendBadge);
+      if (vocabCard) vocabCard.hidden = false;
+      return;
+    }
+
+    if (dynamicWrap) {
+      dynamicWrap.hidden = true;
+      dynamicWrap.innerHTML = "";
+    }
+    if (trendBadge) trendBadge.hidden = isDemo ? false : true;
+    if (vocabCard) vocabCard.hidden = !isDemo;
   }
 
   function grammarBadge(errors) {
@@ -5948,9 +6133,10 @@
       state.selectedId = primary.id;
     }
     renderStudentOverview();
+    renderHomeNavTabs();
     if (!state.reports.length) {
       setHtml("grammar-list-current", emptyMsg("Пока нет отчётов по урокам."));
-      setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
+      renderLessonsProgressPanel();
       return;
     }
     if (primary) {
@@ -5958,7 +6144,6 @@
     } else {
       selectLesson(state.reports[0].id, { switchTab: false });
     }
-    if (!isDemo) renderChart(state.reports.slice().reverse());
   }
 
   function loadDashboardFromStaticPreview() {
