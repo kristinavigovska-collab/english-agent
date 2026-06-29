@@ -316,7 +316,7 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
 
 @router.post("/students/{student_id}/practice", response_model=StudentReportsResponse)
 def mark_practice(student_id: str, body: MarkPracticeRequest):
-    """Mark self-study practice for a day (defaults to today)."""
+    """Mark practice for a day (defaults to today)."""
     student = supabase_service.get_student(student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -351,7 +351,7 @@ def mark_practice(student_id: str, body: MarkPracticeRequest):
     if existing and existing[0].get("source") == "lesson":
         raise HTTPException(status_code=400, detail="Day already completed via lesson")
 
-    supabase_service.mark_self_practice(
+    supabase_service.mark_practice(
         student_id,
         practice_date.isoformat(),
         planned_minutes=planned,

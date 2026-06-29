@@ -1,4 +1,4 @@
-"""Daily progress tracker — habit grid, lesson auto-mark, self-practice."""
+"""Daily progress tracker — habit grid, lesson auto-mark, practice."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from services.goal_plan_config import (
 from services.goal_plan_service import StudyPlan, _parse_date, _report_date
 
 DayState = Literal["future", "missed", "completed", "partial", "lesson"]
-ProgressSource = Literal["lesson", "self_practice"]
+ProgressSource = Literal["lesson", "practice"]
 
 PACE_WARNING_THRESHOLD = 0.7
 RECENT_DAYS_WINDOW = 14

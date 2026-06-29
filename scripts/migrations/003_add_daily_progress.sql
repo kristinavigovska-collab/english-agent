@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS daily_progress (
     planned_minutes INTEGER NOT NULL DEFAULT 0,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     completed_minutes INTEGER,
-    source TEXT CHECK (source IS NULL OR source IN ('lesson', 'self_practice')),
+    source TEXT CHECK (source IS NULL OR source IN ('lesson', 'practice')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (student_id, progress_date)

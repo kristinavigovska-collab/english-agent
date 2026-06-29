@@ -28,7 +28,7 @@ class StudyPlan:
     hours_per_week: float
     minutes_per_day: float
     tutor_hours_per_week: float
-    self_study_hours_per_week: float
+    practice_hours_per_week: float
     total_hours: float
     hours_completed: float
     hours_remaining: float
@@ -195,7 +195,7 @@ def compute_study_plan(
     tutor_minutes = int(student.get("tutor_lesson_minutes") or DEFAULT_TUTOR_LESSON_MINUTES)
 
     tutor_hours_per_week = tutor_lessons * tutor_minutes / 60.0
-    self_study_hours_per_week = max(0.0, hours_per_week - tutor_hours_per_week)
+    practice_hours_per_week = max(0.0, hours_per_week - tutor_hours_per_week)
 
     minutes_per_day = (hours_per_week / practice_days) * 60.0
 
@@ -229,7 +229,7 @@ def compute_study_plan(
         catch_up = min(2.0, 0.7 / completion_rate)
         hours_per_week = _round_hours(hours_per_week * catch_up)
         minutes_per_day = _round_minutes(minutes_per_day * catch_up)
-        self_study_hours_per_week = max(0.0, hours_per_week - tutor_hours_per_week)
+        practice_hours_per_week = max(0.0, hours_per_week - tutor_hours_per_week)
         status = "behind"
         status_message = (
             f"Темп ниже плана — необходимая нагрузка выросла до "
@@ -242,7 +242,7 @@ def compute_study_plan(
         hours_per_week=_round_hours(hours_per_week),
         minutes_per_day=_round_minutes(minutes_per_day),
         tutor_hours_per_week=_round_hours(tutor_hours_per_week),
-        self_study_hours_per_week=_round_hours(self_study_hours_per_week),
+        practice_hours_per_week=_round_hours(practice_hours_per_week),
         total_hours=_round_hours(total_hours),
         hours_completed=_round_hours(hours_completed),
         hours_remaining=_round_hours(max(0.0, total_hours - hours_completed)),
@@ -267,7 +267,7 @@ def study_plan_to_dict(plan: StudyPlan) -> dict:
         "hours_per_week": plan.hours_per_week,
         "minutes_per_day": plan.minutes_per_day,
         "tutor_hours_per_week": plan.tutor_hours_per_week,
-        "self_study_hours_per_week": plan.self_study_hours_per_week,
+        "practice_hours_per_week": plan.practice_hours_per_week,
         "total_hours": plan.total_hours,
         "hours_completed": plan.hours_completed,
         "hours_remaining": plan.hours_remaining,

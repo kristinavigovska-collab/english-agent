@@ -79,10 +79,10 @@ INSERT INTO program_plans (
     'Start free →', 'free', 'free', FALSE, NULL, 1
 ),
 (
-    'solo', 'SOLO', 'Self-study', 2000, 'per month', NULL, 0,
+    'solo', 'SOLO', 'Practice', 2000, 'per month', NULL, 0,
     '[
         {"text": "yBook + program access", "ok": true},
-        {"text": "AI Tutor for self-study", "ok": true},
+        {"text": "AI Tutor for practice", "ok": true},
         {"text": "Goal & progress dashboard", "ok": true},
         {"text": "No live classes", "ok": false}
     ]'::jsonb,

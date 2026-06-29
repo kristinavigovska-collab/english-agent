@@ -15,7 +15,7 @@ Last updated: 2026-06-23
 | Lesson topic | Calendar event title / Recall metadata → `lessons.lesson_topic` via webhook |
 | Study intensity | Presets `once_week` / `few_times_week` / `daily` on `students`; drives plan + curriculum pacing |
 | Programs (June 2026) | Per-program subscription model in **UI**; catalog + plans in `dashboard.js`; enrollment in `localStorage` only |
-| Lesson format (product) | 30 min self-study (yBook + AI) + 30 min live micro class — stated on program detail page |
+| Lesson format (product) | 30 min practice (yBook + AI) + 30 min live micro class — stated on program detail page |
 | Dashboard accent | `#6687FF` (CSS `--accent`) |
 
 ## Phase 0–1 — completed
@@ -86,7 +86,7 @@ Last updated: 2026-06-23
 ### P1 — student-facing (other)
 
 - [ ] Student login: email → magic link (no UUID in URL)
-- [ ] UI to mark self-study (`POST /practice` exists; no dashboard button yet)
+- [ ] UI to mark practice (`POST /practice` exists; curriculum Practice button is stub)
 - [ ] Real platform session time (heatmap «время на платформе»)
 
 ### P2 — school ops & monetization
@@ -94,7 +94,7 @@ Last updated: 2026-06-23
 - Checkout / Stripe for per-program subscription
 - `schools` table + school calendar account docs for teachers
 - Auto-email “report ready” after webhook
-- Wire book-class / self-study curriculum overlays to scheduling + materials
+- Wire book-class / practice curriculum overlays to scheduling + materials
 
 ## Webhook signature (`RECALL_WEBHOOK_SECRET`)
 
@@ -126,7 +126,7 @@ Last updated: 2026-06-23
 | Programs data | Catalog, plans, enrollment — **client-only** in `dashboard.js` / `localStorage` |
 | Curriculum vs Programs | Two separate placeholders; not synced |
 | Checkout | URL stub only; no payment integration |
-| Activity data model | `daily_progress` = one row per day, one `source` (`lesson` \| `self_practice`) |
+| Activity data model | `daily_progress` = one row per day, one `source` (`lesson` \| `practice`) |
 | Mark practice UI | `POST /practice` API works; no student-facing button in dashboard yet |
 | UI vs Claude | Demo shows pronunciation/wpm; API does not — hidden on live load |
 | Render free | Cold start ~30–50 s; ping `/` before lessons |

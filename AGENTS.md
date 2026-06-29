@@ -90,7 +90,7 @@ Tabs: **Активность** (heatmap, metrics, breakdown) · **Общий п�
 
 **Enrolled program hero:** first grid slot when `localStorage.enrolled_program_id` is set — same card size as catalog; **«Продолжить обучение»** → Home.
 
-**Program detail** (in-page, not a separate route): course description, format block (**30 min self-study + 30 min live**), horizontal **EUR plan cards** (free_trial, solo, light, standard, intensive). Plan buttons link to **`/checkout?plan={id}&program={program_id}`** — **route not implemented**.
+**Program detail** (in-page, not a separate route): course description, format block (**30 min practice + 30 min live**), horizontal **EUR plan cards** (free_trial, solo, light, standard, intensive). Plan buttons link to **`/checkout?plan={id}&program={program_id}`** — **route not implemented**.
 
 **Enrollment:** live students → `PUT /api/students/{id}/enrollment` on plan selection; demo/preview → `EnrollmentState` + localStorage cache. Catalog: `GET /api/programs` (no embedded JS catalog).
 

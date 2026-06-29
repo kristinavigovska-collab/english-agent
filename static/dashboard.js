@@ -134,8 +134,6 @@
     studentName: "Студент",
     selectedId: null,
     historyBound: false,
-    curriculumFilter: "all",
-    curriculumFilterBound: false,
     curriculumActionsBound: false,
     curriculumStubProgress: {},
     curriculumStubPending: null,
@@ -242,12 +240,12 @@
     {
       id: "solo",
       name: "SOLO",
-      cardTitle: "Self-study",
+      cardTitle: "Practice",
       priceMain: "€20",
       priceNote: "per month",
       features: [
         { text: "yBook + program access", ok: true },
-        { text: "AI Tutor for self-study", ok: true },
+        { text: "AI Tutor for practice", ok: true },
         { text: "Goal & progress dashboard", ok: true },
         { text: "No live classes", ok: false },
       ],
@@ -541,23 +539,6 @@
     }
   }
 
-  function initCurriculumFilters() {
-    if (state.curriculumFilterBound) return;
-    state.curriculumFilterBound = true;
-
-    document.querySelectorAll(".curriculum-filter-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        state.curriculumFilter = btn.dataset.filter || "all";
-        document.querySelectorAll(".curriculum-filter-btn").forEach(function (item) {
-          var active = item === btn;
-          item.classList.toggle("is-active", active);
-          item.setAttribute("aria-selected", active ? "true" : "false");
-        });
-        renderCurriculumProgram();
-      });
-    });
-  }
-
   function activateTab(target, root) {
     root = root || document.getElementById("view-home");
     if (!root) return;
@@ -661,6 +642,7 @@
     updateCurriculumReportLinks();
 
     if (options.switchTab !== false) {
+      setAppNavView("home");
       activateTab("current", document.getElementById("view-home"));
     }
   }
@@ -1004,8 +986,8 @@
     today.setHours(0, 0, 0, 0);
     var totalMinutes = 0;
     var lessonMinutes = 0;
-    var selfMinutes = 0;
-    var selfStudyDays = 0;
+    var practiceMinutes = 0;
+    var practiceDays = 0;
 
     (tracker.days || []).forEach(function (day) {
       var dayDate = parseIsoDate(day.date);
@@ -1014,18 +996,18 @@
       totalMinutes += mins;
       if (day.source === "lesson") {
         lessonMinutes += mins;
-      } else if (day.source === "self_practice") {
-        selfMinutes += mins;
-        selfStudyDays += 1;
+      } else if (day.source === "practice") {
+        practiceMinutes += mins;
+        practiceDays += 1;
       }
     });
 
     return {
       totalMinutes: totalMinutes,
       lessonMinutes: lessonMinutes,
-      selfMinutes: selfMinutes,
+      practiceMinutes: practiceMinutes,
       lessonCount: (reports || []).length,
-      selfStudyDays: selfStudyDays,
+      practiceDays: practiceDays,
       streak: tracker.streak || 0,
       longestStreak: computeLongestActivityStreak(tracker.days || [], today),
     };
@@ -1053,7 +1035,7 @@
     if (day && day.completed) {
       var mins = day.completed_minutes || day.planned_minutes || 0;
       if (day.source === "lesson") teacherMinutes = mins;
-      else if (day.source === "self_practice") agentMinutes = mins;
+      else if (day.source === "practice") agentMinutes = mins;
     }
 
     return {
@@ -1195,14 +1177,14 @@
     var el = document.getElementById("activity-breakdown");
     if (!el) return;
 
-    var total = stats.lessonMinutes + stats.selfMinutes;
+    var total = stats.lessonMinutes + stats.practiceMinutes;
     if (!total) {
       el.innerHTML = '<p class="activity-tile-detail">Пока нет данных о занятиях.</p>';
       return;
     }
 
     var lessonPct = Math.round((stats.lessonMinutes / total) * 100);
-    var selfPct = 100 - lessonPct;
+    var practicePct = 100 - lessonPct;
 
     function barRow(pct, label, kind) {
       return (
@@ -1224,7 +1206,7 @@
 
     el.innerHTML =
       barRow(lessonPct, "Уроки · " + stats.lessonMinutes + " мин", "lesson") +
-      barRow(selfPct, "Self-study · " + stats.selfMinutes + " мин", "self");
+      barRow(practicePct, "Practice · " + stats.practiceMinutes + " мин", "practice");
   }
 
   function renderActivityHeatmap(container, tracker) {
@@ -1336,7 +1318,7 @@
 
     setText("activity-metric-minutes", String(stats.totalMinutes));
     setText("activity-metric-lessons", String(stats.lessonCount));
-    setText("activity-metric-self-study", String(stats.selfStudyDays));
+    setText("activity-metric-practice", String(stats.practiceDays));
     setText("activity-metric-streak", String(stats.streak));
     setText("activity-lesson-minutes", stats.lessonMinutes + " мин на уроках");
     setText("activity-total-kicker", "Всего мин | " + stats.totalMinutes);
@@ -1844,7 +1826,7 @@
       "analytics-study-plan-breakdown",
       formatHours(plan.tutor_hours_per_week) +
         " ч репетитор · " +
-        formatHours(plan.self_study_hours_per_week) +
+        formatHours(plan.practice_hours_per_week) +
         " ч практика"
     );
     setText(
@@ -2570,7 +2552,7 @@
       '<span class="program-detail-format-icon" aria-hidden="true">⏱</span>' +
       '<div class="program-detail-format-body">' +
       '<p class="program-detail-format-title">Ежедневный ритм программы</p>' +
-      '<p class="program-detail-format-text">Программа рассчитана на <strong>30 минут self-study</strong> на платформе и <strong>30 минут живого урока</strong> с преподавателем. Такой формат помогает закреплять материал самостоятельно и сразу отрабатывать его в разговоре.</p>' +
+      '<p class="program-detail-format-text">Программа рассчитана на <strong>30 минут практики</strong> на платформе и <strong>30 минут живого урока</strong> с преподавателем. Такой формат помогает закреплять материал самостоятельно и сразу отрабатывать его в разговоре.</p>' +
       "</div>" +
       "</div>" +
       "</section>" +
@@ -2585,7 +2567,7 @@
       " " +
       pluralize(program.weeks, "неделя", "недели", "недель") +
       " программы</span>" +
-      "<span>Self-study + live каждый учебный день</span>" +
+      "<span>Practice + live каждый учебный день</span>" +
       "</div>" +
       (tagsHtml ? '<div class="program-detail-tags">' + tagsHtml + "</div>" : "") +
       baseHtml +
@@ -3407,11 +3389,11 @@
     return seen;
   }
 
-  function collectSelfPracticeDates(progressTracker) {
+  function collectPracticeDates(progressTracker) {
     if (!progressTracker || !progressTracker.days) return [];
     return progressTracker.days
       .filter(function (day) {
-        return day.source === "self_practice" && day.completed;
+        return day.source === "practice" && day.completed;
       })
       .map(function (day) {
         return parseIsoDate(day.date);
@@ -3556,13 +3538,13 @@
   function applyCurriculumCompletions(items, reports, progressTracker) {
     var completedTopics = collectCompletedLessonTopics(reports);
     var lessonMetaByTopic = buildLessonMetaByTopic(reports);
-    var selfPracticeDates = collectSelfPracticeDates(progressTracker);
+    var practiceDates = collectPracticeDates(progressTracker);
     var usedSelfPractice = {};
 
     items.forEach(function (item) {
       var key = normalizeCurriculumTopic(item.title);
       item.lessonCompleted = !!completedTopics[key];
-      item.selfStudyCompleted = false;
+      item.practiceCompleted = false;
       item.lessonReportId = null;
       item.lessonDateIso = null;
 
@@ -3573,36 +3555,38 @@
           item.lessonDateIso = meta.date ? isoDateOnly(meta.date) : null;
         }
         var lessonDate = meta ? meta.date : null;
-        for (var i = 0; i < selfPracticeDates.length; i += 1) {
-          var practiceDate = selfPracticeDates[i];
+        for (var i = 0; i < practiceDates.length; i += 1) {
+          var practiceDate = practiceDates[i];
           var practiceKey = practiceDate.getTime();
           if (usedSelfPractice[practiceKey]) continue;
           if (lessonDate && practiceDate >= lessonDate) {
-            item.selfStudyCompleted = true;
+            item.practiceCompleted = true;
             usedSelfPractice[practiceKey] = true;
             break;
           }
         }
       }
 
-      item.completed = item.lessonCompleted && item.selfStudyCompleted;
-      item.hasProgress = item.lessonCompleted || item.selfStudyCompleted;
+      item.completed = item.lessonCompleted && item.practiceCompleted;
+      item.hasProgress = item.lessonCompleted || item.practiceCompleted;
     });
 
     items.forEach(function (item) {
       var stub = state.curriculumStubProgress[item.classNum];
       if (!stub) return;
       if (stub.lesson) item.lessonCompleted = true;
-      if (stub.selfStudy) item.selfStudyCompleted = true;
-      item.completed = item.lessonCompleted && item.selfStudyCompleted;
-      item.hasProgress = item.lessonCompleted || item.selfStudyCompleted;
+      if (stub.practice) item.practiceCompleted = true;
+      item.completed = item.lessonCompleted && item.practiceCompleted;
+      item.hasProgress = item.lessonCompleted || item.practiceCompleted;
     });
 
     applySequentialCurriculumBackfill(items);
 
+    applyPracticeProgressFields(items);
+
     var currentIdx = -1;
     for (var j = 0; j < items.length; j += 1) {
-      if (!items[j].lessonCompleted || !items[j].selfStudyCompleted) {
+      if (!items[j].lessonCompleted || !items[j].practiceCompleted) {
         currentIdx = j;
         break;
       }
@@ -3614,34 +3598,85 @@
 
   function getNextStepClassItem(items) {
     if (!items || !items.length) return null;
-    var maxLessonDone = 0;
-    items.forEach(function (item) {
-      if (item.lessonCompleted && item.classNum > maxLessonDone) {
-        maxLessonDone = item.classNum;
-      }
+    var open = items.find(function (item) {
+      return !item.completed;
     });
-    var targetNum = maxLessonDone > 0 ? maxLessonDone + 1 : 1;
-    var nextItem = null;
-    items.forEach(function (item) {
-      if (item.classNum === targetNum && !item.completed) nextItem = item;
-    });
-    if (!nextItem) {
-      nextItem =
-        items.find(function (item) {
-          return !item.completed;
-        }) || null;
-    }
-    return nextItem;
+    return open || items[items.length - 1];
   }
 
   function applyNextStepFlags(items) {
     var nextItem = getNextStepClassItem(items);
+    var currentNum = nextItem ? nextItem.classNum : null;
     items.forEach(function (item) {
-      var isNext = !!(nextItem && item.classNum === nextItem.classNum);
-      item.isNextStep = isNext;
-      item.isCurrent = isNext;
+      item.isNextStep = !!(nextItem && item.classNum === nextItem.classNum);
+      item.isCurrent = item.isNextStep;
+      item.isNext =
+        !!(currentNum && item.classNum === currentNum + 1 && !item.completed);
     });
     return items;
+  }
+
+  function applyPracticeProgressFields(items) {
+    items.forEach(function (item) {
+      if (item.practiceProgressPercent == null) item.practiceProgressPercent = 0;
+      var stub = state.curriculumStubProgress[item.classNum];
+      if (stub) {
+        if (stub.practice) item.practiceProgressPercent = 100;
+        else if (stub.practiceProgress != null) {
+          item.practiceProgressPercent = Math.max(
+            0,
+            Math.min(100, Number(stub.practiceProgress) || 0)
+          );
+        }
+      }
+      if (item.practiceCompleted) {
+        if (!item.practiceProgressPercent || item.practiceProgressPercent < 1) {
+          item.practiceProgressPercent = 100;
+        }
+      } else if (item.practiceProgressPercent >= 100) {
+        item.practiceProgressPercent = 0;
+      }
+    });
+    return items;
+  }
+
+  function isPracticeAvailable(item) {
+    if (item.practiceCompleted) return true;
+    if (item.isCurrent || item.isNext) return true;
+    return false;
+  }
+
+  function isLessonAvailable(item) {
+    if (item.lessonCompleted) return true;
+    return !!item.practiceCompleted && !!item.isCurrent;
+  }
+
+  function getLessonLockedLabel(item) {
+    if (!item.practiceCompleted) return "После подготовки";
+    return "Недоступно";
+  }
+
+  function classActionLockIcon() {
+    return (
+      '<svg class="class-action-icon curriculum-lock-icon" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<rect x="3.5" y="7" width="9" height="6.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.25"/>' +
+      '<path d="M5.5 7V5.25a2.75 2.75 0 015.5 0V7" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>' +
+      "</svg>"
+    );
+  }
+
+  function renderCurriculumLockedSlot(label) {
+    return (
+      '<span class="curriculum-locked-slot" aria-disabled="true">' +
+      classActionLockIcon() +
+      '<span class="curriculum-locked-text">' +
+      esc(label) +
+      "</span></span>"
+    );
+  }
+
+  function normalizedPracticePercent(item) {
+    return Math.max(0, Math.min(100, Math.round(Number(item.practiceProgressPercent) || 0)));
   }
 
   function normalizeCurriculumItems(items) {
@@ -3650,11 +3685,12 @@
       var stub = state.curriculumStubProgress[item.classNum];
       if (!stub) return;
       if (stub.lesson) item.lessonCompleted = true;
-      if (stub.selfStudy) item.selfStudyCompleted = true;
-      item.completed = item.lessonCompleted && item.selfStudyCompleted;
-      item.hasProgress = item.lessonCompleted || item.selfStudyCompleted;
+      if (stub.practice) item.practiceCompleted = true;
+      item.completed = item.lessonCompleted && item.practiceCompleted;
+      item.hasProgress = item.lessonCompleted || item.practiceCompleted;
     });
     applySequentialCurriculumBackfill(items);
+    applyPracticeProgressFields(items);
     return applyNextStepFlags(items);
   }
 
@@ -3674,7 +3710,8 @@
     items.forEach(function (item) {
       if (item.classNum >= anchorItem.classNum) return;
       item.lessonCompleted = true;
-      item.selfStudyCompleted = true;
+      item.practiceCompleted = true;
+      item.practiceProgressPercent = 100;
       item.completed = true;
       item.hasProgress = true;
       if (!item.lessonReportId) {
@@ -3687,9 +3724,10 @@
   }
 
   function getClassRowPhase(item) {
-    if (item.isNextStep || item.isCurrent) return "current";
-    if (item.lessonCompleted && item.selfStudyCompleted) return "passed";
-    if (item.lessonCompleted || item.selfStudyCompleted) return "partial";
+    if (item.lessonCompleted && item.practiceCompleted) return "passed";
+    if (item.isCurrent) return "current";
+    if (item.isNext) return "next";
+    if (item.lessonCompleted || item.practiceCompleted) return "partial";
     return "future";
   }
 
@@ -3721,10 +3759,10 @@
 
   function renderCurriculumStatusPill(kind, done) {
     var label =
-      kind === "selfStudy"
+      kind === "practice"
         ? done
-          ? "Self-study готово"
-          : "Self-study не выполнено"
+          ? "Практика выполнена"
+          : "Практика не выполнена"
         : done
           ? "Урок пройден"
           : "Урок не пройден";
@@ -3747,7 +3785,7 @@
     var done = item.lessonCompleted;
     var pendingLabel = "Урок не пройден";
     var doneLabel = "Урок пройден";
-    var reportLabel = "Class summary";
+    var reportLabel = "AI Report";
     var className = "curriculum-status-pill " + (done ? "is-done" : "is-pending");
 
     if (done && item.lessonReportId) {
@@ -3759,7 +3797,7 @@
         active +
         '" data-report-id="' +
         esc(item.lessonReportId) +
-        '">' +
+        '" aria-label="AI Report — отчёт AI-агента с урока">' +
         classActionCheckIcon() +
         '<span class="curriculum-status-text">' +
         esc(reportLabel) +
@@ -3781,14 +3819,37 @@
     );
   }
 
-  function renderCurriculumActionBtn(kind, classNum, topic, disabled) {
+  function renderCurriculumActionBtn(kind, classNum, topic, disabled, options) {
+    options = options || {};
     var isBook = kind === "lesson";
-    var label = isBook ? "Book Class" : "Self-study";
+    var label = isBook ? "Book Class" : "Practice";
+    if (kind === "practice" && options.availableLabel) {
+      label = "Доступно";
+    }
     var btnClass = isBook ? "class-action-btn--primary" : "class-action-btn--outline";
+    if (kind === "practice" && options.availableLabel) {
+      btnClass = "class-action-btn--available";
+    }
+    if (kind === "practice" && options.done) {
+      btnClass = "class-action-btn--outline class-action-btn--practice-done";
+    }
     var icon = isBook ? classActionCalendarIcon() : classActionBookIcon();
+    var progressPct = options.progressPercent;
+    var showProgress =
+      kind === "practice" &&
+      !disabled &&
+      progressPct != null &&
+      progressPct > 0;
+    var labelHtml = showProgress
+      ? '<span>Practice</span><span class="practice-progress-pct">' +
+        Math.round(progressPct) +
+        "%</span>"
+      : "<span>" + label + "</span>";
+    var progressClass = showProgress ? " class-action-btn--practice-progress" : "";
     return (
       '<button type="button" class="class-action-btn ' +
       btnClass +
+      progressClass +
       '" data-action="' +
       kind +
       '" data-class-num="' +
@@ -3799,65 +3860,61 @@
       (disabled ? " disabled" : "") +
       ">" +
       icon +
-      "<span>" +
-      label +
-      "</span></button>"
+      labelHtml +
+      "</button>"
     );
   }
 
-  function renderCurriculumActions(item) {
+  function renderCurriculumPracticePart(item) {
+    var pct = normalizedPracticePercent(item);
+    if (item.practiceCompleted) {
+      return renderCurriculumActionBtn("practice", item.classNum, item.title, false, {
+        progressPercent: pct,
+        done: true,
+      });
+    }
+    if (!isPracticeAvailable(item)) {
+      return renderCurriculumLockedSlot("Недоступно");
+    }
+    if (pct > 0) {
+      return renderCurriculumActionBtn("practice", item.classNum, item.title, false, {
+        progressPercent: pct,
+      });
+    }
+    return renderCurriculumActionBtn("practice", item.classNum, item.title, false, {
+      availableLabel: true,
+    });
+  }
+
+  function renderCurriculumLessonPart(item) {
+    if (item.lessonCompleted) {
+      return renderCurriculumLessonStatus(item);
+    }
+    if (!isLessonAvailable(item)) {
+      return renderCurriculumLockedSlot(getLessonLockedLabel(item));
+    }
+    return renderCurriculumActionBtn("lesson", item.classNum, item.title, false);
+  }
+
+  function renderCurriculumActions(item, items) {
+    items = items || state.curriculumItems || [];
     var phase = getClassRowPhase(item);
-    var parts = [];
+    var practicePart = renderCurriculumPracticePart(item);
+    var lessonPart = renderCurriculumLessonPart(item);
 
     if (phase === "passed") {
-      parts.push(renderCurriculumLessonStatus(item));
-      parts.push(renderCurriculumStatusPill("selfStudy", item.selfStudyCompleted));
       return (
-        '<div class="curriculum-actions curriculum-actions--status">' + parts.join("") + "</div>"
-      );
-    }
-
-    if (phase === "future") {
-      return (
-        '<div class="curriculum-actions curriculum-actions--buttons">' +
-        renderCurriculumActionBtn("lesson", item.classNum, item.title, true) +
-        renderCurriculumActionBtn("selfStudy", item.classNum, item.title, true) +
+        '<div class="curriculum-actions curriculum-actions--status">' +
+        practicePart +
+        lessonPart +
         "</div>"
       );
     }
 
-    if (phase === "partial") {
-      if (item.lessonCompleted) {
-        parts.push(renderCurriculumLessonStatus(item));
-      } else {
-        parts.push(renderCurriculumActionBtn("lesson", item.classNum, item.title, false));
-      }
-      if (item.selfStudyCompleted) {
-        parts.push(renderCurriculumStatusPill("selfStudy", true));
-      } else {
-        parts.push(renderCurriculumActionBtn("selfStudy", item.classNum, item.title, false));
-      }
-      return (
-        '<div class="curriculum-actions curriculum-actions--buttons curriculum-actions--mixed">' +
-        parts.join("") +
-        "</div>"
-      );
-    }
-
-    // current — следующий Class в программе
-    if (item.lessonCompleted) {
-      parts.push(renderCurriculumLessonStatus(item));
-    } else {
-      parts.push(renderCurriculumActionBtn("lesson", item.classNum, item.title, false));
-    }
-    if (item.selfStudyCompleted) {
-      parts.push(renderCurriculumStatusPill("selfStudy", true));
-    } else {
-      parts.push(renderCurriculumActionBtn("selfStudy", item.classNum, item.title, false));
-    }
     return (
       '<div class="curriculum-actions curriculum-actions--buttons curriculum-actions--mixed">' +
-      parts.join("") +
+      practicePart +
+      lessonPart +
       "</div>"
     );
   }
@@ -3870,7 +3927,7 @@
     }
     if (filter === "upcoming") {
       return items.filter(function (item) {
-        return !item.lessonCompleted && !item.selfStudyCompleted;
+        return !item.lessonCompleted && !item.practiceCompleted;
       });
     }
     return items;
@@ -3935,7 +3992,13 @@
   function renderCurriculumItemHtml(item) {
     var phase = getClassRowPhase(item);
     var phaseClass =
-      phase === "passed" ? "is-passed" : phase === "current" ? "is-current" : "is-future";
+      phase === "passed"
+        ? "is-passed"
+        : phase === "current"
+          ? "is-current"
+          : phase === "next"
+            ? "is-next"
+            : "is-future";
     return (
       '<li class="curriculum-item ' +
       phaseClass +
@@ -3947,7 +4010,7 @@
       '<span class="curriculum-topic">' +
       esc(item.title) +
       "</span>" +
-      renderCurriculumActions(item) +
+      renderCurriculumActions(item, state.curriculumItems) +
       "</div>" +
       "</li>"
     );
@@ -3957,6 +4020,7 @@
     if (!rootEl) return;
     rootEl.querySelectorAll(".curriculum-status-pill--report").forEach(function (btn) {
       btn.addEventListener("click", function () {
+        setAppNavView("home");
         selectLesson(btn.dataset.reportId);
       });
     });
@@ -3967,7 +4031,7 @@
         if (btn.dataset.action === "lesson") {
           openBookClassStub(classNum, topic);
         } else {
-          openSelfStudyStub(classNum, topic);
+          openPracticeStub(classNum, topic);
         }
       });
     });
@@ -3976,6 +4040,9 @@
   function formatCurriculumClassLabel(item) {
     if (item.isCurrent) {
       return "Class " + item.classNum + " · Текущий";
+    }
+    if (item.isNext) {
+      return "Class " + item.classNum + " · Следующая";
     }
     var label = "Class " + item.classNum;
     if (item.lessonCompleted && item.lessonDateIso) {
@@ -4025,8 +4092,6 @@
     }).length;
     var progressPercent =
       items.length > 0 ? Math.min(100, Math.round((completedCount / items.length) * 100)) : 0;
-    var filter = state.curriculumFilter || "all";
-    var filteredItems = filterCurriculumItems(items, filter);
 
     section.hidden = false;
     if (summaryEl) {
@@ -4049,26 +4114,18 @@
       progressBar.setAttribute("aria-valuenow", String(progressPercent));
     }
 
-    if (!filteredItems.length) {
+    if (!items.length) {
       listEl.innerHTML =
-        '<li class="curriculum-empty">Нет Class в этой категории</li>';
+        '<li class="curriculum-empty">Нет Class в программе</li>';
       if (scrollEl) scrollEl.scrollTop = 0;
       return;
     }
 
-    var visibleItems =
-      filter === "all"
-        ? sortCurriculumSequential(filteredItems)
-        : sortCurriculumForDisplay(filteredItems);
+    var visibleItems = sortCurriculumSequential(items);
 
     listEl.innerHTML = visibleItems.map(renderCurriculumItemHtml).join("");
     bindCurriculumListInteractions(listEl);
-
-    if (filter === "all") {
-      scrollCurriculumToCurrent(scrollEl, listEl);
-    } else if (scrollEl) {
-      scrollEl.scrollTop = 0;
-    }
+    scrollCurriculumToCurrent(scrollEl, listEl);
 
     var selectedReport = state.reports.find(function (r) {
       return r.id === state.selectedId;
@@ -4083,7 +4140,7 @@
   }
 
   function markCurriculumStubProgress(classNum, patch) {
-    if (isDemo && (patch.lesson || patch.selfStudy)) {
+    if (isDemo && (patch.lesson || patch.practice)) {
       fetch(
         DashboardApi.apiUrl(
           "/api/demo/curriculum/" + encodeURIComponent(classNum) + "/complete"
@@ -4093,7 +4150,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lesson: !!patch.lesson,
-          self_study: !!patch.selfStudy,
+          practice: !!patch.practice,
         }),
       })
         .then(function (res) {
@@ -4201,9 +4258,101 @@
     });
   }
 
+  function buildNextStepViewModel(nextItem, report) {
+    var pct = normalizedPracticePercent(nextItem);
+    var title = "Тема " + nextItem.classNum + " · " + nextItem.title;
+    var hasAiReport = !!(report && report.id);
+    var badge = null;
+
+    if (state.studyPlan && state.studyPlan.status === "ahead") {
+      badge = { text: "↗ Опережаете план", tone: "positive" };
+    } else if (state.studyPlan && state.studyPlan.status === "behind") {
+      badge = { text: "Нужно ускориться", tone: "warn" };
+    }
+
+    if (!nextItem.practiceCompleted) {
+      var lead;
+      if (pct > 0) {
+        lead =
+          "Вы остановились на " +
+          pct +
+          "% — доведите Practice до конца, и живой урок откроется. ";
+      } else {
+        lead =
+          "Сначала Practice: 30 минут, которые превращают урок с преподавателем в точечную работу, а не повтор основ. ";
+      }
+      if (hasAiReport) {
+        lead +=
+          "У вашего преподавателя уже есть AI Report с прошлого занятия — он знает, с чего продолжить именно с вами.";
+      } else {
+        lead += "После Practice вы придёте на урок подготовленными — преподаватель сможет сразу перейти к делу.";
+      }
+      return {
+        title: title,
+        lead: lead,
+        badge: badge,
+        showProgress: pct > 0,
+        progressPct: pct,
+        showBook: false,
+        showReport: hasAiReport,
+        showPracticePctOnBtn: pct > 0,
+        practiceLabel: pct > 0 ? "Продолжить Practice →" : "Начать Practice →",
+        bookLabel: "Записаться на урок →",
+        reportLabel: "Открыть AI Report →",
+      };
+    }
+
+    var leadReady =
+      "Practice закрыта — вы готовы к live-сессии. Забронируйте урок: ";
+    if (hasAiReport) {
+      leadReady +=
+        "преподаватель уже изучил ваш AI Report и видит прогресс по программе. Следующее занятие будет построено вокруг того, что важно именно вам.";
+    } else {
+      leadReady +=
+        "на занятии вы отработаете тему с преподавателем и получите новый AI Report.";
+    }
+
+    return {
+      title: title,
+      lead: leadReady,
+      badge: badge,
+      showProgress: false,
+      progressPct: 100,
+      showBook: true,
+      showReport: false,
+      showPracticePctOnBtn: false,
+      practiceLabel: "Ещё Practice",
+      bookLabel: "Записаться на урок →",
+      reportLabel: "",
+    };
+  }
+
+  function renderNextStepPracticeButton(practiceBtn, view) {
+    if (!practiceBtn) return;
+    practiceBtn.classList.toggle("has-practice-pct", !!view.showPracticePctOnBtn);
+    if (view.showPracticePctOnBtn) {
+      practiceBtn.innerHTML =
+        "Продолжить Practice " +
+        '<span class="next-step-practice-pct">' +
+        view.progressPct +
+        "%</span>" +
+        " →";
+      return;
+    }
+    practiceBtn.textContent = view.practiceLabel;
+  }
+
   function renderNextStepBanner(report) {
     var banner = document.getElementById("class-next-step");
+    var titleEl = document.getElementById("class-next-step-title");
     var leadEl = document.getElementById("class-next-step-lead");
+    var badgeEl = document.getElementById("class-next-step-badge");
+    var progressWrap = document.getElementById("class-next-step-progress");
+    var progressFill = document.getElementById("class-next-step-progress-fill");
+    var progressPctEl = document.getElementById("class-next-step-progress-pct");
+    var practiceBtn = document.getElementById("btn-next-step-practice");
+    var bookBtn = document.getElementById("btn-next-step-book");
+    var reportBtn = document.getElementById("btn-next-step-report");
     if (!banner || !leadEl) return;
 
     var nextItem = getNextStepClassItem(state.curriculumItems);
@@ -4218,8 +4367,56 @@
       return;
     }
 
-    state.nextStepPending = { classNum: nextItem.classNum, topic: nextItem.title };
-    leadEl.textContent = "Class " + nextItem.classNum + " · " + nextItem.title;
+    var view = buildNextStepViewModel(nextItem, report);
+    state.nextStepPending = {
+      classNum: nextItem.classNum,
+      topic: nextItem.title,
+      reportId: report && report.id ? report.id : null,
+    };
+
+    if (titleEl) titleEl.textContent = view.title;
+    leadEl.textContent = view.lead;
+
+    if (badgeEl) {
+      if (view.badge) {
+        badgeEl.textContent = view.badge.text;
+        badgeEl.className =
+          "class-next-step-badge " + (view.badge.tone === "warn" ? "is-warn" : "is-positive");
+        badgeEl.hidden = false;
+      } else {
+        badgeEl.hidden = true;
+      }
+    }
+
+    if (progressWrap && progressFill && progressPctEl) {
+      progressWrap.hidden = !view.showProgress;
+      if (view.showProgress) {
+        var width = Math.max(4, Math.min(100, view.progressPct));
+        progressFill.style.width = width + "%";
+        progressPctEl.textContent = view.progressPct + "%";
+        progressWrap.setAttribute(
+          "aria-label",
+          "Прогресс Practice: " + view.progressPct + " процентов"
+        );
+      }
+    }
+
+    if (practiceBtn) {
+      renderNextStepPracticeButton(practiceBtn, view);
+      practiceBtn.hidden = false;
+      practiceBtn.classList.toggle("btn-primary", !view.showBook);
+      practiceBtn.classList.toggle("btn-secondary", view.showBook);
+    }
+    if (bookBtn) {
+      bookBtn.textContent = view.bookLabel;
+      bookBtn.hidden = !view.showBook;
+      bookBtn.classList.toggle("btn-primary", view.showBook);
+    }
+    if (reportBtn) {
+      reportBtn.textContent = view.reportLabel;
+      reportBtn.hidden = !view.showReport;
+    }
+
     banner.hidden = false;
   }
 
@@ -4232,21 +4429,21 @@
     if (overlay) overlay.hidden = false;
   }
 
-  function openSelfStudyStub(classNum, topic) {
-    state.curriculumStubPending = { classNum: classNum, topic: topic, action: "selfStudy" };
-    setText("self-study-topic", topic);
+  function openPracticeStub(classNum, topic) {
+    state.curriculumStubPending = { classNum: classNum, topic: topic, action: "practice" };
+    setText("practice-topic", topic);
     setText(
-      "self-study-material",
+      "practice-material",
       "Материалы по теме «" +
         topic +
         "»: упражнения, карточки и задания появятся здесь после подключения библиотеки школы."
     );
-    var overlay = document.getElementById("self-study-overlay");
+    var overlay = document.getElementById("practice-overlay");
     if (overlay) overlay.hidden = false;
   }
 
   function closeCurriculumStubOverlays() {
-    ["book-class-overlay", "self-study-overlay"].forEach(function (id) {
+    ["book-class-overlay", "practice-overlay"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.hidden = true;
     });
@@ -4265,8 +4462,8 @@
 
     bindClose("btn-book-class-close");
     bindClose("btn-book-class-cancel");
-    bindClose("btn-self-study-close");
-    bindClose("btn-self-study-cancel");
+    bindClose("btn-practice-close");
+    bindClose("btn-practice-cancel");
 
     var bookBack = document.getElementById("btn-book-class-back");
     if (bookBack) {
@@ -4285,12 +4482,21 @@
       });
     }
 
-    var nextSelf = document.getElementById("btn-next-step-self-study");
+    var nextSelf = document.getElementById("btn-next-step-practice");
     if (nextSelf) {
       nextSelf.addEventListener("click", function () {
         var pending = state.nextStepPending;
         if (!pending) return;
-        openSelfStudyStub(pending.classNum, pending.topic);
+        openPracticeStub(pending.classNum, pending.topic);
+      });
+    }
+
+    var nextReport = document.getElementById("btn-next-step-report");
+    if (nextReport) {
+      nextReport.addEventListener("click", function () {
+        var pending = state.nextStepPending;
+        if (!pending || !pending.reportId) return;
+        selectLesson(pending.reportId);
       });
     }
 
@@ -4305,18 +4511,18 @@
       });
     }
 
-    var selfConfirm = document.getElementById("btn-self-study-confirm");
+    var selfConfirm = document.getElementById("btn-practice-confirm");
     if (selfConfirm) {
       selfConfirm.addEventListener("click", function () {
         var pending = state.curriculumStubPending;
-        if (!pending || pending.action !== "selfStudy") return;
+        if (!pending || pending.action !== "practice") return;
         // STUB: real materials library will track completion via API.
-        markCurriculumStubProgress(pending.classNum, { selfStudy: true });
+        markCurriculumStubProgress(pending.classNum, { practice: true, practiceProgress: 100 });
         closeCurriculumStubOverlays();
       });
     }
 
-    ["book-class-overlay", "self-study-overlay"].forEach(function (id) {
+    ["book-class-overlay", "practice-overlay"].forEach(function (id) {
       var overlay = document.getElementById(id);
       if (overlay) {
         overlay.addEventListener("click", function (e) {
@@ -5063,8 +5269,8 @@
     var topicLabel = document.querySelector(".lesson-topic-label");
     if (topicLabel) {
       topicLabel.textContent = isPrimary
-        ? "Class summary · разбор AI-тютора"
-        : "Class summary · архив урока";
+        ? "AI Report · отчёт AI-агента с урока"
+        : "AI Report · архив урока";
     }
     var heading = document.getElementById("lesson-report-heading");
     if (heading) {
@@ -5720,7 +5926,6 @@
     });
 
     initLessonNavigation();
-    initCurriculumFilters();
     initCurriculumActions();
     initBuyLessonsButton();
     initSidebarProfilePrograms();

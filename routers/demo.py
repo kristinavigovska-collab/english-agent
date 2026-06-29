@@ -47,7 +47,7 @@ class DemoGoalUpdate(BaseModel):
 
 class DemoCompleteRequest(BaseModel):
     lesson: bool = True
-    self_study: bool = True
+    practice: bool = True
 
 
 @router.get("/reports")
@@ -89,7 +89,7 @@ def demo_update_goal(body: DemoGoalUpdate):
 
 @router.post("/curriculum/{class_id}/complete")
 def demo_complete_class(class_id: int, body: DemoCompleteRequest = DemoCompleteRequest()):
-    demo_state.mark_class_complete(class_id, lesson=body.lesson, self_study=body.self_study)
+    demo_state.mark_class_complete(class_id, lesson=body.lesson, practice=body.practice)
     bundle = demo_state.build_bundle()
     curriculum = bundle.get("curriculum")
     if not curriculum:

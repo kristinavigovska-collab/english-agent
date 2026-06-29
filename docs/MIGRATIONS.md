@@ -11,6 +11,7 @@ SQL files live in `scripts/migrations/`. Apply **in numeric order** on a project
 | `005_add_lesson_topic.sql` | `lessons.lesson_topic` from calendar event title / Recall metadata |
 | `006_add_study_intensity_preset.sql` | `students.study_intensity_preset` (`once_week` \| `few_times_week` \| `daily`) |
 | `007_add_programs_catalog.sql` | `programs`, `program_plans`, `student_enrollments` + seed catalog (16 programs, 5 plans) |
+| `008_rename_practice_terminology.sql` | `daily_progress.source`: `self_practice` → `practice`; solo plan copy |
 
 ## Apply via CLI
 
@@ -26,7 +27,7 @@ python scripts/run_supabase_migration.py 003_add_daily_progress.sql
 python scripts/run_supabase_migration.py 004_add_error_pattern_history.sql
 python scripts/run_supabase_migration.py 005_add_lesson_topic.sql
 python scripts/run_supabase_migration.py 006_add_study_intensity_preset.sql
-python scripts/run_supabase_migration.py 007_add_programs_catalog.sql
+python scripts/run_supabase_migration.py 008_rename_practice_terminology.sql
 ```
 
 Default (no argument) runs `001_add_student_goal.sql`.

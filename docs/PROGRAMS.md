@@ -8,12 +8,12 @@ Last updated: 2026-06-23
 
 | Concept | Meaning |
 |---------|---------|
-| **Program** | A course track (e.g. General English — Intermediate). Fixed number of **Classes** (`classes` × 30 min live + self-study block). |
+| **Program** | A course track (e.g. General English — Intermediate). Fixed number of **Classes** (`classes` × 30 min live + practice block). |
 | **Learning plan** | Subscription tier (EUR/month): how many live classes per month + platform access. Same 5 tiers for every program. |
 | **Enrollment** | Student is on one program + one plan at a time. Drives sidebar curriculum and (later) lesson attribution. |
-| **Class** | One unit in the curriculum list (sidebar «Программа обучения»). Not the same as a **live lesson** row in `lessons` — a Class may span self-study + one Meet. |
+| **Class** | One unit in the curriculum list (sidebar «Программа обучения»). Not the same as a **live lesson** row in `lessons` — a Class may span practice + one Meet. |
 
-**Lesson format (product copy):** 30 min self-study (yBook + AI) + 30 min live micro class. Shown on program detail page.
+**Lesson format (product copy):** 30 min practice (yBook + AI) + 30 min live micro class. Shown on program detail page.
 
 ## Two tracks (do not conflate)
 
@@ -90,7 +90,7 @@ Stored in DB as `base_category` + `base_level_id` (nullable).
 | id | Name | Price | Live classes / month | Notes |
 |----|------|-------|----------------------|-------|
 | `free_trial` | FREE TRIAL | €0 | 1 (trial) | 7 days, no card |
-| `solo` | SOLO | €20/mo | 0 | Self-study + AI only |
+| `solo` | SOLO | €20/mo | 0 | Practice + AI only |
 | `light` | LIGHT | €88/mo | 4 | ~1/week, €17/class |
 | `standard` | STANDARD | €140/mo | 8 | Featured; ~2/week, €15/class |
 | `intensive` | INTENSIVE | €236/mo | 16 | ~4/week, €13.5/class |

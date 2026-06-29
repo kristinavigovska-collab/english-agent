@@ -66,7 +66,7 @@ class StudyPlanResponse(BaseModel):
     hours_per_week: float
     minutes_per_day: float
     tutor_hours_per_week: float
-    self_study_hours_per_week: float
+    practice_hours_per_week: float
     total_hours: float
     hours_completed: float
     hours_remaining: float

@@ -72,15 +72,15 @@ def build_curriculum(
                 "date": lesson_date,
             }
 
-    self_practice_dates: list[date] = []
+    practice_dates: list[date] = []
     if progress_tracker and progress_tracker.get("days"):
         for day in progress_tracker["days"]:
-            if day.get("source") == "self_practice" and day.get("completed"):
+            if day.get("source") == "practice" and day.get("completed"):
                 try:
-                    self_practice_dates.append(date.fromisoformat(str(day["date"])[:10]))
+                    practice_dates.append(date.fromisoformat(str(day["date"])[:10]))
                 except ValueError:
                     pass
-        self_practice_dates.sort()
+        practice_dates.sort()
 
     items: list[dict[str, Any]] = []
     used_practice: set[date] = set()
@@ -91,7 +91,7 @@ def build_curriculum(
         lesson_completed = bool(completed_topics.get(key))
         lesson_report_id = None
         lesson_date_iso = None
-        self_study_completed = False
+        practice_completed = False
 
         if lesson_completed:
             meta = lesson_meta.get(key)
@@ -100,19 +100,19 @@ def build_curriculum(
                 if meta.get("date"):
                     lesson_date_iso = meta["date"].isoformat()
             lesson_date = meta.get("date") if meta else None
-            for practice_date in self_practice_dates:
+            for practice_date in practice_dates:
                 if practice_date in used_practice:
                     continue
                 if lesson_date and practice_date >= lesson_date:
-                    self_study_completed = True
+                    practice_completed = True
                     used_practice.add(practice_date)
                     break
 
         if extra_completed_class_nums and class_num in extra_completed_class_nums:
             lesson_completed = True
-            self_study_completed = True
+            practice_completed = True
 
-        completed = lesson_completed and self_study_completed
+        completed = lesson_completed and practice_completed
         items.append(
             {
                 "class_index": index,
@@ -120,12 +120,13 @@ def build_curriculum(
                 "title": title,
                 "program_id": program_id,
                 "lesson_completed": lesson_completed,
-                "self_study_completed": self_study_completed,
+                "practice_completed": practice_completed,
+                "practice_progress_percent": 0,
                 "completed": completed,
                 "is_current": False,
                 "lesson_report_id": lesson_report_id,
                 "lesson_date_iso": lesson_date_iso,
-                "has_progress": lesson_completed or self_study_completed,
+                "has_progress": lesson_completed or practice_completed,
             }
         )
 
@@ -142,7 +143,7 @@ def build_curriculum(
             if item["class_num"] >= anchor["class_num"]:
                 continue
             item["lesson_completed"] = True
-            item["self_study_completed"] = True
+            item["practice_completed"] = True
             item["completed"] = True
             item["has_progress"] = True
             if not item.get("lesson_date_iso") and anchor_date:
@@ -151,26 +152,22 @@ def build_curriculum(
                 item["lesson_date_iso"] = back.isoformat()
 
     current_idx = -1
-    max_lesson_done = 0
     for item in items:
-        if item["lesson_completed"] and item["class_num"] > max_lesson_done:
-            max_lesson_done = item["class_num"]
-
-    next_step_num = max_lesson_done + 1 if max_lesson_done > 0 else 1
-    next_item = next((i for i in items if i["class_num"] == next_step_num), None)
-    if next_item and not next_item["completed"]:
-        current_num = next_step_num
-    else:
-        first_open = next((i for i in items if not i["completed"]), None)
-        if first_open:
-            current_num = first_open["class_num"]
-        elif items:
-            current_num = items[-1]["class_num"]
-        else:
-            current_num = 1
+        if not item["completed"]:
+            current_idx = items.index(item)
+            current_num = item["class_num"]
+            break
+    if current_idx < 0 and items:
+        current_idx = len(items) - 1
+        current_num = items[-1]["class_num"]
+    elif current_idx < 0:
+        current_num = 1
 
     for item in items:
         item["is_current"] = item["class_num"] == current_num
+        item["is_next"] = (
+            item["class_num"] == current_num + 1 and not item["completed"]
+        )
 
     current_idx = next(
         (i for i, item in enumerate(items) if item["class_num"] == current_num),

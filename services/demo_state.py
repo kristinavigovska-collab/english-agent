@@ -93,14 +93,14 @@ def update_goal(updates: dict[str, Any]) -> None:
     _demo_goal.update({k: v for k, v in updates.items() if v is not None})
 
 
-def mark_class_complete(class_id: int, *, lesson: bool = True, self_study: bool = True) -> None:
+def mark_class_complete(class_id: int, *, lesson: bool = True, practice: bool = True) -> None:
     ensure_loaded()
     _extra_completed.add(int(class_id))
     logger.info(
-        "[DEV] Demo completion recorded in memory only: class_id=%s lesson=%s self_study=%s",
+        "[DEV] Demo completion recorded in memory only: class_id=%s lesson=%s practice=%s",
         class_id,
         lesson,
-        self_study,
+        practice,
     )
 
 

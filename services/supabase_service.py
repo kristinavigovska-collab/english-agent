@@ -230,7 +230,7 @@ def upsert_daily_progress(student_id: str, rows: list[dict]) -> None:
     db.table("daily_progress").upsert(payload, on_conflict="student_id,progress_date").execute()
 
 
-def mark_self_practice(
+def mark_practice(
     student_id: str,
     progress_date: str,
     planned_minutes: int,
@@ -243,7 +243,7 @@ def mark_self_practice(
         "planned_minutes": planned_minutes,
         "completed": True,
         "completed_minutes": completed_minutes,
-        "source": "self_practice",
+        "source": "practice",
         "updated_at": date.today().isoformat(),
     }
     result = (
