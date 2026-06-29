@@ -8,12 +8,6 @@
       "class_num": 1,
       "title": "Opinions",
       "lesson_date": "2026-05-12"
-    },
-    {
-      "class_index": 1,
-      "class_num": 2,
-      "title": "Conditionals",
-      "lesson_date": "2026-05-19"
     }
   ],
   "classes": [
@@ -35,13 +29,14 @@
       "class_num": 2,
       "title": "Conditionals",
       "program_id": "general-intermediate",
-      "lesson_completed": true,
+      "lesson_completed": false,
       "practice_completed": false,
       "completed": false,
       "is_current": true,
-      "lesson_report_id": "demo-6",
-      "lesson_date_iso": "2026-05-19",
-      "has_progress": true
+      "lesson_report_id": null,
+      "lesson_date_iso": null,
+      "has_progress": true,
+      "practice_progress_percent": 62
     },
     {
       "class_index": 2,

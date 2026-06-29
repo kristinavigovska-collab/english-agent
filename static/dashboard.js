@@ -2785,8 +2785,32 @@
   function closeSidebarProgramMenu() {
     var menu = document.getElementById("sidebar-program-menu");
     var switchBtn = document.getElementById("btn-profile-program-switch");
-    if (menu) menu.hidden = true;
+    if (!menu) return;
+    if (menu._closeTimer) {
+      clearTimeout(menu._closeTimer);
+      menu._closeTimer = null;
+    }
+    menu.classList.remove("is-open");
     if (switchBtn) switchBtn.setAttribute("aria-expanded", "false");
+    menu._closeTimer = window.setTimeout(function () {
+      if (!menu.classList.contains("is-open")) menu.hidden = true;
+      menu._closeTimer = null;
+    }, 180);
+  }
+
+  function openSidebarProgramMenu() {
+    var menu = document.getElementById("sidebar-program-menu");
+    var switchBtn = document.getElementById("btn-profile-program-switch");
+    if (!menu) return;
+    if (menu._closeTimer) {
+      clearTimeout(menu._closeTimer);
+      menu._closeTimer = null;
+    }
+    menu.hidden = false;
+    window.requestAnimationFrame(function () {
+      menu.classList.add("is-open");
+    });
+    if (switchBtn) switchBtn.setAttribute("aria-expanded", "true");
   }
 
   function switchActiveProgram(programId) {
@@ -2808,10 +2832,12 @@
 
   function renderSidebarProfilePrograms() {
     var nameEl = document.getElementById("dash-name");
-    var rowEl = document.getElementById("sidebar-program-row");
+    var pickBtn = document.getElementById("btn-pick-program");
+    var labelEl = document.getElementById("sidebar-program-active");
+    var actionsEl = document.getElementById("sidebar-program-actions");
     var switchBtn = document.getElementById("btn-profile-program-switch");
     var menuEl = document.getElementById("sidebar-program-menu");
-    if (!rowEl) return;
+    if (!labelEl || !actionsEl) return;
 
     var enrollments =
       typeof EnrollmentState !== "undefined" ? EnrollmentState.list() : [];
@@ -2826,8 +2852,9 @@
 
     if (menuEl) {
       if (count <= 1) {
-        menuEl.hidden = true;
+        closeSidebarProgramMenu();
         menuEl.innerHTML = "";
+        menuEl.hidden = true;
       } else {
         menuEl.innerHTML = enrollments
           .map(function (item) {
@@ -2855,34 +2882,22 @@
     }
 
     if (count === 0) {
-      rowEl.innerHTML =
-        '<button type="button" class="sidebar-program-pick" id="btn-pick-program">Выбрать цель</button>';
-      var pickBtn = document.getElementById("btn-pick-program");
-      if (pickBtn) {
-        pickBtn.addEventListener("click", function () {
-          setAppNavView("programs");
-        });
-      }
+      if (pickBtn) pickBtn.hidden = false;
+      labelEl.hidden = true;
+      actionsEl.hidden = true;
       syncSidebarProgramDependentSections(false);
       return;
     }
 
+    if (pickBtn) pickBtn.hidden = true;
+    labelEl.hidden = false;
+    actionsEl.hidden = false;
+
     var programLabel = shortenProgramLabel(
       active && active.program_name ? active.program_name : "Программа"
     );
-    rowEl.innerHTML =
-      '<span class="sidebar-program-active" title="' +
-      esc(active && active.program_name ? active.program_name : programLabel) +
-      '">' +
-      esc(programLabel) +
-      '</span><button type="button" class="sidebar-program-add" id="btn-add-program" aria-label="Добавить программу">+</button>';
-
-    var addBtn = document.getElementById("btn-add-program");
-    if (addBtn) {
-      addBtn.addEventListener("click", function () {
-        setAppNavView("programs");
-      });
-    }
+    labelEl.textContent = "Current Program: " + programLabel;
+    labelEl.title = active && active.program_name ? active.program_name : programLabel;
 
     syncSidebarProgramDependentSections(true);
   }
@@ -2900,17 +2915,30 @@
     if (state.sidebarProfileProgramsBound) return;
     state.sidebarProfileProgramsBound = true;
 
+    var pickBtn = document.getElementById("btn-pick-program");
+    if (pickBtn) {
+      pickBtn.addEventListener("click", function () {
+        setAppNavView("programs");
+      });
+    }
+
+    var addBtn = document.getElementById("btn-add-program");
+    if (addBtn) {
+      addBtn.addEventListener("click", function () {
+        setAppNavView("programs");
+      });
+    }
+
     var switchBtn = document.getElementById("btn-profile-program-switch");
     if (switchBtn) {
       switchBtn.addEventListener("click", function () {
         var menu = document.getElementById("sidebar-program-menu");
         if (!menu) return;
-        var willOpen = menu.hidden;
-        closeSidebarProgramMenu();
-        if (willOpen) {
-          menu.hidden = false;
-          switchBtn.setAttribute("aria-expanded", "true");
+        if (menu.classList.contains("is-open") && !menu.hidden) {
+          closeSidebarProgramMenu();
+          return;
         }
+        openSidebarProgramMenu();
       });
     }
 
@@ -3451,6 +3479,7 @@
       var match = null;
       items.forEach(function (item) {
         if (normalizeCurriculumTopic(item.title) !== topicKey) return;
+        if (!item.lessonCompleted) return;
         if (usedClasses[item.classNum] && map[report.id] !== item.classNum) return;
         if (!match || item.classNum > match) match = item.classNum;
       });
@@ -3494,6 +3523,7 @@
       classToReport[reportClassMap[reportId]] = reportId;
     });
     items.forEach(function (item) {
+      if (!item.lessonCompleted) return;
       if (!item.lessonReportId && classToReport[item.classNum]) {
         item.lessonReportId = classToReport[item.classNum];
       }
@@ -3640,19 +3670,27 @@
     return items;
   }
 
+  function normalizedPracticePercent(item) {
+    return Math.max(0, Math.min(100, Math.round(Number(item.practiceProgressPercent) || 0)));
+  }
+
   function isPracticeAvailable(item) {
     if (item.practiceCompleted) return true;
     if (item.isCurrent || item.isNext) return true;
     return false;
   }
 
+  function isPracticeDone(item) {
+    return !!item.practiceCompleted || normalizedPracticePercent(item) >= 100;
+  }
+
   function isLessonAvailable(item) {
     if (item.lessonCompleted) return true;
-    return !!item.practiceCompleted && !!item.isCurrent;
+    return isPracticeDone(item) && !!item.isCurrent;
   }
 
   function getLessonLockedLabel(item) {
-    if (!item.practiceCompleted) return "После подготовки";
+    if (!isPracticeDone(item)) return "После подготовки";
     return "Недоступно";
   }
 
@@ -3673,10 +3711,6 @@
       esc(label) +
       "</span></span>"
     );
-  }
-
-  function normalizedPracticePercent(item) {
-    return Math.max(0, Math.min(100, Math.round(Number(item.practiceProgressPercent) || 0)));
   }
 
   function normalizeCurriculumItems(items) {
@@ -4077,13 +4111,8 @@
           goToProgramSelection();
         });
       }
-      var changeBtn = document.getElementById("btn-change-enrollment");
-      if (changeBtn) changeBtn.hidden = true;
       return;
     }
-
-    var changeBtnVisible = document.getElementById("btn-change-enrollment");
-    if (changeBtnVisible) changeBtnVisible.hidden = false;
 
     refreshCurriculumState();
     var items = state.curriculumItems;
@@ -4258,10 +4287,33 @@
     });
   }
 
-  function buildNextStepViewModel(nextItem, report) {
-    var pct = normalizedPracticePercent(nextItem);
-    var title = "Тема " + nextItem.classNum + " · " + nextItem.title;
-    var hasAiReport = !!(report && report.id);
+  function getCurriculumStepActions(item) {
+    var pct = normalizedPracticePercent(item);
+    var practiceDone = isPracticeDone(item);
+    return {
+      practiceCompleted: practiceDone,
+      practiceAvailable: isPracticeAvailable(item),
+      practicePercent: pct,
+      lessonCompleted: !!item.lessonCompleted,
+      lessonReportId: item.lessonReportId || null,
+      showBookClass: !item.lessonCompleted && isLessonAvailable(item),
+      showBookClassPreview:
+        !item.lessonCompleted && !!item.isCurrent && !practiceDone,
+      showAiReport: !!(item.lessonCompleted && item.lessonReportId),
+      showAiReportPreview:
+        !item.lessonCompleted && !!(item.isCurrent || item.isNext),
+      lessonLocked: !item.lessonCompleted && !isLessonAvailable(item),
+      lessonLockedLabel: getLessonLockedLabel(item),
+    };
+  }
+
+  function buildStepCardViewModel(item) {
+    var actions = getCurriculumStepActions(item);
+    var pct = actions.practicePercent;
+    var eyebrow = item.isNext && !item.isCurrent ? "Следующая" : "Текущий";
+    var title = "Тема " + item.classNum + " · " + item.title;
+    var hasAiReport = actions.showAiReport;
+    var hasReportPreview = actions.showAiReportPreview;
     var badge = null;
 
     if (state.studyPlan && state.studyPlan.status === "ahead") {
@@ -4270,61 +4322,176 @@
       badge = { text: "Нужно ускориться", tone: "warn" };
     }
 
-    if (!nextItem.practiceCompleted) {
+    if (!actions.practiceCompleted) {
       var lead;
-      if (pct > 0) {
+      if (actions.lessonCompleted) {
+        lead =
+          pct > 0
+            ? "Вы остановились на " +
+              pct +
+              "% — завершите Practice по этой теме. Урок уже пройден: преподаватель видит ваш AI Report и ждёт, когда вы закроете подготовку."
+            : "Начните Practice по этой теме. Урок уже состоялся — преподаватель изучил ваш AI Report и готов продолжить с того места, где вы остановились.";
+      } else if (pct > 0) {
         lead =
           "Вы остановились на " +
           pct +
-          "% — доведите Practice до конца, и живой урок откроется. ";
+          "% — завершите Practice до 100%, и откроется Book Class. После занятия с преподавателем здесь появится AI Report.";
       } else {
         lead =
-          "Сначала Practice: 30 минут, которые превращают урок с преподавателем в точечную работу, а не повтор основ. ";
-      }
-      if (hasAiReport) {
-        lead +=
-          "У вашего преподавателя уже есть AI Report с прошлого занятия — он знает, с чего продолжить именно с вами.";
-      } else {
-        lead += "После Practice вы придёте на урок подготовленными — преподаватель сможет сразу перейти к делу.";
+          "Сначала Practice до 100% — это подготовка к живому уроку. Затем Book Class: запись к преподавателю. После занятия появится AI Report с разбором.";
       }
       return {
+        eyebrow: eyebrow,
         title: title,
         lead: lead,
         badge: badge,
         showProgress: pct > 0,
         progressPct: pct,
-        showBook: false,
-        showReport: hasAiReport,
         showPracticePctOnBtn: pct > 0,
+        showBook: actions.showBookClass,
+        showBookPreview: actions.showBookClassPreview,
+        showReport: actions.showAiReport,
+        showReportPreview: hasReportPreview,
+        reportIsActive:
+          actions.showAiReport &&
+          actions.lessonReportId &&
+          actions.lessonReportId === state.selectedId,
+        practiceIsPrimary: true,
         practiceLabel: pct > 0 ? "Продолжить Practice →" : "Начать Practice →",
-        bookLabel: "Записаться на урок →",
-        reportLabel: "Открыть AI Report →",
+        bookLabel: "Book Class",
+        bookPreviewLabel: "Book Class",
+        bookPreviewHint: "После подготовки",
+        reportLabel: "AI Report →",
+        reportPreviewLabel: "AI Report",
+        reportPreviewHint: actions.lessonLocked
+          ? actions.lessonLockedLabel
+          : "После урока",
+        reportId: actions.lessonReportId,
+        classNum: item.classNum,
+        topic: item.title,
       };
     }
 
     var leadReady =
-      "Practice закрыта — вы готовы к live-сессии. Забронируйте урок: ";
-    if (hasAiReport) {
+      "Practice закрыта — вы готовы к live-сессии. ";
+    if (actions.showBookClass) {
       leadReady +=
-        "преподаватель уже изучил ваш AI Report и видит прогресс по программе. Следующее занятие будет построено вокруг того, что важно именно вам.";
+        "Забронируйте урок на платформе — так же, как кнопка Book Class в программе слева. После занятия с преподавателем здесь появится ваш AI Report.";
+    } else if (hasAiReport) {
+      leadReady +=
+        "Откройте AI Report по пройденному уроку или вернитесь к Practice для повторения.";
     } else {
-      leadReady +=
-        "на занятии вы отработаете тему с преподавателем и получите новый AI Report.";
+      leadReady += "Запишитесь на живой урок с преподавателем.";
     }
 
     return {
+      eyebrow: eyebrow,
       title: title,
       lead: leadReady,
       badge: badge,
       showProgress: false,
       progressPct: 100,
-      showBook: true,
-      showReport: false,
       showPracticePctOnBtn: false,
+      showBook: actions.showBookClass,
+      showBookPreview: false,
+      showReport: actions.showAiReport,
+      showReportPreview: hasReportPreview,
+      reportIsActive:
+        actions.showAiReport &&
+        actions.lessonReportId &&
+        actions.lessonReportId === state.selectedId,
+      practiceIsPrimary: !actions.showBookClass,
       practiceLabel: "Ещё Practice",
-      bookLabel: "Записаться на урок →",
-      reportLabel: "",
+      bookLabel: "Book Class",
+      bookPreviewLabel: "Book Class",
+      bookPreviewHint: "После подготовки",
+      reportLabel: "AI Report →",
+      reportPreviewLabel: "AI Report",
+      reportPreviewHint: actions.lessonLocked
+        ? actions.lessonLockedLabel
+        : "После урока",
+      reportId: actions.lessonReportId,
+      classNum: item.classNum,
+      topic: item.title,
     };
+  }
+
+  function buildNextStepViewModel(nextItem, report) {
+    return buildStepCardViewModel(nextItem);
+  }
+
+  function renderNextStepBookButton(bookBtn, view) {
+    if (!bookBtn) return;
+    var showSlot = view.showBook || view.showBookPreview;
+    bookBtn.hidden = !showSlot;
+    if (!showSlot) return;
+
+    if (view.showBook) {
+      bookBtn.disabled = false;
+      bookBtn.type = "button";
+      bookBtn.textContent = view.bookLabel;
+      bookBtn.classList.remove("is-locked");
+      bookBtn.classList.toggle("btn-primary", !view.practiceIsPrimary);
+      bookBtn.classList.toggle("btn-secondary", view.practiceIsPrimary);
+      bookBtn.setAttribute("aria-label", "Записаться на урок с преподавателем");
+      return;
+    }
+
+    bookBtn.disabled = true;
+    bookBtn.type = "button";
+    bookBtn.classList.remove("btn-primary", "btn-secondary");
+    bookBtn.classList.add("is-locked");
+    bookBtn.setAttribute(
+      "aria-label",
+      "Book Class откроется после завершения Practice"
+    );
+    bookBtn.innerHTML =
+      classActionLockIcon() +
+      '<span class="class-next-step-action-label">' +
+      esc(view.bookPreviewLabel) +
+      "</span>" +
+      '<span class="class-next-step-action-hint">' +
+      esc(view.bookPreviewHint) +
+      "</span>";
+  }
+
+  function renderNextStepReportButton(reportBtn, view) {
+    if (!reportBtn) return;
+    var showSlot = view.showReport || view.showReportPreview;
+    reportBtn.hidden = !showSlot;
+    if (!showSlot) return;
+
+    if (view.showReport) {
+      reportBtn.disabled = false;
+      reportBtn.type = "button";
+      reportBtn.textContent = view.reportLabel;
+      reportBtn.classList.add("class-next-step-report-btn");
+      reportBtn.classList.toggle("is-active", !!view.reportIsActive);
+      reportBtn.classList.remove("is-locked");
+      reportBtn.classList.remove("btn-link-style");
+      reportBtn.setAttribute(
+        "aria-label",
+        "AI Report — отчёт AI-агента с урока"
+      );
+      return;
+    }
+
+    reportBtn.disabled = true;
+    reportBtn.type = "button";
+    reportBtn.classList.remove("class-next-step-report-btn", "is-active", "btn-link-style");
+    reportBtn.classList.add("is-locked");
+    reportBtn.setAttribute(
+      "aria-label",
+      "AI Report появится после занятия с преподавателем"
+    );
+    reportBtn.innerHTML =
+      classActionLockIcon() +
+      '<span class="class-next-step-action-label">' +
+      esc(view.reportPreviewLabel) +
+      "</span>" +
+      '<span class="class-next-step-action-hint">' +
+      esc(view.reportPreviewHint) +
+      "</span>";
   }
 
   function renderNextStepPracticeButton(practiceBtn, view) {
@@ -4355,24 +4522,26 @@
     var reportBtn = document.getElementById("btn-next-step-report");
     if (!banner || !leadEl) return;
 
-    var nextItem = getNextStepClassItem(state.curriculumItems);
-    if (!nextItem || nextItem.completed) {
+    var stepItem = getNextStepClassItem(state.curriculumItems);
+    if (!stepItem || stepItem.completed) {
       banner.hidden = true;
       state.nextStepPending = null;
       return;
     }
 
-    if (!isPrimaryLessonReport(report)) {
-      banner.hidden = true;
-      return;
-    }
-
-    var view = buildNextStepViewModel(nextItem, report);
+    var view = buildStepCardViewModel(stepItem);
     state.nextStepPending = {
-      classNum: nextItem.classNum,
-      topic: nextItem.title,
-      reportId: report && report.id ? report.id : null,
+      classNum: view.classNum,
+      topic: view.topic,
+      reportId: view.reportId,
     };
+
+    var eyebrowEl = document.getElementById("class-next-step-eyebrow");
+    if (eyebrowEl) eyebrowEl.textContent = view.eyebrow;
+    banner.setAttribute(
+      "aria-label",
+      view.eyebrow === "Следующая" ? "Следующая тема программы" : "Текущий шаг программы"
+    );
 
     if (titleEl) titleEl.textContent = view.title;
     leadEl.textContent = view.lead;
@@ -4404,17 +4573,18 @@
     if (practiceBtn) {
       renderNextStepPracticeButton(practiceBtn, view);
       practiceBtn.hidden = false;
-      practiceBtn.classList.toggle("btn-primary", !view.showBook);
-      practiceBtn.classList.toggle("btn-secondary", view.showBook);
+      practiceBtn.classList.toggle("btn-primary", view.practiceIsPrimary);
+      practiceBtn.classList.toggle("btn-secondary", !view.practiceIsPrimary);
     }
     if (bookBtn) {
-      bookBtn.textContent = view.bookLabel;
-      bookBtn.hidden = !view.showBook;
-      bookBtn.classList.toggle("btn-primary", view.showBook);
+      renderNextStepBookButton(bookBtn, view);
     }
     if (reportBtn) {
-      reportBtn.textContent = view.reportLabel;
-      reportBtn.hidden = !view.showReport;
+      renderNextStepReportButton(reportBtn, view);
+    }
+
+    if (view.showReport && view.reportId) {
+      updateCurriculumReportLinks();
     }
 
     banner.hidden = false;
@@ -5792,13 +5962,16 @@
     setPreviewBanners(!!ctx && ctx.isPreview);
     refreshAnalyticsPanels();
 
+    var primary = getPrimaryReport();
+    if (primary) {
+      state.selectedId = primary.id;
+    }
     renderStudentOverview();
     if (!state.reports.length) {
       setHtml("grammar-list-current", emptyMsg("Пока нет отчётов по урокам."));
       setHtml("grammar-list-detailed", emptyMsg("Пока нет отчётов по урокам."));
       return;
     }
-    var primary = getPrimaryReport();
     if (primary) {
       selectLesson(primary.id, { switchTab: false });
     } else {
@@ -5951,12 +6124,5 @@
     } else {
       DashboardApi.loadAppConfig().finally(boot);
     }
-  }
-
-  var changeEnrollmentBtn = document.getElementById("btn-change-enrollment");
-  if (changeEnrollmentBtn) {
-    changeEnrollmentBtn.addEventListener("click", function () {
-      goToProgramSelection();
-    });
   }
 })();
