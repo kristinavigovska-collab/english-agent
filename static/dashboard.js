@@ -2201,6 +2201,11 @@
       .join("");
   }
 
+  function formatProgramCardFormat(program) {
+    var classes = Number(program.classes) || 0;
+    return classes + " classes · 30 min";
+  }
+
   function renderProgramCard(program, enrolledRecord, mode) {
     var isHero = mode === "hero";
     var isEnrolledCurrent =
@@ -2208,53 +2213,31 @@
     var level = getProgramLevel(program.levelId);
     var isActive = isHero || isEnrolledCurrent;
     var cardClass =
-      "program-card" + (isActive ? " is-active" : "");
+      "program-card program-card--rich" + (isActive ? " is-active" : "");
+    if (isHero) {
+      cardClass = "program-card" + (isActive ? " is-active" : "");
+    }
 
     var enrolledBadge = "";
     if (isEnrolledCurrent && enrolledRecord) {
       enrolledBadge =
-        '<span class="program-card-badge program-card-badge--active">Your program · ' +
+        '<span class="program-card-enrolled">Your program · ' +
         esc(enrolledRecord.level_cefr || level.cefr || "") +
         "</span>";
     }
 
-    var badges =
-      '<span class="program-card-badge program-card-badge--level">' +
-      esc(level ? level.label : program.levelId) +
-      "</span>" +
-      (level
-        ? '<span class="program-card-badge program-card-badge--cefr">' +
-          esc(level.cefr) +
-          "</span>"
-        : "") +
-      enrolledBadge;
-
     var baseHtml = "";
     if (program.base) {
       baseHtml =
-        '<div class="program-card-base">' +
-        '<span class="program-card-base-icon" aria-hidden="true">🔗</span>' +
-        '<p class="program-card-base-text">Построено на базе <strong>' +
+        '<p class="program-card-base-note">Based on <strong>' +
         esc(formatProgramBaseLabel(program.base)) +
-        "</strong> — сначала освоите базовый трек или подтвердите уровень с преподавателем.</p>" +
-        "</div>";
+        "</strong></p>";
     }
 
-    var tagsHtml = (program.tags || [])
-      .map(function (tag) {
-        return '<span class="program-card-tag">' + esc(tag) + "</span>";
-      })
-      .join("");
-
-    var categoryLabel = esc(
-      PROGRAM_CATEGORY_LABELS[program.category] || program.category
-    );
-
-    var actionHtml = isEnrolledCurrent
-      ? '<button type="button" class="btn btn-primary program-continue-btn">Continue</button>'
-      : '<button type="button" class="btn btn-primary program-enroll-btn" data-program-id="' +
-        esc(program.id) +
-        '">Get started</button>';
+    var ctaLabel = isEnrolledCurrent ? "Continue" : "Learn more";
+    var ctaClass = isEnrolledCurrent
+      ? "btn btn-primary program-card-cta program-continue-btn"
+      : "btn btn-primary program-card-cta program-view-btn";
 
     return (
       '<article class="' +
@@ -2262,13 +2245,17 @@
       '" data-program-id="' +
       esc(program.id) +
       '">' +
-      '<div class="program-card-top">' +
-      '<div class="program-card-badges">' +
-      badges +
-      "</div>" +
-      '<span class="program-card-category">' +
-      categoryLabel +
+      '<div class="program-card-head gd-program__top">' +
+      '<span class="program-card-level">' +
+      esc(level ? level.cefr : "—") +
       "</span>" +
+      '<span class="program-card-format">' +
+      esc(formatProgramCardFormat(program)) +
+      "</span>" +
+      "</div>" +
+      '<div class="program-card-feature-row">' +
+      '<span class="program-card-feature">Personal tutor + AI assistant</span>' +
+      enrolledBadge +
       "</div>" +
       "<h3 class=\"program-card-title\">" +
       esc(program.title) +
@@ -2277,24 +2264,14 @@
       esc(program.description) +
       "</p>" +
       baseHtml +
-      '<div class="program-card-meta">' +
-      "<span>" +
-      program.classes +
-      " Class</span>" +
-      "<span>~" +
-      program.weeks +
-      " " +
-      pluralize(program.weeks, "неделя", "недели", "недель") +
-      "</span>" +
-      "</div>" +
-      '<div class="program-card-tags">' +
-      tagsHtml +
-      "</div>" +
       '<div class="program-card-actions">' +
-      actionHtml +
-      '<button type="button" class="btn program-view-btn program-view-btn--secondary" data-program-id="' +
+      '<button type="button" class="' +
+      ctaClass +
+      '" data-program-id="' +
       esc(program.id) +
-      '">View program</button>' +
+      '">' +
+      esc(ctaLabel) +
+      "</button>" +
       "</div>" +
       "</article>"
     );

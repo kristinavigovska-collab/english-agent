@@ -127,6 +127,78 @@
       ]
     },
     {
+      "id": "special-interview-it",
+      "category": "special",
+      "levelId": "upper_intermediate",
+      "title": "English for IT Interviews",
+      "description": "Prepare for HR, technical, and final interviews for IT roles: practice answers about your stack and projects, and run mock sessions with a tutor.",
+      "classes": 12,
+      "weeks": 6,
+      "tags": [
+        "Technical",
+        "HR screen",
+        "Mock interview"
+      ],
+      "base": {
+        "category": "general",
+        "levelId": "upper_intermediate"
+      }
+    },
+    {
+      "id": "special-interview-pm",
+      "category": "special",
+      "levelId": "upper_intermediate",
+      "title": "English for Product Manager Interviews",
+      "description": "Product sense, roadmap, metrics, and stakeholder questions — plus case interviews with structured feedback from your tutor.",
+      "classes": 12,
+      "weeks": 6,
+      "tags": [
+        "Product sense",
+        "Metrics",
+        "Case interview"
+      ],
+      "base": {
+        "category": "general",
+        "levelId": "upper_intermediate"
+      }
+    },
+    {
+      "id": "special-interview-marketing",
+      "category": "special",
+      "levelId": "upper_intermediate",
+      "title": "English for Marketing Interviews",
+      "description": "Campaigns, analytics, performance marketing, and client cases — from HR screen to final round with role-play practice.",
+      "classes": 12,
+      "weeks": 6,
+      "tags": [
+        "Campaigns",
+        "Analytics",
+        "Client cases"
+      ],
+      "base": {
+        "category": "business",
+        "levelId": "upper_intermediate"
+      }
+    },
+    {
+      "id": "special-interview-sales",
+      "category": "special",
+      "levelId": "upper_intermediate",
+      "title": "English for Sales Interviews",
+      "description": "Pitch, discovery, objections, and role-play scenarios across every interview stage — with AI review after each live session.",
+      "classes": 12,
+      "weeks": 6,
+      "tags": [
+        "Pitch",
+        "Discovery",
+        "Objections"
+      ],
+      "base": {
+        "category": "business",
+        "levelId": "upper_intermediate"
+      }
+    },
+    {
       "id": "special-interview",
       "category": "special",
       "levelId": "upper_intermediate",
