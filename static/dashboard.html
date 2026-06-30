@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260630-01" />
+  <link rel="stylesheet" href="dashboard.css?v=20260630-04" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -510,7 +510,7 @@
       <section class="sidebar-curriculum-section" id="sidebar-curriculum-section" hidden aria-label="Программа обучения">
         <div class="curriculum-card">
           <div class="curriculum-header">
-            <h2 class="curriculum-title">Программа обучения</h2>
+            <h2 class="curriculum-title">Программа · этапы</h2>
             <p class="curriculum-summary" id="curriculum-summary">—</p>
             <div class="curriculum-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="curriculum-progress" aria-label="Прогресс программы обучения">
               <div class="curriculum-progress-bar">
@@ -520,7 +520,8 @@
           </div>
           <div class="curriculum-lists" id="curriculum-lists">
             <div class="curriculum-list-scroll" id="curriculum-list-scroll">
-              <ul class="curriculum-list" id="curriculum-list"></ul>
+              <div class="curriculum-stages" id="curriculum-stages"></div>
+              <ul class="curriculum-list" id="curriculum-list" hidden></ul>
             </div>
           </div>
         </div>
@@ -537,7 +538,29 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
       </div>
 
-      <nav class="tabs" role="tablist" aria-label="Разделы Home">
+      <section class="goal-stage-stepper card" id="goal-stage-stepper" hidden aria-label="Прогресс к цели по этапам">
+        <div class="goal-stage-stepper-top">
+          <span class="goal-stage-stepper-eyebrow">Программа · <span id="goal-stage-count-label">—</span> этапа</span>
+          <div class="goal-stage-stepper-level" id="goal-stage-speaking-level" hidden>
+            <svg class="goal-stage-stepper-level-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+              <rect x="1" y="9" width="3" height="6" rx="0.5" fill="currentColor"/>
+              <rect x="6" y="5" width="3" height="10" rx="0.5" fill="currentColor"/>
+              <rect x="11" y="2" width="3" height="13" rx="0.5" fill="currentColor"/>
+            </svg>
+            <span class="goal-stage-stepper-level-label">Уровень речи</span>
+            <span class="goal-stage-stepper-level-badge" id="goal-stage-level-value">—</span>
+          </div>
+        </div>
+        <h2 class="goal-stage-stepper-goal" id="goal-stage-goal-title">—</h2>
+        <div class="goal-stage-stepper-track" id="goal-stage-track" role="list"></div>
+        <div class="goal-stage-stepper-stats">
+          <span id="goal-stage-stats-progress">—</span>
+          <span id="goal-stage-stats-eta" hidden>—</span>
+        </div>
+        <p class="goal-stage-stepper-hint">Нажмите на этап, чтобы открыть его темы в программе слева</p>
+      </section>
+
+      <nav class="tabs home-class-tabs" id="home-class-tabs" role="tablist" aria-label="Текущий и предыдущий урок" hidden>
         <button class="tab active" type="button" role="tab" data-tab="step" id="tab-home-step" aria-selected="true">Текущий шаг</button>
         <button class="tab" type="button" role="tab" data-tab="breakdown" id="tab-home-breakdown" aria-selected="false" aria-label="Разбор урока" hidden>Разбор</button>
       </nav>
@@ -1245,10 +1268,11 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard-api.js?v=20260625-16"></script>
-  <script src="/static/enrollment-state.js?v=20260625-09"></script>
-  <script src="/static/student-learning-context.js?v=20260625-16"></script>
-  <script src="/static/dashboard.js?v=20260630-01" defer></script>
+  <script src="dashboard-api.js?v=20260625-16"></script>
+  <script src="enrollment-state.js?v=20260625-09"></script>
+  <script src="student-learning-context.js?v=20260625-16"></script>
+  <script src="curriculum-stages.js?v=20260630-03"></script>
+  <script src="dashboard.js?v=20260630-04" defer></script>
 
 </body>
 </html>

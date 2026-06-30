@@ -171,6 +171,9 @@
     serverCurriculum: null,
     previewBundle: null,
     programCatalog: null,
+    programStages: [],
+    focusedClassNum: null,
+    expandedStageIds: {},
     bookClassFlow: null,
   };
 
@@ -331,6 +334,8 @@
 
   function handleEnrollmentConfirmed() {
     state.curriculumStubProgress = {};
+    state.focusedClassNum = null;
+    state.expandedStageIds = {};
     rebuildStudentLearningContext();
     renderStudentOverview();
   }
@@ -533,6 +538,7 @@
     var latestBtn = document.getElementById("btn-lesson-latest");
     if (latestBtn) {
       latestBtn.addEventListener("click", function () {
+        clearFocusedCurriculumClass();
         var primary = getPrimaryReport();
         if (primary) {
           selectLesson(primary.id, { preferredTab: "step" });
@@ -1901,6 +1907,118 @@
     return { completed: completed, total: total, percent: percent };
   }
 
+  function refreshProgramStages() {
+    if (typeof EnglishAgentStages === "undefined") {
+      state.programStages = [];
+      return;
+    }
+    var program = getActiveProgram();
+    if (!program) {
+      state.programStages = [];
+      return;
+    }
+    state.programStages = EnglishAgentStages.build(program, state.curriculumItems);
+    state.programStages.forEach(function (stage) {
+      if (state.expandedStageIds[stage.id] == null && stage.status === "current") {
+        state.expandedStageIds[stage.id] = true;
+      }
+    });
+  }
+
+  function getStepCardItem() {
+    if (state.focusedClassNum) {
+      var focused = (state.curriculumItems || []).find(function (item) {
+        return item.classNum === state.focusedClassNum;
+      });
+      if (focused) return focused;
+    }
+    return getNextStepClassItem(state.curriculumItems);
+  }
+
+  function focusCurriculumClass(classNum, options) {
+    options = options || {};
+    if (!classNum) return;
+    state.focusedClassNum = Number(classNum);
+    var stage =
+      typeof EnglishAgentStages !== "undefined"
+        ? EnglishAgentStages.findStageForClassNum(state.programStages, state.focusedClassNum)
+        : null;
+    if (stage) {
+      state.expandedStageIds[stage.id] = true;
+    }
+    if (options.switchView !== false) {
+      setAppNavView("home");
+      activateTab("step", document.getElementById("view-home"));
+    }
+    var report = state.reports.find(function (r) {
+      return r.id === state.selectedId;
+    });
+    renderGoalStageStepper();
+    renderCurriculumProgram();
+    renderNextStepBanner(report || null);
+    if (options.scrollSidebar !== false) {
+      scrollCurriculumToFocused();
+    }
+  }
+
+  function clearFocusedCurriculumClass() {
+    state.focusedClassNum = null;
+    var report = state.reports.find(function (r) {
+      return r.id === state.selectedId;
+    });
+    renderCurriculumProgram();
+    renderNextStepBanner(report || null);
+  }
+
+  function focusProgramStage(stageId) {
+    var stage = (state.programStages || []).find(function (item) {
+      return String(item.id) === String(stageId);
+    });
+    if (!stage) return;
+    state.expandedStageIds[stage.id] = true;
+    var targetLesson =
+      stage.lessons.find(function (item) {
+        return item.isCurrent || item.isNextStep;
+      }) || stage.lessons[0];
+    if (targetLesson) {
+      focusCurriculumClass(targetLesson.classNum, { scrollSidebar: true });
+      return;
+    }
+    renderCurriculumProgram();
+    scrollCurriculumToStage(stage.id);
+  }
+
+  function scrollCurriculumToStage(stageId) {
+    var scrollEl = document.getElementById("curriculum-list-scroll");
+    var stageEl = document.querySelector(
+      '.curriculum-stage[data-stage-id="' + stageId + '"]'
+    );
+    if (!scrollEl || !stageEl) return;
+    requestAnimationFrame(function () {
+      var top =
+        stageEl.getBoundingClientRect().top -
+        scrollEl.getBoundingClientRect().top +
+        scrollEl.scrollTop;
+      scrollEl.scrollTop = Math.max(0, Math.round(top - 8));
+    });
+  }
+
+  function scrollCurriculumToFocused() {
+    var scrollEl = document.getElementById("curriculum-list-scroll");
+    var selector = state.focusedClassNum
+      ? '.curriculum-stage-lesson[data-class-num="' + state.focusedClassNum + '"]'
+      : ".curriculum-stage.is-current";
+    var targetEl = document.querySelector(selector);
+    if (!scrollEl || !targetEl) return;
+    requestAnimationFrame(function () {
+      var top =
+        targetEl.getBoundingClientRect().top -
+        scrollEl.getBoundingClientRect().top +
+        scrollEl.scrollTop;
+      scrollEl.scrollTop = Math.max(0, Math.round(top - 12));
+    });
+  }
+
   function getProgramLevel(levelId) {
     return PROGRAM_LEVELS[levelId] || null;
   }
@@ -2050,6 +2168,14 @@
     }
   }
 
+  function ensureStaticPreviewEnrollment() {
+    if (!DashboardApi.isStaticPreviewMode()) return;
+    if (typeof EnrollmentState === "undefined") return;
+    if (EnrollmentState.isEnrolled()) return;
+    if (!getProgramById("general-intermediate")) return;
+    enrollProgramLocally("general-intermediate", "standard", true);
+  }
+
   function loadProgramCatalogAndEnrollment() {
     var catalogPromise = DashboardApi.fetchProgramsCatalog()
       .then(function (programs) {
@@ -2089,6 +2215,7 @@
       if (results[1]) {
         applyServerEnrollment(results[1]);
       }
+      ensureStaticPreviewEnrollment();
     });
   }
 
@@ -2839,6 +2966,7 @@
 
     state.serverCurriculum = null;
     state.curriculumItems = [];
+    state.focusedClassNum = null;
     closeSidebarProgramMenu();
     rebuildStudentLearningContext();
     renderStudentOverview();
@@ -4068,54 +4196,6 @@
     window.setTimeout(applyScroll, 280);
   }
 
-  function renderCurriculumItemHtml(item) {
-    var phase = getClassRowPhase(item);
-    var phaseClass =
-      phase === "passed"
-        ? "is-passed"
-        : phase === "current"
-          ? "is-current"
-          : phase === "next"
-            ? "is-next"
-            : "is-future";
-    return (
-      '<li class="curriculum-item ' +
-      phaseClass +
-      '">' +
-      '<div class="curriculum-item-body">' +
-      '<span class="curriculum-class-num">' +
-      esc(formatCurriculumClassLabel(item)) +
-      "</span>" +
-      '<span class="curriculum-topic">' +
-      esc(item.title) +
-      "</span>" +
-      renderCurriculumActions(item, state.curriculumItems) +
-      "</div>" +
-      "</li>"
-    );
-  }
-
-  function bindCurriculumListInteractions(rootEl) {
-    if (!rootEl) return;
-    rootEl.querySelectorAll(".curriculum-status-pill--report").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        setAppNavView("home");
-        selectLesson(btn.dataset.reportId, { preferredTab: "breakdown" });
-      });
-    });
-    rootEl.querySelectorAll(".class-action-btn:not([disabled])").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var classNum = Number(btn.dataset.classNum);
-        var topic = btn.dataset.topic || "";
-        if (btn.dataset.action === "lesson") {
-          openBookClassStub(classNum, topic);
-        } else {
-          openPracticeStub(classNum, topic);
-        }
-      });
-    });
-  }
-
   function formatCurriculumClassLabel(item) {
     if (item.isCurrent) {
       return "Class " + item.classNum + " · Текущий";
@@ -4130,13 +4210,265 @@
     return label;
   }
 
+  function stageMarkerHtml(stage, isLast) {
+    if (stage.status === "completed") {
+      return (
+        '<svg class="goal-stage-step-check curriculum-stage-check" viewBox="0 0 16 16" aria-hidden="true">' +
+        '<path d="M4.5 8.25L7 10.75L11.75 5.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        "</svg>"
+      );
+    }
+    if (isLast) {
+      return (
+        '<svg class="goal-stage-step-flag" viewBox="0 0 16 16" aria-hidden="true">' +
+        '<path d="M4 2.5v11M4 2.5h7.5L10 5.5l1.5-1 1.5 1V2.5H4z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>' +
+        "</svg>"
+      );
+    }
+    return String(stage.index + 1);
+  }
+
+  function curriculumLessonStatusHtml(item) {
+    if (item.lessonCompleted && item.lessonReportId) {
+      return '<span class="curriculum-stage-lesson-status is-report">Репорт</span>';
+    }
+    if (item.completed || item.lessonCompleted) {
+      return (
+        '<span class="curriculum-stage-lesson-status" aria-hidden="true">' +
+        '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4.5 8.25L7 10.75L11.75 5.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        "</span>"
+      );
+    }
+    if (item.isCurrent || item.isNextStep) {
+      return (
+        '<span class="curriculum-stage-lesson-status curriculum-stage-lesson-play" aria-hidden="true">' +
+        '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M6 4.5l5.5 3.5L6 11.5V4.5z" fill="currentColor"/></svg>' +
+        "</span>"
+      );
+    }
+    if (!isPracticeAvailable(item) && !item.lessonCompleted) {
+      return (
+        '<span class="curriculum-stage-lesson-status" aria-hidden="true">' +
+        classActionLockIcon() +
+        "</span>"
+      );
+    }
+    return "";
+  }
+
+  function getCurriculumLessonRowClass(item) {
+    var classes = [];
+    if (state.focusedClassNum === item.classNum) classes.push("is-focused");
+    if (item.isCurrent || item.isNextStep) classes.push("is-current");
+    if (!isPracticeAvailable(item) && !item.lessonCompleted && !item.completed) {
+      classes.push("is-locked");
+    }
+    return classes.join(" ");
+  }
+
+  function renderCurriculumStageLessonHtml(item) {
+    var num = String(item.classNum).padStart(2, "0");
+    return (
+      '<li class="curriculum-stage-lesson ' +
+      getCurriculumLessonRowClass(item) +
+      '" data-class-num="' +
+      item.classNum +
+      '">' +
+      '<button type="button" class="curriculum-stage-lesson-btn" data-class-num="' +
+      item.classNum +
+      '" data-topic="' +
+      esc(item.title) +
+      '">' +
+      '<span class="curriculum-stage-lesson-num">' +
+      num +
+      "</span>" +
+      '<span class="curriculum-stage-lesson-title">' +
+      esc(item.title) +
+      "</span>" +
+      curriculumLessonStatusHtml(item) +
+      "</button></li>"
+    );
+  }
+
+  function renderCurriculumStageHtml(stage) {
+    var isOpen = !!state.expandedStageIds[stage.id];
+    var isLast = stage.index === state.programStages.length - 1;
+    var meta = stage.topicsLabel;
+    if (stage.status === "current") {
+      meta += " · сейчас здесь";
+    }
+    return (
+      '<section class="curriculum-stage is-' +
+      stage.status +
+      (isOpen ? " is-open" : "") +
+      '" data-stage-id="' +
+      stage.id +
+      '">' +
+      '<button type="button" class="curriculum-stage-head" aria-expanded="' +
+      (isOpen ? "true" : "false") +
+      '" data-stage-id="' +
+      stage.id +
+      '">' +
+      '<span class="curriculum-stage-marker">' +
+      stageMarkerHtml(stage, isLast) +
+      "</span>" +
+      '<span class="curriculum-stage-head-text">' +
+      '<span class="curriculum-stage-title">Этап ' +
+      (stage.index + 1) +
+      " · " +
+      esc(stage.title) +
+      "</span>" +
+      '<span class="curriculum-stage-meta">' +
+      esc(meta) +
+      "</span>" +
+      "</span>" +
+      '<span class="curriculum-stage-progress">' +
+      stage.completedCount +
+      "/" +
+      stage.lessonCount +
+      "</span>" +
+      '<span class="curriculum-stage-chevron" aria-hidden="true">' +
+      '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      "</span>" +
+      "</button>" +
+      '<ul class="curriculum-stage-lessons"' +
+      (isOpen ? "" : " hidden") +
+      ">" +
+      stage.lessons.map(renderCurriculumStageLessonHtml).join("") +
+      "</ul></section>"
+    );
+  }
+
+  function bindCurriculumStageInteractions(rootEl) {
+    if (!rootEl) return;
+    rootEl.querySelectorAll(".curriculum-stage-head").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var stageId = btn.dataset.stageId;
+        var currentlyOpen = !!state.expandedStageIds[stageId];
+        state.expandedStageIds[stageId] = !currentlyOpen;
+        renderCurriculumProgram();
+      });
+    });
+    rootEl.querySelectorAll(".curriculum-stage-lesson-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        focusCurriculumClass(Number(btn.dataset.classNum));
+      });
+    });
+  }
+
+  function renderGoalStageStepper() {
+    var section = document.getElementById("goal-stage-stepper");
+    if (!section) return;
+
+    var enrollment = getActiveEnrollment();
+    var stages = state.programStages || [];
+    if (!enrollment || !stages.length) {
+      section.hidden = true;
+      return;
+    }
+
+    var program = getActiveProgram();
+    var goalTitle = getProgramGoalTitle(program);
+    var countLabel = document.getElementById("goal-stage-count-label");
+    var goalEl = document.getElementById("goal-stage-goal-title");
+    var trackEl = document.getElementById("goal-stage-track");
+    var statsProgressEl = document.getElementById("goal-stage-stats-progress");
+    var statsEtaEl = document.getElementById("goal-stage-stats-eta");
+    var levelWrap = document.getElementById("goal-stage-speaking-level");
+    var levelValue = document.getElementById("goal-stage-level-value");
+
+    if (countLabel) countLabel.textContent = String(stages.length);
+    if (goalEl) goalEl.textContent = goalTitle;
+
+    var speakingLevel =
+      getCurrentStudentCefr() ||
+      (state.learningContext && state.learningContext.current_cefr_level) ||
+      null;
+    if (levelWrap && levelValue) {
+      if (speakingLevel) {
+        levelValue.textContent = speakingLevel;
+        levelWrap.hidden = false;
+      } else {
+        levelWrap.hidden = true;
+      }
+    }
+
+    if (trackEl) {
+      trackEl.dataset.stageCount = String(stages.length);
+      trackEl.innerHTML = stages
+        .map(function (stage, index) {
+          var isLast = index === stages.length - 1;
+          return (
+            '<button type="button" class="goal-stage-step is-' +
+            stage.status +
+            '" data-stage-id="' +
+            stage.id +
+            '" role="listitem">' +
+            '<span class="goal-stage-step-marker">' +
+            stageMarkerHtml(stage, isLast) +
+            "</span>" +
+            '<span class="goal-stage-step-copy">' +
+            '<span class="goal-stage-step-title">' +
+            esc(stage.title) +
+            "</span>" +
+            '<span class="goal-stage-step-meta">' +
+            esc(stage.topicsLabel) +
+            "</span></span></button>"
+          );
+        })
+        .join("");
+      trackEl.querySelectorAll(".goal-stage-step").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          focusProgramStage(btn.dataset.stageId);
+        });
+      });
+    }
+
+    var progress = getProgramProgressMetrics();
+    var lessonCompleted = 0;
+    (state.curriculumItems || []).forEach(function (item) {
+      if (item.lessonCompleted) lessonCompleted += 1;
+    });
+    if (statsProgressEl) {
+      statsProgressEl.innerHTML =
+        "<strong>" +
+        progress.percent +
+        "%</strong> программы · " +
+        lessonCompleted +
+        " из " +
+        (progress.total || stages.reduce(function (sum, stage) {
+          return sum + stage.lessonCount;
+        }, 0)) +
+        " уроков";
+    }
+
+    var eta =
+      state.learningContext &&
+      state.learningContext.computed &&
+      state.learningContext.computed.goal_eta_date;
+    if (statsEtaEl) {
+      if (eta) {
+        statsEtaEl.textContent = "Завершение: " + formatDateLocal(eta);
+        statsEtaEl.hidden = false;
+      } else if (state.goal && state.goal.target_date) {
+        statsEtaEl.textContent = "Завершение: " + formatDateLocal(state.goal.target_date);
+        statsEtaEl.hidden = false;
+      } else {
+        statsEtaEl.hidden = true;
+      }
+    }
+
+    section.hidden = false;
+  }
+
   function renderCurriculumProgram() {
     var section = document.getElementById("sidebar-curriculum-section");
+    var stagesEl = document.getElementById("curriculum-stages");
     var listEl = document.getElementById("curriculum-list");
     var scrollEl = document.getElementById("curriculum-list-scroll");
     var summaryEl = document.getElementById("curriculum-summary");
     var progressFill = document.getElementById("curriculum-progress-fill");
-    if (!section || !listEl) return;
+    if (!section || !stagesEl) return;
 
     var enrollment = getActiveEnrollment();
     if (!enrollment) {
@@ -4145,40 +4477,45 @@
         summaryEl.textContent = "Программа не выбрана";
       }
       if (progressFill) progressFill.style.width = "0%";
-      listEl.innerHTML =
-        '<li class="curriculum-empty">' +
-        '<p>Выберите программу обучения — от неё зависит список Class в курсе.</p>' +
+      stagesEl.innerHTML =
+        '<div class="curriculum-empty">' +
+        '<p>Выберите программу обучения — от неё зависит путь к цели.</p>' +
         '<button type="button" class="btn btn-secondary" id="btn-choose-program">Выбрать программу</button>' +
-        "</li>";
+        "</div>";
       var chooseBtn = document.getElementById("btn-choose-program");
       if (chooseBtn) {
         chooseBtn.addEventListener("click", function () {
           goToProgramSelection();
         });
       }
+      renderGoalStageStepper();
       return;
     }
 
     refreshCurriculumState();
+    refreshProgramStages();
+
     var items = state.curriculumItems;
     var completedCount = items.filter(function (item) {
       return item.completed;
     }).length;
     var progressPercent =
       items.length > 0 ? Math.min(100, Math.round((completedCount / items.length) * 100)) : 0;
+    var stages = state.programStages || [];
 
     section.hidden = false;
     if (summaryEl) {
       var programLabel = enrollment.program_name || "Программа";
+      var stagePart = stages.length ? stages.length + " этапа · " : "";
       summaryEl.textContent =
         programLabel +
         " · " +
-        (enrollment.level_name || enrollment.program_level || "") +
-        " · пройдено " +
+        stagePart +
+        "пройдено " +
         completedCount +
         " из " +
         items.length +
-        " Class";
+        " уроков";
     }
     if (progressFill) {
       progressFill.style.width = progressPercent + "%";
@@ -4188,22 +4525,23 @@
       progressBar.setAttribute("aria-valuenow", String(progressPercent));
     }
 
-    if (!items.length) {
-      listEl.innerHTML =
-        '<li class="curriculum-empty">Нет Class в программе</li>';
+    if (!items.length || !stages.length) {
+      stagesEl.innerHTML =
+        '<div class="curriculum-empty">Нет уроков в программе</div>';
       if (scrollEl) scrollEl.scrollTop = 0;
+      renderGoalStageStepper();
       return;
     }
 
-    var visibleItems = sortCurriculumSequential(items);
-
-    listEl.innerHTML = visibleItems.map(renderCurriculumItemHtml).join("");
-    bindCurriculumListInteractions(listEl);
-    scrollCurriculumToCurrent(scrollEl, listEl);
+    if (listEl) listEl.innerHTML = "";
+    stagesEl.innerHTML = stages.map(renderCurriculumStageHtml).join("");
+    bindCurriculumStageInteractions(stagesEl);
+    scrollCurriculumToFocused();
 
     var selectedReport = state.reports.find(function (r) {
       return r.id === state.selectedId;
     });
+    renderGoalStageStepper();
     renderNextStepBanner(selectedReport || null);
   }
 
@@ -4355,7 +4693,13 @@
   function buildStepCardViewModel(item) {
     var actions = getCurriculumStepActions(item);
     var pct = actions.practicePercent;
-    var eyebrow = item.isNext && !item.isCurrent ? "Следующая" : "Текущий шаг";
+    var eyebrow =
+      state.focusedClassNum && state.focusedClassNum !==
+        (getNextStepClassItem(state.curriculumItems) || {}).classNum
+        ? "Урок " + String(item.classNum).padStart(2, "0")
+        : item.isNext && !item.isCurrent
+          ? "Следующая"
+          : "Текущий шаг";
     var title = formatReportClassLabel(item.classNum) + " · " + item.title;
     var hasAiReport = actions.showAiReport;
     var hasReportPreview = actions.showAiReportPreview;
@@ -4567,8 +4911,14 @@
     var reportBtn = document.getElementById("btn-next-step-report");
     if (!banner || !leadEl) return;
 
-    var stepItem = getNextStepClassItem(state.curriculumItems);
-    if (!stepItem || stepItem.completed) {
+    var stepItem = getStepCardItem();
+    if (!stepItem) {
+      banner.hidden = true;
+      state.nextStepPending = null;
+      return;
+    }
+
+    if (stepItem.completed && !state.focusedClassNum) {
       banner.hidden = true;
       state.nextStepPending = null;
       return;
@@ -5494,6 +5844,7 @@
   function renderHomeNavTabs(selectedReport) {
     var stepTab = document.getElementById("tab-home-step");
     var breakdownTab = document.getElementById("tab-home-breakdown");
+    var tabsNav = document.getElementById("home-class-tabs");
     var stepItem = getCurrentStepClassItem();
     var primary = getPrimaryReport();
     var report = selectedReport || getSelectedReport() || primary;
@@ -5517,24 +5868,33 @@
       }
     }
 
-    if (!breakdownTab) return;
-
-    if (!report || !state.reports.length) {
-      breakdownTab.hidden = true;
+    if (!breakdownTab) {
+      if (tabsNav) tabsNav.hidden = true;
       return;
     }
 
-    var classNum = findClassNumForReport(report);
-    breakdownTab.hidden = false;
-    breakdownTab.textContent = classNum
-      ? formatReportClassLabel(classNum)
-      : "Разбор";
-    var ariaParts = [formatLessonBreakdownTitle(classNum)];
-    var topic = formatLessonTopic(report);
-    var lessonDate = report.lesson_date || report.created_at;
-    if (topic && topic !== "—") ariaParts.push(topic);
-    if (lessonDate) ariaParts.push(formatDate(lessonDate));
-    breakdownTab.setAttribute("aria-label", ariaParts.join(" · "));
+    if (!report || !state.reports.length) {
+      breakdownTab.hidden = true;
+    } else {
+      var classNum = findClassNumForReport(report);
+      breakdownTab.hidden = false;
+      breakdownTab.textContent = classNum
+        ? formatReportClassLabel(classNum)
+        : "Разбор";
+      var ariaParts = [formatLessonBreakdownTitle(classNum)];
+      var topic = formatLessonTopic(report);
+      var lessonDate = report.lesson_date || report.created_at;
+      if (topic && topic !== "—") ariaParts.push(topic);
+      if (lessonDate) ariaParts.push(formatDate(lessonDate));
+      breakdownTab.setAttribute("aria-label", ariaParts.join(" · "));
+    }
+
+    if (tabsNav) {
+      var stepHidden = !stepTab || stepTab.hidden;
+      var breakdownHidden = breakdownTab.hidden;
+      var hasEnrollment = !!getActiveEnrollment();
+      tabsNav.hidden = !hasEnrollment || (stepHidden && breakdownHidden);
+    }
   }
 
   function renderLessonReport(report, isPrimary) {
