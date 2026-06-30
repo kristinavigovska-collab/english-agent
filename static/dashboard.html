@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="dashboard.css?v=20260630-04" />
+  <link rel="stylesheet" href="dashboard.css?v=20260630-17" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -538,31 +538,62 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
       </div>
 
-      <section class="goal-stage-stepper card" id="goal-stage-stepper" hidden aria-label="Прогресс к цели по этапам">
-        <div class="goal-stage-stepper-top">
-          <span class="goal-stage-stepper-eyebrow">Программа · <span id="goal-stage-count-label">—</span> этапа</span>
-          <div class="goal-stage-stepper-level" id="goal-stage-speaking-level" hidden>
-            <svg class="goal-stage-stepper-level-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-              <rect x="1" y="9" width="3" height="6" rx="0.5" fill="currentColor"/>
-              <rect x="6" y="5" width="3" height="10" rx="0.5" fill="currentColor"/>
-              <rect x="11" y="2" width="3" height="13" rx="0.5" fill="currentColor"/>
-            </svg>
-            <span class="goal-stage-stepper-level-label">Уровень речи</span>
-            <span class="goal-stage-stepper-level-badge" id="goal-stage-level-value">—</span>
-          </div>
+      <section class="home-activity-summary" id="home-activity-summary" hidden aria-label="Активность и обучение">
+        <div class="activity-bottom-row home-activity-row">
+          <article class="activity-tile activity-tile--breakdown">
+            <div class="activity-tile-head">
+              <h3 class="activity-tile-title">Как вы учитесь</h3>
+              <span class="activity-tile-kicker" id="home-activity-total-kicker">—</span>
+            </div>
+            <div class="activity-breakdown" id="home-activity-breakdown"></div>
+          </article>
+
+          <article class="activity-tile activity-tile--heatmap">
+            <div class="activity-tile-head">
+              <h3 class="activity-tile-title" id="home-activity-heatmap-streak">—</h3>
+              <span class="activity-tile-kicker" id="home-activity-heatmap-longest">—</span>
+            </div>
+            <div class="activity-heatmap-wrap" id="home-activity-heatmap" aria-label="Календарь активности"></div>
+            <div
+              class="activity-day-popover"
+              id="home-activity-day-popover"
+              role="dialog"
+              aria-labelledby="home-activity-day-popover-date"
+              hidden
+            >
+              <p class="activity-day-popover-date" id="home-activity-day-popover-date"></p>
+              <dl class="activity-day-popover-rows">
+                <div class="activity-day-popover-row">
+                  <dt>Время на платформе</dt>
+                  <dd id="home-activity-day-platform">—</dd>
+                </div>
+                <div class="activity-day-popover-row">
+                  <dt>Работа с агентом</dt>
+                  <dd id="home-activity-day-agent">—</dd>
+                </div>
+                <div class="activity-day-popover-row">
+                  <dt>Урок с преподавателем</dt>
+                  <dd id="home-activity-day-teacher">—</dd>
+                </div>
+              </dl>
+            </div>
+            <div class="activity-heatmap-legend" aria-hidden="true">
+              <span class="activity-heatmap-legend-label">Меньше</span>
+              <span class="activity-heatmap-legend-cell level-0"></span>
+              <span class="activity-heatmap-legend-cell level-1"></span>
+              <span class="activity-heatmap-legend-cell level-2"></span>
+              <span class="activity-heatmap-legend-cell level-3"></span>
+              <span class="activity-heatmap-legend-cell level-4"></span>
+              <span class="activity-heatmap-legend-label">Больше</span>
+            </div>
+          </article>
         </div>
-        <h2 class="goal-stage-stepper-goal" id="goal-stage-goal-title">—</h2>
-        <div class="goal-stage-stepper-track" id="goal-stage-track" role="list"></div>
-        <div class="goal-stage-stepper-stats">
-          <span id="goal-stage-stats-progress">—</span>
-          <span id="goal-stage-stats-eta" hidden>—</span>
-        </div>
-        <p class="goal-stage-stepper-hint">Нажмите на этап, чтобы открыть его темы в программе слева</p>
       </section>
 
-      <nav class="tabs home-class-tabs" id="home-class-tabs" role="tablist" aria-label="Текущий и предыдущий урок" hidden>
-        <button class="tab active" type="button" role="tab" data-tab="step" id="tab-home-step" aria-selected="true">Текущий шаг</button>
-        <button class="tab" type="button" role="tab" data-tab="breakdown" id="tab-home-breakdown" aria-selected="false" aria-label="Разбор урока" hidden>Разбор</button>
+      <nav class="home-class-tabs" id="home-class-tabs" role="navigation" aria-label="Текущий шаг программы" hidden>
+        <button class="tab active home-class-tabs-pill" type="button" role="tab" data-tab="step" id="tab-home-step" aria-selected="true">Текущий шаг</button>
+        <button type="button" class="home-class-tabs-back" id="btn-home-back-to-step" hidden>Вернуться на текущий шаг</button>
+        <button type="button" class="tab" role="tab" data-tab="breakdown" id="tab-home-breakdown" hidden aria-hidden="true" tabindex="-1"></button>
       </nav>
 
       <!-- Tab: Current step (actions) -->
@@ -588,6 +619,7 @@
           <button type="button" class="btn btn-secondary" id="btn-next-step-book" hidden>Book Class</button>
           <button type="button" class="btn btn-secondary btn-link-style" id="btn-next-step-report" hidden>AI Report</button>
         </div>
+        <p class="class-next-step-footnote" id="class-next-step-book-hint" hidden></p>
       </section>
 
         <section class="card stuck-patterns-card" id="stuck-patterns-card" hidden>
@@ -1272,7 +1304,7 @@
   <script src="enrollment-state.js?v=20260625-09"></script>
   <script src="student-learning-context.js?v=20260625-16"></script>
   <script src="curriculum-stages.js?v=20260630-03"></script>
-  <script src="dashboard.js?v=20260630-04" defer></script>
+  <script src="dashboard.js?v=20260630-16" defer></script>
 
 </body>
 </html>

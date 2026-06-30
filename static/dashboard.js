@@ -128,6 +128,8 @@
   var ENROLLED_PLAN_KEY = "enrolled_plan_id";
   var SUBSCRIPTION_STORAGE_KEY = "english_agent_subscription_v1";
   var FREE_PLAN_TRIAL_DAYS = 15;
+  var BOOK_CLASS_PRACTICE_HINT =
+    "Рекомендуем пройти Practice на 100%, затем бронировать";
 
   var state = {
     reports: [],
@@ -531,26 +533,30 @@
   }
   window.setAppNavView = setAppNavView;
 
+  function goToCurrentStep() {
+    clearFocusedCurriculumClass();
+    var primary = getPrimaryReport();
+    if (primary) {
+      selectLesson(primary.id, { preferredTab: "step" });
+      return;
+    }
+    setAppNavView("home");
+    activateTab("step", document.getElementById("view-home"));
+    renderHomeNavTabs();
+  }
+
   function initLessonNavigation() {
     if (state.historyBound) return;
     state.historyBound = true;
 
     var latestBtn = document.getElementById("btn-lesson-latest");
     if (latestBtn) {
-      latestBtn.addEventListener("click", function () {
-        clearFocusedCurriculumClass();
-        var primary = getPrimaryReport();
-        if (primary) {
-          selectLesson(primary.id, { preferredTab: "step" });
-          return;
-        }
-        var stepItem = getCurrentStepClassItem();
-        if (stepItem) {
-          setAppNavView("home");
-          activateTab("step", document.getElementById("view-home"));
-          renderHomeNavTabs();
-        }
-      });
+      latestBtn.addEventListener("click", goToCurrentStep);
+    }
+
+    var backToStepBtn = document.getElementById("btn-home-back-to-step");
+    if (backToStepBtn) {
+      backToStepBtn.addEventListener("click", goToCurrentStep);
     }
   }
 
@@ -642,9 +648,8 @@
     );
   }
 
-  function updateHomeTabsForLesson(isPrimary) {
-    var stepTab = document.getElementById("tab-home-step");
-    if (stepTab) stepTab.hidden = !isPrimary;
+  function updateHomeTabsForLesson() {
+    renderHomeNavTabs();
   }
 
   function selectLesson(reportId, options) {
@@ -1067,8 +1072,9 @@
   }
 
   function closeActivityDayPopover() {
-    var popover = document.getElementById("activity-day-popover");
-    if (popover) popover.hidden = true;
+    document.querySelectorAll(".activity-day-popover").forEach(function (popover) {
+      popover.hidden = true;
+    });
     state.activityPopoverDate = null;
     document.querySelectorAll(".activity-heatmap-cell.is-selected").forEach(function (cell) {
       cell.classList.remove("is-selected");
@@ -1076,9 +1082,9 @@
   }
 
   function showActivityDayPopover(anchorEl, iso) {
-    var popover = document.getElementById("activity-day-popover");
-    var tile = document.querySelector(".activity-tile--heatmap");
-    if (!popover || !tile || !anchorEl || !state.progressTracker) return;
+    var tile = anchorEl && anchorEl.closest(".activity-tile--heatmap");
+    var popover = tile && tile.querySelector(".activity-day-popover");
+    if (!popover || !anchorEl || !state.progressTracker) return;
 
     if (state.activityPopoverDate === iso && !popover.hidden) {
       closeActivityDayPopover();
@@ -1086,10 +1092,14 @@
     }
 
     var summary = buildActivityDaySummary(iso, state.progressTracker);
-    setText("activity-day-popover-date", formatActivityDayPopoverDate(iso));
-    setText("activity-day-platform", formatDurationHoursMinutes(summary.platformMinutes));
-    setText("activity-day-agent", formatDurationMinutes(summary.agentMinutes));
-    setText("activity-day-teacher", formatDurationMinutes(summary.teacherMinutes));
+    var dateEl = popover.querySelector(".activity-day-popover-date");
+    if (dateEl) dateEl.textContent = formatActivityDayPopoverDate(iso);
+    var platformEl = popover.querySelector(".activity-day-popover-row:nth-child(1) dd");
+    var agentEl = popover.querySelector(".activity-day-popover-row:nth-child(2) dd");
+    var teacherEl = popover.querySelector(".activity-day-popover-row:nth-child(3) dd");
+    if (platformEl) platformEl.textContent = formatDurationHoursMinutes(summary.platformMinutes);
+    if (agentEl) agentEl.textContent = formatDurationMinutes(summary.agentMinutes);
+    if (teacherEl) teacherEl.textContent = formatDurationMinutes(summary.teacherMinutes);
 
     document.querySelectorAll(".activity-heatmap-cell.is-selected").forEach(function (cell) {
       cell.classList.remove("is-selected");
@@ -1183,8 +1193,8 @@
       "% плана</span>";
   }
 
-  function renderActivityBreakdown(stats) {
-    var el = document.getElementById("activity-breakdown");
+  function renderActivityBreakdown(stats, el) {
+    if (!el) el = document.getElementById("activity-breakdown");
     if (!el) return;
 
     var total = stats.lessonMinutes + stats.practiceMinutes;
@@ -1351,6 +1361,44 @@
     renderActivityBreakdown(stats);
     var heatmapEl = document.getElementById("activity-heatmap");
     if (heatmapEl) renderActivityHeatmap(heatmapEl, ctx.progressTracker);
+    renderHomeActivitySummary(ctx, stats);
+  }
+
+  function renderHomeActivitySummary(ctx, stats) {
+    var section = document.getElementById("home-activity-summary");
+    if (!section) return;
+
+    if (!getActiveEnrollment()) {
+      section.hidden = true;
+      return;
+    }
+
+    ctx = ctx || resolveMetricsContext();
+    if (!ctx) {
+      section.hidden = true;
+      return;
+    }
+
+    stats = stats || buildActivityStats(ctx.progressTracker, ctx.reports);
+    setText("home-activity-total-kicker", "Всего мин | " + stats.totalMinutes);
+    setText(
+      "home-activity-heatmap-streak",
+      stats.streak +
+        " " +
+        pluralize(stats.streak, "день", "дня", "дней") +
+        " подряд"
+    );
+    setText(
+      "home-activity-heatmap-longest",
+      "Лучшая серия | " +
+        stats.longestStreak +
+        " " +
+        pluralize(stats.longestStreak, "день", "дня", "дней")
+    );
+    renderActivityBreakdown(stats, document.getElementById("home-activity-breakdown"));
+    var heatmapEl = document.getElementById("home-activity-heatmap");
+    if (heatmapEl) renderActivityHeatmap(heatmapEl, ctx.progressTracker);
+    section.hidden = false;
   }
 
   function formatGoalShortLabel(goal) {
@@ -1953,7 +2001,6 @@
     var report = state.reports.find(function (r) {
       return r.id === state.selectedId;
     });
-    renderGoalStageStepper();
     renderCurriculumProgram();
     renderNextStepBanner(report || null);
     if (options.scrollSidebar !== false) {
@@ -3860,6 +3907,11 @@
     return isPracticeDone(item) && !!item.isCurrent;
   }
 
+  function canBookClass(item) {
+    if (!item || item.lessonCompleted) return false;
+    return !!(item.isCurrent || item.isNextStep || item.isNext);
+  }
+
   function getLessonLockedLabel(item) {
     if (!isPracticeDone(item)) return "После подготовки";
     return "Недоступно";
@@ -4356,111 +4408,6 @@
     });
   }
 
-  function renderGoalStageStepper() {
-    var section = document.getElementById("goal-stage-stepper");
-    if (!section) return;
-
-    var enrollment = getActiveEnrollment();
-    var stages = state.programStages || [];
-    if (!enrollment || !stages.length) {
-      section.hidden = true;
-      return;
-    }
-
-    var program = getActiveProgram();
-    var goalTitle = getProgramGoalTitle(program);
-    var countLabel = document.getElementById("goal-stage-count-label");
-    var goalEl = document.getElementById("goal-stage-goal-title");
-    var trackEl = document.getElementById("goal-stage-track");
-    var statsProgressEl = document.getElementById("goal-stage-stats-progress");
-    var statsEtaEl = document.getElementById("goal-stage-stats-eta");
-    var levelWrap = document.getElementById("goal-stage-speaking-level");
-    var levelValue = document.getElementById("goal-stage-level-value");
-
-    if (countLabel) countLabel.textContent = String(stages.length);
-    if (goalEl) goalEl.textContent = goalTitle;
-
-    var speakingLevel =
-      getCurrentStudentCefr() ||
-      (state.learningContext && state.learningContext.current_cefr_level) ||
-      null;
-    if (levelWrap && levelValue) {
-      if (speakingLevel) {
-        levelValue.textContent = speakingLevel;
-        levelWrap.hidden = false;
-      } else {
-        levelWrap.hidden = true;
-      }
-    }
-
-    if (trackEl) {
-      trackEl.dataset.stageCount = String(stages.length);
-      trackEl.innerHTML = stages
-        .map(function (stage, index) {
-          var isLast = index === stages.length - 1;
-          return (
-            '<button type="button" class="goal-stage-step is-' +
-            stage.status +
-            '" data-stage-id="' +
-            stage.id +
-            '" role="listitem">' +
-            '<span class="goal-stage-step-marker">' +
-            stageMarkerHtml(stage, isLast) +
-            "</span>" +
-            '<span class="goal-stage-step-copy">' +
-            '<span class="goal-stage-step-title">' +
-            esc(stage.title) +
-            "</span>" +
-            '<span class="goal-stage-step-meta">' +
-            esc(stage.topicsLabel) +
-            "</span></span></button>"
-          );
-        })
-        .join("");
-      trackEl.querySelectorAll(".goal-stage-step").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          focusProgramStage(btn.dataset.stageId);
-        });
-      });
-    }
-
-    var progress = getProgramProgressMetrics();
-    var lessonCompleted = 0;
-    (state.curriculumItems || []).forEach(function (item) {
-      if (item.lessonCompleted) lessonCompleted += 1;
-    });
-    if (statsProgressEl) {
-      statsProgressEl.innerHTML =
-        "<strong>" +
-        progress.percent +
-        "%</strong> программы · " +
-        lessonCompleted +
-        " из " +
-        (progress.total || stages.reduce(function (sum, stage) {
-          return sum + stage.lessonCount;
-        }, 0)) +
-        " уроков";
-    }
-
-    var eta =
-      state.learningContext &&
-      state.learningContext.computed &&
-      state.learningContext.computed.goal_eta_date;
-    if (statsEtaEl) {
-      if (eta) {
-        statsEtaEl.textContent = "Завершение: " + formatDateLocal(eta);
-        statsEtaEl.hidden = false;
-      } else if (state.goal && state.goal.target_date) {
-        statsEtaEl.textContent = "Завершение: " + formatDateLocal(state.goal.target_date);
-        statsEtaEl.hidden = false;
-      } else {
-        statsEtaEl.hidden = true;
-      }
-    }
-
-    section.hidden = false;
-  }
-
   function renderCurriculumProgram() {
     var section = document.getElementById("sidebar-curriculum-section");
     var stagesEl = document.getElementById("curriculum-stages");
@@ -4488,7 +4435,7 @@
           goToProgramSelection();
         });
       }
-      renderGoalStageStepper();
+      renderHomeActivitySummary();
       return;
     }
 
@@ -4529,7 +4476,7 @@
       stagesEl.innerHTML =
         '<div class="curriculum-empty">Нет уроков в программе</div>';
       if (scrollEl) scrollEl.scrollTop = 0;
-      renderGoalStageStepper();
+      renderHomeActivitySummary();
       return;
     }
 
@@ -4541,7 +4488,7 @@
     var selectedReport = state.reports.find(function (r) {
       return r.id === state.selectedId;
     });
-    renderGoalStageStepper();
+    renderHomeActivitySummary();
     renderNextStepBanner(selectedReport || null);
   }
 
@@ -4673,15 +4620,15 @@
   function getCurriculumStepActions(item) {
     var pct = normalizedPracticePercent(item);
     var practiceDone = isPracticeDone(item);
+    var bookable = canBookClass(item);
     return {
       practiceCompleted: practiceDone,
       practiceAvailable: isPracticeAvailable(item),
       practicePercent: pct,
       lessonCompleted: !!item.lessonCompleted,
       lessonReportId: item.lessonReportId || null,
-      showBookClass: !item.lessonCompleted && isLessonAvailable(item),
-      showBookClassPreview:
-        !item.lessonCompleted && !!item.isCurrent && !practiceDone,
+      showBookClass: bookable,
+      bookRecommendPractice: bookable && !practiceDone,
       showAiReport: !!(item.lessonCompleted && item.lessonReportId),
       showAiReportPreview:
         !item.lessonCompleted && !!(item.isCurrent || item.isNext),
@@ -4724,10 +4671,10 @@
         lead =
           "Вы остановились на " +
           pct +
-          "% — завершите Practice до 100%, и откроется Book Class. После занятия с преподавателем здесь появится AI Report.";
+          "%. Можете записаться на урок сейчас, но лучше сначала довести Practice до 100% — так live-сессия пройдёт продуктивнее.";
       } else {
         lead =
-          "Сначала Practice до 100% — это подготовка к живому уроку. Затем Book Class: запись к преподавателю. После занятия появится AI Report с разбором.";
+          "Начните Practice по теме. Book Class уже доступен, но мы рекомендуем сначала пройти подготовку на 100%, а затем бронировать занятие с преподавателем.";
       }
       return {
         eyebrow: eyebrow,
@@ -4738,7 +4685,7 @@
         progressPct: pct,
         showPracticePctOnBtn: pct > 0,
         showBook: actions.showBookClass,
-        showBookPreview: actions.showBookClassPreview,
+        bookRecommendPractice: actions.bookRecommendPractice,
         showReport: actions.showAiReport,
         showReportPreview: hasReportPreview,
         reportIsActive:
@@ -4746,10 +4693,9 @@
           actions.lessonReportId &&
           actions.lessonReportId === state.selectedId,
         practiceIsPrimary: true,
-        practiceLabel: pct > 0 ? "Продолжить Practice →" : "Начать Practice →",
+        practiceLabel: pct > 0 ? "Продолжить Practice" : "Начать Practice",
         bookLabel: "Book Class",
-        bookPreviewLabel: "Book Class",
-        bookPreviewHint: "После подготовки",
+        bookPreviewHint: BOOK_CLASS_PRACTICE_HINT,
         reportLabel: "AI Report →",
         reportPreviewLabel: "AI Report",
         reportPreviewHint: actions.lessonLocked
@@ -4782,7 +4728,7 @@
       progressPct: 100,
       showPracticePctOnBtn: false,
       showBook: actions.showBookClass,
-      showBookPreview: false,
+      bookRecommendPractice: false,
       showReport: actions.showAiReport,
       showReportPreview: hasReportPreview,
       reportIsActive:
@@ -4792,8 +4738,7 @@
       practiceIsPrimary: !actions.showBookClass,
       practiceLabel: "Ещё Practice",
       bookLabel: "Book Class",
-      bookPreviewLabel: "Book Class",
-      bookPreviewHint: "После подготовки",
+      bookPreviewHint: BOOK_CLASS_PRACTICE_HINT,
       reportLabel: "AI Report →",
       reportPreviewLabel: "AI Report",
       reportPreviewHint: actions.lessonLocked
@@ -4811,37 +4756,31 @@
 
   function renderNextStepBookButton(bookBtn, view) {
     if (!bookBtn) return;
-    var showSlot = view.showBook || view.showBookPreview;
-    bookBtn.hidden = !showSlot;
-    if (!showSlot) return;
+    bookBtn.hidden = !view.showBook;
+    if (!view.showBook) return;
 
-    if (view.showBook) {
-      bookBtn.disabled = false;
-      bookBtn.type = "button";
-      bookBtn.textContent = view.bookLabel;
-      bookBtn.classList.remove("is-locked");
-      bookBtn.classList.toggle("btn-primary", !view.practiceIsPrimary);
-      bookBtn.classList.toggle("btn-secondary", view.practiceIsPrimary);
-      bookBtn.setAttribute("aria-label", "Записаться на урок с преподавателем");
-      return;
-    }
-
-    bookBtn.disabled = true;
+    bookBtn.disabled = false;
     bookBtn.type = "button";
-    bookBtn.classList.remove("btn-primary", "btn-secondary");
-    bookBtn.classList.add("is-locked");
+    bookBtn.classList.remove("is-locked", "has-book-hint", "btn-secondary");
+    bookBtn.classList.add("btn-primary");
+    bookBtn.textContent = view.bookLabel;
     bookBtn.setAttribute(
       "aria-label",
-      "Book Class откроется после завершения Practice"
+      view.bookRecommendPractice
+        ? view.bookLabel + ". " + (view.bookPreviewHint || BOOK_CLASS_PRACTICE_HINT)
+        : "Записаться на урок с преподавателем"
     );
-    bookBtn.innerHTML =
-      classActionLockIcon() +
-      '<span class="class-next-step-action-label">' +
-      esc(view.bookPreviewLabel) +
-      "</span>" +
-      '<span class="class-next-step-action-hint">' +
-      esc(view.bookPreviewHint) +
-      "</span>";
+  }
+
+  function renderNextStepBookHint(hintEl, view) {
+    if (!hintEl) return;
+    if (view.showBook && view.bookRecommendPractice) {
+      hintEl.textContent = view.bookPreviewHint || BOOK_CLASS_PRACTICE_HINT;
+      hintEl.hidden = false;
+      return;
+    }
+    hintEl.textContent = "";
+    hintEl.hidden = true;
   }
 
   function renderNextStepReportButton(reportBtn, view) {
@@ -4877,9 +4816,6 @@
       classActionLockIcon() +
       '<span class="class-next-step-action-label">' +
       esc(view.reportPreviewLabel) +
-      "</span>" +
-      '<span class="class-next-step-action-hint">' +
-      esc(view.reportPreviewHint) +
       "</span>";
   }
 
@@ -4888,11 +4824,10 @@
     practiceBtn.classList.toggle("has-practice-pct", !!view.showPracticePctOnBtn);
     if (view.showPracticePctOnBtn) {
       practiceBtn.innerHTML =
-        "Продолжить Practice " +
+        '<span class="next-step-practice-label">Продолжить Practice</span>' +
         '<span class="next-step-practice-pct">' +
         view.progressPct +
-        "%</span>" +
-        " →";
+        "%</span>";
       return;
     }
     practiceBtn.textContent = view.practiceLabel;
@@ -4909,6 +4844,7 @@
     var practiceBtn = document.getElementById("btn-next-step-practice");
     var bookBtn = document.getElementById("btn-next-step-book");
     var reportBtn = document.getElementById("btn-next-step-report");
+    var bookHintEl = document.getElementById("class-next-step-book-hint");
     if (!banner || !leadEl) return;
 
     var stepItem = getStepCardItem();
@@ -4976,6 +4912,7 @@
     if (bookBtn) {
       renderNextStepBookButton(bookBtn, view);
     }
+    renderNextStepBookHint(bookHintEl, view);
     if (reportBtn) {
       renderNextStepReportButton(reportBtn, view);
     }
@@ -5841,59 +5778,49 @@
     return "Разбор урока " + classPart;
   }
 
+  function isViewingOffCurrentStep(report) {
+    var currentStepNum = getCurrentStepClassNum();
+    if (
+      state.focusedClassNum &&
+      currentStepNum &&
+      state.focusedClassNum !== currentStepNum
+    ) {
+      return true;
+    }
+    report = report || getSelectedReport();
+    return !!(report && !isPrimaryLessonReport(report));
+  }
+
   function renderHomeNavTabs(selectedReport) {
     var stepTab = document.getElementById("tab-home-step");
-    var breakdownTab = document.getElementById("tab-home-breakdown");
+    var backBtn = document.getElementById("btn-home-back-to-step");
     var tabsNav = document.getElementById("home-class-tabs");
     var stepItem = getCurrentStepClassItem();
-    var primary = getPrimaryReport();
-    var report = selectedReport || getSelectedReport() || primary;
-    var viewingArchive = !!(report && !isPrimaryLessonReport(report));
+    var report = selectedReport || getSelectedReport() || getPrimaryReport();
+    var showBack = isViewingOffCurrentStep(report);
 
     if (stepTab) {
-      if (viewingArchive) {
-        stepTab.hidden = true;
-      } else if (stepItem) {
+      if (stepItem) {
         var stepLabel = "Текущий шаг · " + formatReportClassLabel(stepItem.classNum);
         stepTab.textContent = stepLabel;
         stepTab.setAttribute(
           "aria-label",
           stepLabel + " · " + (stepItem.title || "")
         );
-        stepTab.hidden = false;
       } else {
         stepTab.textContent = "Текущий шаг";
         stepTab.setAttribute("aria-label", "Текущий шаг");
-        stepTab.hidden = false;
       }
+      stepTab.hidden = false;
     }
 
-    if (!breakdownTab) {
-      if (tabsNav) tabsNav.hidden = true;
-      return;
-    }
-
-    if (!report || !state.reports.length) {
-      breakdownTab.hidden = true;
-    } else {
-      var classNum = findClassNumForReport(report);
-      breakdownTab.hidden = false;
-      breakdownTab.textContent = classNum
-        ? formatReportClassLabel(classNum)
-        : "Разбор";
-      var ariaParts = [formatLessonBreakdownTitle(classNum)];
-      var topic = formatLessonTopic(report);
-      var lessonDate = report.lesson_date || report.created_at;
-      if (topic && topic !== "—") ariaParts.push(topic);
-      if (lessonDate) ariaParts.push(formatDate(lessonDate));
-      breakdownTab.setAttribute("aria-label", ariaParts.join(" · "));
+    if (backBtn) {
+      backBtn.hidden = !showBack;
     }
 
     if (tabsNav) {
-      var stepHidden = !stepTab || stepTab.hidden;
-      var breakdownHidden = breakdownTab.hidden;
       var hasEnrollment = !!getActiveEnrollment();
-      tabsNav.hidden = !hasEnrollment || (stepHidden && breakdownHidden);
+      tabsNav.hidden = !hasEnrollment || !stepItem;
     }
   }
 
@@ -6651,6 +6578,10 @@
     document.querySelectorAll("#view-home .tab, #view-analytics .analytics-tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
         var root = tab.closest(".app-view");
+        if (tab.id === "tab-home-step" && isViewingOffCurrentStep()) {
+          goToCurrentStep();
+          return;
+        }
         activateTab(tab.dataset.tab, root);
       });
     });

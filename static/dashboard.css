@@ -53,6 +53,10 @@
   --nav-width-collapsed: 72px;
   --nav-width: var(--nav-width-expanded);
   --page-padding: 24px;
+  --home-main-max-width: 46rem; /* 736px — compact Home content column */
+  --home-card-radius: 14px;
+  --home-card-pad-x: 1.125rem;
+  --home-card-pad-y: 1rem;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -4038,9 +4042,9 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 /* ── Goal stage stepper (Home) ── */
 .goal-stage-stepper {
   margin-bottom: 1rem;
-  padding: 1.125rem 1.25rem;
+  padding: var(--home-card-pad-y) var(--home-card-pad-x);
   border: 1px solid var(--accent-muted-border);
-  border-radius: 14px;
+  border-radius: var(--home-card-radius);
   background: var(--accent-muted-surface);
 }
 
@@ -4216,8 +4220,64 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 }
 
 .home-class-tabs {
-  margin-top: -0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.625rem 1rem;
+  width: 100%;
+  margin-top: 0;
   margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.home-class-tabs-pill {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: var(--btn-active);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.home-class-tabs-pill.active {
+  background: var(--btn-active);
+  color: #fff;
+}
+
+.home-class-tabs-back {
+  flex: 0 1 auto;
+  margin: 0;
+  padding: 0.375rem 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--accent-deep);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.home-class-tabs-back:hover {
+  color: var(--accent-hover);
+}
+
+.home-class-tabs-back[hidden] {
+  display: none !important;
 }
 
 .home-class-tabs[hidden] {
@@ -4236,9 +4296,9 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .class-next-step {
   margin-bottom: 1rem;
-  padding: 1.125rem 1.25rem;
+  padding: var(--home-card-pad-y) var(--home-card-pad-x);
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border-radius: var(--home-card-radius);
   background: var(--surface);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
@@ -4335,14 +4395,30 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .class-next-step-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  align-items: stretch;
+  width: 100%;
 }
 
 .class-next-step-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
   width: auto;
-  flex: 1 1 auto;
-  min-width: 9rem;
+}
+
+.class-next-step-footnote {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.class-next-step-footnote[hidden] {
+  display: none;
 }
 
 .class-next-step-actions .btn-link-style {
@@ -4415,16 +4491,36 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .class-next-step-actions #btn-next-step-practice.has-practice-pct {
   gap: 0.375rem;
+  white-space: nowrap;
+}
+
+.class-next-step-actions #btn-next-step-practice .next-step-practice-label {
+  white-space: nowrap;
 }
 
 .class-next-step-actions #btn-next-step-practice .next-step-practice-pct {
   font-weight: 700;
   color: var(--progress-soft);
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .class-next-step-actions #btn-next-step-practice.btn-secondary .next-step-practice-pct {
   color: var(--progress-deep);
+}
+
+.class-next-step-actions #btn-next-step-book.btn-primary {
+  background: var(--btn-active);
+  border-color: var(--btn-active);
+  color: #fff;
+  font-weight: 600;
+}
+
+.class-next-step-actions #btn-next-step-book.btn-primary:hover {
+  background: var(--btn-active-hover);
+  border-color: var(--btn-active-hover);
+  color: #fff;
 }
 
 .sr-only {
@@ -4530,6 +4626,61 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+#view-home .main {
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+#view-home .main > .home-activity-summary,
+#view-home .main > .home-class-tabs,
+#view-home .main > .tab-panel,
+#view-home .main > .lesson-context-bar {
+  width: 100%;
+  max-width: var(--home-main-max-width);
+  box-sizing: border-box;
+}
+
+.home-activity-summary[hidden] {
+  display: none !important;
+}
+
+.home-activity-row {
+  width: 100%;
+}
+
+#view-home .class-next-step {
+  padding: var(--home-card-pad-y) var(--home-card-pad-x);
+  border-radius: var(--home-card-radius);
+  margin-bottom: 0;
+  width: 100%;
+  background: var(--surface);
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+#view-home .tab-panel {
+  gap: 1rem;
+}
+
+#view-home .tab-panel > .card,
+#view-home .tab-panel > .class-next-step,
+#view-home .tab-panel > .lesson-topic-plaque {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --home-main-max-width: 42rem;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --home-main-max-width: 100%;
+  }
 }
 
 /* ── Tabs ── */
@@ -5080,7 +5231,8 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   line-height: 1.5;
 }
 
-.activity-board {
+.activity-board,
+.home-activity-summary {
   --activity-accent: var(--accent);
   --activity-accent-deep: var(--accent-deep-dark);
   --activity-accent-mid: var(--accent);
@@ -5089,7 +5241,9 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   --activity-cream: var(--surface);
   --activity-board: var(--card);
   --activity-border: var(--border);
+}
 
+.activity-board {
   display: flex;
   flex-direction: column;
   gap: 1.125rem;
