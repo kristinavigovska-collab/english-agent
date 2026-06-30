@@ -43,6 +43,7 @@
   --nav-icon-inset: calc(var(--nav-inset) + var(--nav-item-pad-x));
   --nav-hit-size: 32px;
   --canvas-bg: #ffffff;
+  --programs-canvas-bg: #ebebeb;
   --canvas-radius: 28px;
   --canvas-inset-top: 40px;
   --sidebar-width: 360px;
@@ -465,6 +466,10 @@ body {
 
 .app-view[hidden] {
   display: none !important;
+}
+
+#view-programs {
+  background: var(--programs-canvas-bg);
 }
 
 .analytics-page {
