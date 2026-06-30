@@ -672,6 +672,7 @@
     renderSidebarProfilePrograms();
     renderStudentGoal();
     renderSidebarGoalCompact();
+    renderSidebarSpeakingLevel();
     renderSidebarLessonPackage();
     renderStudyPlan();
     renderCurriculumProgram();
@@ -1867,6 +1868,39 @@
     }) || null;
   }
 
+  function getActiveProgram() {
+    var enrollment = getActiveEnrollment();
+    return enrollment ? getProgramById(enrollment.program_id) : null;
+  }
+
+  function getProgramGoalTitle(program) {
+    if (!program) return "—";
+    if (program.goal_title) return String(program.goal_title).trim();
+    if (program.description) return String(program.description).trim();
+    return program.title || "—";
+  }
+
+  function getProgramProgressMetrics() {
+    var items = state.curriculumItems || [];
+    var completed = 0;
+    var total = items.length;
+
+    if (total) {
+      items.forEach(function (item) {
+        if (item.lessonCompleted) completed += 1;
+      });
+    } else if (state.learningContext && state.learningContext.computed) {
+      completed = Number(state.learningContext.computed.program_classes_completed) || 0;
+      total = Number(state.learningContext.computed.program_classes_total) || 0;
+    } else {
+      var program = getActiveProgram();
+      total = program ? Number(program.classes) || 0 : 0;
+    }
+
+    var percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+    return { completed: completed, total: total, percent: percent };
+  }
+
   function getProgramLevel(levelId) {
     return PROGRAM_LEVELS[levelId] || null;
   }
@@ -2742,8 +2776,8 @@
   }
 
   function formatSidebarPaceLabel(status) {
-    if (status === "ahead") return "Опережаете план";
-    if (status === "behind") return "Отстаёте";
+    if (status === "ahead") return "↑ Опережаете";
+    if (status === "behind") return "↓ Отстаёте";
     if (status === "on_track") return "По плану";
     return "—";
   }
@@ -2812,20 +2846,22 @@
 
   function renderSidebarProfilePrograms() {
     var nameEl = document.getElementById("dash-name");
+    var subtitleEl = document.getElementById("sidebar-profile-subtitle");
     var pickBtn = document.getElementById("btn-pick-program");
     var labelEl = document.getElementById("sidebar-program-active");
     var actionsEl = document.getElementById("sidebar-program-actions");
     var switchBtn = document.getElementById("btn-profile-program-switch");
     var menuEl = document.getElementById("sidebar-program-menu");
-    if (!labelEl || !actionsEl) return;
+    if (!actionsEl) return;
 
     var enrollments =
       typeof EnrollmentState !== "undefined" ? EnrollmentState.list() : [];
     var active = getActiveEnrollment();
     var count = enrollments.length;
+    var program = getActiveProgram();
 
     if (nameEl) {
-      nameEl.textContent = count > 1 ? "Мой профиль" : state.studentName || "Студент";
+      nameEl.textContent = state.studentName || "Студент";
     }
 
     if (switchBtn) switchBtn.hidden = count <= 1;
@@ -2863,30 +2899,37 @@
 
     if (count === 0) {
       if (pickBtn) pickBtn.hidden = false;
-      labelEl.hidden = true;
+      if (subtitleEl) subtitleEl.hidden = true;
+      if (labelEl) labelEl.hidden = true;
       actionsEl.hidden = true;
       syncSidebarProgramDependentSections(false);
       return;
     }
 
     if (pickBtn) pickBtn.hidden = true;
-    labelEl.hidden = false;
+    if (labelEl) labelEl.hidden = true;
     actionsEl.hidden = false;
 
-    var programLabel = shortenProgramLabel(
-      active && active.program_name ? active.program_name : "Программа"
-    );
-    labelEl.textContent = "Current Program: " + programLabel;
-    labelEl.title = active && active.program_name ? active.program_name : programLabel;
+    var programSubtitle =
+      (active && active.program_name) ||
+      (program && program.title) ||
+      "Программа";
+    if (subtitleEl) {
+      subtitleEl.textContent = programSubtitle;
+      subtitleEl.title = programSubtitle;
+      subtitleEl.hidden = false;
+    }
 
     syncSidebarProgramDependentSections(true);
   }
 
   function syncSidebarProgramDependentSections(hasProgram) {
     var goalSection = document.getElementById("sidebar-goal-compact");
+    var speakingSection = document.getElementById("sidebar-speaking-level");
     var packageSection = document.getElementById("sidebar-lesson-package");
     var buyBtn = document.getElementById("btn-buy-lessons");
     if (goalSection) goalSection.hidden = !hasProgram;
+    if (speakingSection) speakingSection.hidden = !hasProgram;
     if (packageSection) packageSection.hidden = !hasProgram;
     if (buyBtn) buyBtn.hidden = !hasProgram;
   }
@@ -2939,62 +2982,73 @@
 
   function renderSidebarGoalCompact() {
     var section = document.getElementById("sidebar-goal-compact");
-    if (!getActiveEnrollment()) {
+    var enrollment = getActiveEnrollment();
+    if (!enrollment) {
       if (section) section.hidden = true;
       return;
     }
     if (section) section.hidden = false;
 
-    var currentEl = document.getElementById("sidebar-goal-current");
-    var targetEl = document.getElementById("sidebar-goal-target");
+    var program = getActiveProgram();
+    var titleEl = document.getElementById("sidebar-goal-title");
     var captionEl = document.getElementById("sidebar-goal-compact-caption");
     var progressWrap = document.getElementById("sidebar-goal-compact-progress");
     var progressFill = document.getElementById("sidebar-goal-progress-fill");
     var progressPct = document.getElementById("sidebar-goal-progress-pct");
     var paceEl = document.getElementById("sidebar-goal-pace-status");
     var progressBar = document.getElementById("sidebar-goal-progress-bar");
-    if (!currentEl || !targetEl) return;
 
-    var latest = getLatestReport();
-    var current = latest ? latest.vocabulary_level || "—" : "—";
-    currentEl.textContent = current;
-
-    var ctx = resolveMetricsContext();
-    var previewGoal = ctx && ctx.isPreview ? ctx.goal : null;
-    var goal = hasGoal() ? state.goal : previewGoal && hasGoalData(previewGoal) ? previewGoal : null;
-
-    if (goal && goal.target_cefr_level) {
-      targetEl.textContent = goal.target_cefr_level;
-      if (captionEl) {
-        var scenarioText = String(goal.scenario_description || "").trim();
-        var isScenario = goal.goal_type === "scenario_based" && scenarioText;
-        captionEl.textContent = isScenario ? "Потолок цели" : "Цель";
-      }
-    } else {
-      targetEl.textContent = "—";
-      if (captionEl) captionEl.textContent = "Цель";
+    if (captionEl) captionEl.textContent = "Ваша цель";
+    if (titleEl) {
+      titleEl.textContent = getProgramGoalTitle(program);
+      titleEl.title = titleEl.textContent;
     }
 
-    var plan = ctx && ctx.studyPlan ? ctx.studyPlan : null;
-    var computed =
-      ctx && !ctx.isPreview && state.learningContext && state.learningContext.computed
-        ? state.learningContext.computed
-        : null;
-    var showProgress = !!(goal && plan);
+    var progress = getProgramProgressMetrics();
+    var showProgress = progress.total > 0;
 
     if (progressWrap) progressWrap.hidden = !showProgress;
     if (!showProgress) return;
 
-    var pct = Math.max(0, Math.min(100, Math.round(Number(plan.progress_percent) || 0)));
-    var paceStatus = (computed && computed.pace_status) || plan.status || "on_track";
+    var computed =
+      state.learningContext && state.learningContext.computed
+        ? state.learningContext.computed
+        : null;
+    var plan = state.studyPlan;
+    var paceStatus = (computed && computed.pace_status) || (plan && plan.status) || null;
 
-    if (progressFill) progressFill.style.width = pct + "%";
-    if (progressBar) progressBar.setAttribute("aria-valuenow", String(pct));
-    if (progressPct) progressPct.textContent = pct + "% пути";
-    if (paceEl) {
-      paceEl.textContent = formatSidebarPaceLabel(paceStatus);
-      paceEl.className = "sidebar-goal-pace is-" + paceStatus;
+    if (progressFill) progressFill.style.width = progress.percent + "%";
+    if (progressBar) progressBar.setAttribute("aria-valuenow", String(progress.percent));
+    if (progressPct) {
+      progressPct.textContent = progress.percent + "% программы пройдено";
     }
+    if (paceEl) {
+      if (paceStatus) {
+        paceEl.textContent = formatSidebarPaceLabel(paceStatus);
+        paceEl.className = "sidebar-goal-pace is-" + paceStatus;
+        paceEl.hidden = false;
+      } else {
+        paceEl.hidden = true;
+      }
+    }
+  }
+
+  function renderSidebarSpeakingLevel() {
+    var section = document.getElementById("sidebar-speaking-level");
+    var valueEl = document.getElementById("sidebar-speaking-level-value");
+    if (!section || !valueEl) return;
+
+    if (!getActiveEnrollment()) {
+      section.hidden = true;
+      return;
+    }
+
+    section.hidden = false;
+    var current =
+      getCurrentStudentCefr() ||
+      (state.learningContext && state.learningContext.current_cefr_level) ||
+      "—";
+    valueEl.textContent = current;
   }
 
   function renderSidebarLessonPackage() {

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260625-68" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260630-01" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -336,6 +336,7 @@
               >
                 Выбрать цель
               </button>
+              <p class="sidebar-profile-subtitle" id="sidebar-profile-subtitle" hidden></p>
               <span class="sidebar-program-active" id="sidebar-program-active" hidden></span>
               <div class="sidebar-program-actions" id="sidebar-program-actions" hidden>
                 <button
@@ -369,14 +370,8 @@
       </div>
 
       <section class="sidebar-goal-compact" id="sidebar-goal-compact" aria-label="Цель обучения">
-        <div class="sidebar-goal-compact-head">
-          <span class="sidebar-goal-compact-label" id="sidebar-goal-compact-caption">Цель</span>
-          <div class="sidebar-goal-compact-levels">
-            <span class="goal-level-pill" id="sidebar-goal-current">—</span>
-            <span class="goal-level-arrow" aria-hidden="true">→</span>
-            <span class="goal-level-pill goal-level-pill--target" id="sidebar-goal-target">—</span>
-          </div>
-        </div>
+        <span class="sidebar-goal-compact-label" id="sidebar-goal-compact-caption">Ваша цель</span>
+        <p class="sidebar-goal-compact-title" id="sidebar-goal-title">—</p>
         <div class="sidebar-goal-compact-progress" id="sidebar-goal-compact-progress" hidden>
           <div
             class="sidebar-goal-compact-bar"
@@ -392,6 +387,18 @@
             <span class="sidebar-goal-progress-pct" id="sidebar-goal-progress-pct">—</span>
             <span class="sidebar-goal-pace" id="sidebar-goal-pace-status">—</span>
           </div>
+        </div>
+      </section>
+
+      <section class="sidebar-speaking-level" id="sidebar-speaking-level" hidden aria-label="Текущий уровень речи">
+        <div class="sidebar-speaking-level-inner">
+          <svg class="sidebar-speaking-level-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <rect x="1" y="9" width="3" height="6" rx="0.5" fill="currentColor"/>
+            <rect x="6" y="5" width="3" height="10" rx="0.5" fill="currentColor"/>
+            <rect x="11" y="2" width="3" height="13" rx="0.5" fill="currentColor"/>
+          </svg>
+          <span class="sidebar-speaking-level-label">Текущий уровень речи</span>
+          <span class="sidebar-speaking-level-badge" id="sidebar-speaking-level-value">—</span>
         </div>
       </section>
 
@@ -1241,7 +1248,7 @@
   <script src="/static/dashboard-api.js?v=20260625-16"></script>
   <script src="/static/enrollment-state.js?v=20260625-09"></script>
   <script src="/static/student-learning-context.js?v=20260625-16"></script>
-  <script src="/static/dashboard.js?v=20260625-67" defer></script>
+  <script src="/static/dashboard.js?v=20260630-01" defer></script>
 
 </body>
 </html>
