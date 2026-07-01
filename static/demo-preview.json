@@ -2,6 +2,7 @@
   "student_id": "demo",
   "student_name": "Кристина Виговская",
   "student_email": "kristina.vigovska@gmail.com",
+  "demo_activity_today": "2026-06-30",
   "reports": [
     {
       "id": "demo-7",

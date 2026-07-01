@@ -156,6 +156,8 @@
     },
     studyPlan: null,
     progressTracker: null,
+    activeActivityTracker: null,
+    activityTooltipHideTimer: null,
     errorTracking: null,
     goalModalBound: false,
     intensityPickerBound: false,
@@ -766,10 +768,13 @@
       state.previewBundle.progress_tracker &&
       typeof DashboardApi !== "undefined"
     ) {
+      var previewTracker = enrichPreviewActivityTracker(
+        state.previewBundle.progress_tracker
+      );
       return {
         goal: DashboardApi.goalFieldsFromBundle(state.previewBundle),
         studyPlan: state.previewBundle.study_plan,
-        progressTracker: state.previewBundle.progress_tracker,
+        progressTracker: previewTracker,
         reports: state.previewBundle.reports || [],
         isPreview: true,
       };
@@ -937,6 +942,81 @@
     return map;
   }
 
+  function getDemoActivityTodayIso() {
+    if (state.previewBundle && state.previewBundle.demo_activity_today) {
+      return state.previewBundle.demo_activity_today;
+    }
+    if (
+      typeof DashboardApi !== "undefined" &&
+      DashboardApi.CONFIG &&
+      DashboardApi.CONFIG.demo_activity_today
+    ) {
+      return DashboardApi.CONFIG.demo_activity_today;
+    }
+    return "2026-06-30";
+  }
+
+  function getActivityToday(options) {
+    options = options || {};
+    var useDemoToday =
+      options.preview === true ||
+      (options.preview !== false &&
+        typeof DashboardApi !== "undefined" &&
+        DashboardApi.isStaticPreviewMode());
+    if (useDemoToday) {
+      var demoDay = parseIsoDate(getDemoActivityTodayIso());
+      if (demoDay) return demoDay;
+    }
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  function enrichPreviewActivityTracker(tracker) {
+    if (!tracker) return tracker;
+    var today = getActivityToday({ preview: true });
+    var samples = [
+      { offset: 0, mins: 42, source: "practice" },
+      { offset: 1, mins: 55, source: "practice" },
+      { offset: 2, mins: 60, source: "lesson" },
+      { offset: 3, mins: 28, source: "practice" },
+      { offset: 4, mins: 35, source: "practice" },
+    ];
+    if (!tracker.days) tracker.days = [];
+    var dayMap = buildActivityDayMap(tracker);
+    samples.forEach(function (sample) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - sample.offset);
+      var iso = isoDateOnly(d);
+      var row = dayMap[iso];
+      if (!row) {
+        row = {
+          date: iso,
+          day_index: 0,
+          planned_minutes: 60,
+          completed: true,
+          completed_minutes: sample.mins,
+          source: sample.source,
+          state: sample.source === "lesson" ? "lesson" : "completed",
+        };
+        tracker.days.push(row);
+        dayMap[iso] = row;
+      } else {
+        row.completed = true;
+        row.completed_minutes = sample.mins;
+        row.source = sample.source;
+        row.state = sample.source === "lesson" ? "lesson" : "completed";
+      }
+    });
+    tracker.streak = computeActivityStreak(tracker.days, today);
+    return tracker;
+  }
+
+  function getActivityTracker() {
+    var ctx = resolveMetricsContext();
+    return ctx ? ctx.progressTracker : state.progressTracker;
+  }
+
   function activityIntensityLevel(day) {
     if (!day || !day.completed) return 0;
     if (day.source === "lesson") return 4;
@@ -996,9 +1076,9 @@
     return longest;
   }
 
-  function buildActivityStats(tracker, reports) {
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
+  function buildActivityStats(tracker, reports, options) {
+    options = options || {};
+    var today = options.today || getActivityToday({ preview: options.isPreview });
     var totalMinutes = 0;
     var lessonMinutes = 0;
     var practiceMinutes = 0;
@@ -1023,7 +1103,7 @@
       practiceMinutes: practiceMinutes,
       lessonCount: (reports || []).length,
       practiceDays: practiceDays,
-      streak: tracker.streak || 0,
+      streak: computeActivityStreak(tracker.days || [], today),
       longestStreak: computeLongestActivityStreak(tracker.days || [], today),
     };
   }
@@ -1072,6 +1152,10 @@
   }
 
   function closeActivityDayPopover() {
+    if (state.activityTooltipHideTimer) {
+      clearTimeout(state.activityTooltipHideTimer);
+      state.activityTooltipHideTimer = null;
+    }
     document.querySelectorAll(".activity-day-popover").forEach(function (popover) {
       popover.hidden = true;
     });
@@ -1084,14 +1168,12 @@
   function showActivityDayPopover(anchorEl, iso) {
     var tile = anchorEl && anchorEl.closest(".activity-tile--heatmap");
     var popover = tile && tile.querySelector(".activity-day-popover");
-    if (!popover || !anchorEl || !state.progressTracker) return;
+    var tracker = getActivityTracker();
+    if (!popover || !anchorEl || !tracker) return;
 
-    if (state.activityPopoverDate === iso && !popover.hidden) {
-      closeActivityDayPopover();
-      return;
-    }
+    var summary = buildActivityDaySummary(iso, tracker);
+    if (!summary.hasActivity) return;
 
-    var summary = buildActivityDaySummary(iso, state.progressTracker);
     var dateEl = popover.querySelector(".activity-day-popover-date");
     if (dateEl) dateEl.textContent = formatActivityDayPopoverDate(iso);
     var platformEl = popover.querySelector(".activity-day-popover-row:nth-child(1) dd");
@@ -1140,10 +1222,27 @@
   function bindActivityHeatmapInteractions(container) {
     if (!container) return;
     container.querySelectorAll(".activity-heatmap-cell[data-date]").forEach(function (cell) {
-      cell.addEventListener("click", function (event) {
-        event.stopPropagation();
+      function showIfActive() {
+        if (cell.classList.contains("is-future")) return;
+        if (activityIntensityLevel(buildActivityDayMap(getActivityTracker())[cell.dataset.date]) === 0) {
+          return;
+        }
+        if (state.activityTooltipHideTimer) {
+          clearTimeout(state.activityTooltipHideTimer);
+          state.activityTooltipHideTimer = null;
+        }
         showActivityDayPopover(cell, cell.dataset.date);
-      });
+      }
+
+      function scheduleHide() {
+        if (state.activityTooltipHideTimer) clearTimeout(state.activityTooltipHideTimer);
+        state.activityTooltipHideTimer = setTimeout(closeActivityDayPopover, 100);
+      }
+
+      cell.addEventListener("mouseenter", showIfActive);
+      cell.addEventListener("mouseleave", scheduleHide);
+      cell.addEventListener("focus", showIfActive);
+      cell.addEventListener("blur", closeActivityDayPopover);
     });
   }
 
@@ -1152,14 +1251,7 @@
     state.activityPopoverBound = true;
 
     document.addEventListener("click", function (event) {
-      var popover = document.getElementById("activity-day-popover");
-      if (!popover || popover.hidden) return;
-      if (
-        event.target.closest("#activity-day-popover") ||
-        event.target.closest(".activity-heatmap-cell[data-date]")
-      ) {
-        return;
-      }
+      if (event.target.closest(".activity-heatmap-cell[data-date]")) return;
       closeActivityDayPopover();
     });
 
@@ -1229,9 +1321,8 @@
       barRow(practicePct, "Practice · " + stats.practiceMinutes + " мин", "practice");
   }
 
-  function renderActivityHeatmap(container, tracker) {
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
+  function renderActivityHeatmap(container, tracker, today) {
+    today = today || getActivityToday();
     var endSunday = new Date(today);
     endSunday.setDate(endSunday.getDate() - endSunday.getDay());
     var startSunday = new Date(endSunday);
@@ -1325,8 +1416,12 @@
     setPreviewBanners(ctx.isPreview);
     emptyEl.hidden = true;
     contentEl.hidden = false;
+    state.activeActivityTracker = ctx.progressTracker;
 
-    var stats = buildActivityStats(ctx.progressTracker, ctx.reports);
+    var stats = buildActivityStats(ctx.progressTracker, ctx.reports, {
+      isPreview: ctx.isPreview,
+      today: getActivityToday({ preview: ctx.isPreview }),
+    });
     var planTotalMinutes =
       ctx.studyPlan && ctx.studyPlan.total_hours
         ? Math.round(ctx.studyPlan.total_hours * 60)
@@ -1360,7 +1455,13 @@
 
     renderActivityBreakdown(stats);
     var heatmapEl = document.getElementById("activity-heatmap");
-    if (heatmapEl) renderActivityHeatmap(heatmapEl, ctx.progressTracker);
+    if (heatmapEl) {
+      renderActivityHeatmap(
+        heatmapEl,
+        ctx.progressTracker,
+        getActivityToday({ preview: ctx.isPreview })
+      );
+    }
     renderHomeActivitySummary(ctx, stats);
   }
 
@@ -1378,8 +1479,12 @@
       section.hidden = true;
       return;
     }
+    state.activeActivityTracker = ctx.progressTracker;
 
-    stats = stats || buildActivityStats(ctx.progressTracker, ctx.reports);
+    stats = stats || buildActivityStats(ctx.progressTracker, ctx.reports, {
+      isPreview: ctx.isPreview,
+      today: getActivityToday({ preview: ctx.isPreview }),
+    });
     setText("home-activity-total-kicker", "Всего мин | " + stats.totalMinutes);
     setText(
       "home-activity-heatmap-streak",
@@ -1397,7 +1502,13 @@
     );
     renderActivityBreakdown(stats, document.getElementById("home-activity-breakdown"));
     var heatmapEl = document.getElementById("home-activity-heatmap");
-    if (heatmapEl) renderActivityHeatmap(heatmapEl, ctx.progressTracker);
+    if (heatmapEl) {
+      renderActivityHeatmap(
+        heatmapEl,
+        ctx.progressTracker,
+        getActivityToday({ preview: ctx.isPreview })
+      );
+    }
     section.hidden = false;
   }
 

@@ -57,6 +57,14 @@
   --home-card-radius: 14px;
   --home-card-pad-x: 1.125rem;
   --home-card-pad-y: 1rem;
+  --activity-accent: var(--accent);
+  --activity-accent-deep: var(--accent-deep-dark);
+  --activity-accent-mid: var(--accent);
+  --activity-accent-soft: #8BA3FF;
+  --activity-accent-pale: var(--accent-pale);
+  --activity-cream: var(--surface);
+  --activity-board: var(--card);
+  --activity-border: var(--border);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -5233,14 +5241,7 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .activity-board,
 .home-activity-summary {
-  --activity-accent: var(--accent);
-  --activity-accent-deep: var(--accent-deep-dark);
-  --activity-accent-mid: var(--accent);
-  --activity-accent-soft: #8BA3FF;
-  --activity-accent-pale: var(--accent-pale);
-  --activity-cream: var(--surface);
-  --activity-board: var(--card);
-  --activity-border: var(--border);
+  /* Activity color tokens live on :root; keep scope hook for layout theming. */
 }
 
 .activity-board {
@@ -5540,11 +5541,6 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   box-shadow: 0 0 0 2px rgba(102, 135, 255, 0.35);
 }
 
-.activity-heatmap-cell.is-selected {
-  box-shadow: 0 0 0 2px var(--accent);
-  transform: scale(1.08);
-}
-
 .activity-heatmap-cell.level-1 {
   background: var(--activity-accent-pale);
 }
@@ -5571,14 +5567,22 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .activity-day-popover {
   position: absolute;
-  z-index: 20;
-  width: 15.5rem;
-  padding: 0.75rem 0.875rem;
+  z-index: 30;
+  width: 16.5rem;
+  padding: 0.875rem 1rem;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
   pointer-events: none;
+}
+
+.activity-heatmap-cell.is-hovered,
+.activity-heatmap-cell.is-selected {
+  box-shadow: 0 0 0 2px var(--accent);
+  transform: scale(1.08);
+  z-index: 2;
+  position: relative;
 }
 
 .activity-day-popover[hidden] {
