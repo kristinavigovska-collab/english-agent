@@ -314,22 +314,6 @@
     },
   ];
 
-  var PLAN_PACKAGE_LABELS = {
-    free_trial: "Пробный пакет",
-    solo: "Solo",
-    light: "Пакет Light",
-    standard: "Пакет Стандарт",
-    intensive: "Пакет Intensive",
-  };
-
-  var PLAN_LIVE_LESSONS_PER_MONTH = {
-    free_trial: 1,
-    solo: 0,
-    light: 4,
-    standard: 8,
-    intensive: 16,
-  };
-
   var PLAN_MODULES_UNLOCKED = {
     free_trial: 1,
     solo: 1,
@@ -339,9 +323,6 @@
   };
 
   var DEFAULT_MODULE_COUNT = 3;
-
-  // STUB: replace with billing / usage API.
-  var SIDEBAR_LESSON_PACKAGE_STUB = { used: 5, total: 8 };
 
   // Program catalog: GET /api/programs or static/demo-programs.json (preview).
 
@@ -699,7 +680,6 @@
     renderStudentGoal();
     renderSidebarGoalCompact();
     renderSidebarSpeakingLevel();
-    renderSidebarLessonPackage();
     renderStudyPlan();
     renderCurriculumProgram();
     renderActivity();
@@ -3374,15 +3354,6 @@
     return "—";
   }
 
-  function pluralLessonsRu(n) {
-    var abs = Math.abs(Number(n));
-    var mod10 = abs % 10;
-    var mod100 = abs % 100;
-    if (mod10 === 1 && mod100 !== 11) return "урок";
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "урока";
-    return "уроков";
-  }
-
   function shortenProgramLabel(programName) {
     if (!programName) return "Программа";
     return (programName.split("—").pop() || programName).trim();
@@ -3519,12 +3490,8 @@
   function syncSidebarProgramDependentSections(hasProgram) {
     var goalSection = document.getElementById("sidebar-goal-compact");
     var speakingSection = document.getElementById("sidebar-speaking-level");
-    var packageSection = document.getElementById("sidebar-lesson-package");
-    var buyBtn = document.getElementById("btn-buy-lessons");
     if (goalSection) goalSection.hidden = !hasProgram;
     if (speakingSection) speakingSection.hidden = !hasProgram;
-    if (packageSection) packageSection.hidden = !hasProgram;
-    if (buyBtn) buyBtn.hidden = !hasProgram;
   }
 
   function initSidebarProfilePrograms() {
@@ -3642,68 +3609,6 @@
       (state.learningContext && state.learningContext.current_cefr_level) ||
       "—";
     valueEl.textContent = current;
-  }
-
-  function renderSidebarLessonPackage() {
-    var section = document.getElementById("sidebar-lesson-package");
-    var nameEl = document.getElementById("lesson-package-name");
-    var remainingEl = document.getElementById("lesson-package-remaining");
-    var detailEl = document.getElementById("lesson-package-detail");
-    var fillEl = document.getElementById("lesson-package-fill");
-    var barEl = document.getElementById("lesson-package-progress-bar");
-    if (!section) return;
-
-    var enrollment = getActiveEnrollment();
-    var planId =
-      (enrollment && enrollment.plan_id) ||
-      state.subscriptionPlanId ||
-      "standard";
-    var total =
-      PLAN_LIVE_LESSONS_PER_MONTH[planId] != null
-        ? PLAN_LIVE_LESSONS_PER_MONTH[planId]
-        : SIDEBAR_LESSON_PACKAGE_STUB.total;
-
-    if (!total) {
-      section.hidden = true;
-      return;
-    }
-
-    section.hidden = false;
-
-    // STUB: used count from billing later; demo uses fixed sample or lesson reports count.
-    var used = SIDEBAR_LESSON_PACKAGE_STUB.used;
-    if (total !== SIDEBAR_LESSON_PACKAGE_STUB.total) {
-      used = Math.min(total, Math.max(0, state.reports.length));
-    }
-    used = Math.min(used, total);
-    var remaining = Math.max(0, total - used);
-    var pct = total > 0 ? Math.round((used / total) * 100) : 0;
-
-    if (nameEl) {
-      nameEl.textContent = PLAN_PACKAGE_LABELS[planId] || "Пакет";
-    }
-    if (remainingEl) {
-      remainingEl.textContent = remaining + " " + pluralLessonsRu(remaining) + " осталось";
-    }
-    if (detailEl) {
-      detailEl.textContent =
-        used + " из " + total + " уроков с преподавателем использовано";
-    }
-    if (fillEl) fillEl.style.width = pct + "%";
-    if (barEl) {
-      barEl.setAttribute("aria-valuemax", String(total));
-      barEl.setAttribute("aria-valuenow", String(used));
-    }
-  }
-
-  function initBuyLessonsButton() {
-    if (state.buyLessonsBound) return;
-    state.buyLessonsBound = true;
-    var btn = document.getElementById("btn-buy-lessons");
-    if (!btn) return;
-    btn.addEventListener("click", function () {
-      goToModuleCheckout();
-    });
   }
 
   function renderStudentGoal() {
@@ -7062,7 +6967,6 @@
 
     initLessonNavigation();
     initCurriculumActions();
-    initBuyLessonsButton();
     initSidebarProfilePrograms();
     loadDashboardFromApi();
   }
