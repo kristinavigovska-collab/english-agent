@@ -3932,10 +3932,14 @@
   }
 
   function normalizeCurriculumTopic(text) {
-    return String(text || "")
+    return formatCurriculumLessonTitle(text)
       .trim()
       .toLowerCase()
       .replace(/\s+/g, " ");
+  }
+
+  function formatCurriculumLessonTitle(title) {
+    return String(title || "").replace(/^Модуль\s+\d+\s*:\s*/i, "");
   }
 
   function collectCompletedLessonTopics(reports) {
@@ -4261,6 +4265,7 @@
   function normalizeCurriculumItems(items) {
     if (!items || !items.length) return items || [];
     items.forEach(function (item) {
+      item.title = formatCurriculumLessonTitle(item.title);
       var stub = state.curriculumStubProgress[item.classNum];
       if (!stub) return;
       if (stub.lesson) item.lessonCompleted = true;

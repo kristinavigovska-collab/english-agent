@@ -170,12 +170,7 @@
 
     for (i = 0; i < classCount; i += 1) {
       var tag = tags[i % tags.length];
-      if (classCount <= tags.length) {
-        titles.push(tag);
-      } else {
-        var moduleNum = Math.floor(i / tags.length) + 1;
-        titles.push(moduleNum > 1 ? "Модуль " + moduleNum + ": " + tag : tag);
-      }
+      titles.push(tag);
     }
     return titles;
   }

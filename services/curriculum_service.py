@@ -19,11 +19,7 @@ def _class_titles(program: dict[str, Any]) -> list[str]:
     titles: list[str] = []
     for i in range(count):
         tag = tags[i % len(tags)]
-        if count <= len(tags):
-            titles.append(str(tag))
-        else:
-            module_num = i // len(tags) + 1
-            titles.append(f"Модуль {module_num}: {tag}" if module_num > 1 else str(tag))
+        titles.append(str(tag))
     return titles
 
 
