@@ -178,6 +178,9 @@
     programStages: [],
     focusedClassNum: null,
     expandedStageIds: {},
+    pendingModulePurchase: null,
+    programDetailModuleFocus: null,
+    modulePreviewIds: {},
     bookClassFlow: null,
   };
 
@@ -326,6 +329,16 @@
     standard: 8,
     intensive: 16,
   };
+
+  var PLAN_MODULES_UNLOCKED = {
+    free_trial: 1,
+    solo: 1,
+    light: 1,
+    standard: 3,
+    intensive: 3,
+  };
+
+  var DEFAULT_MODULE_COUNT = 3;
 
   // STUB: replace with billing / usage API.
   var SIDEBAR_LESSON_PACKAGE_STUB = { used: 5, total: 8 };
@@ -2066,6 +2079,102 @@
     return { completed: completed, total: total, percent: percent };
   }
 
+  function modulesUnlockedFromPlan(planId, stageCount) {
+    var total = Math.max(1, Number(stageCount) || 1);
+    var fromPlan = planId ? PLAN_MODULES_UNLOCKED[planId] : null;
+    if (fromPlan == null) return 1;
+    return Math.min(total, Math.max(1, fromPlan));
+  }
+
+  function getEnrollmentModulesUnlocked(enrollment, stageCount) {
+    if (!enrollment) return 1;
+    if (enrollment.modules_unlocked != null) {
+      return Math.min(
+        Math.max(1, Number(stageCount) || 1),
+        Math.max(1, Number(enrollment.modules_unlocked) || 1)
+      );
+    }
+    return modulesUnlockedFromPlan(enrollment.plan_id, stageCount);
+  }
+
+  function formatModuleTitle(moduleIndex) {
+    return "Модуль " + (Number(moduleIndex) + 1);
+  }
+
+  function pluralizeModules(count) {
+    return count + " " + pluralize(count, "модуль", "модуля", "модулей");
+  }
+
+  function purchaseModulesThrough(lastModuleIndex) {
+    var enrollment = getActiveEnrollment();
+    if (!enrollment) {
+      goToModuleCheckout(lastModuleIndex);
+      return;
+    }
+    var stages = state.programStages || [];
+    var unlocked = getEnrollmentModulesUnlocked(enrollment, stages.length);
+    var targetIndex = Number(lastModuleIndex);
+    if (isNaN(targetIndex) || targetIndex < unlocked) return;
+
+    var isLive =
+      !DashboardApi.isStaticPreviewMode() &&
+      !DashboardApi.isDemoStudentId(STUDENT_ID);
+
+    if (isLive) {
+      state.pendingModulePurchase = targetIndex + 1;
+      goToModuleCheckout(targetIndex);
+      return;
+    }
+
+    if (typeof EnrollmentState !== "undefined") {
+      EnrollmentState.updateModulesUnlocked(enrollment.program_id, targetIndex + 1);
+    }
+    renderCurriculumProgram();
+    renderStudentOverview();
+    if (state.programDetailId) renderProgramDetailPage();
+  }
+
+  function purchaseNextModule(moduleIndex) {
+    var enrollment = getActiveEnrollment();
+    if (!enrollment) {
+      goToModuleCheckout(moduleIndex);
+      return;
+    }
+    var stages = state.programStages || [];
+    var unlocked = getEnrollmentModulesUnlocked(enrollment, stages.length);
+    var targetIndex =
+      moduleIndex != null ? Number(moduleIndex) : unlocked;
+    purchaseModulesThrough(targetIndex);
+  }
+
+  function viewProgramInModules(stage) {
+    var enrollment = getActiveEnrollment();
+    var programId =
+      (enrollment && enrollment.program_id) ||
+      (state.programDetailId) ||
+      (stage && getActiveProgram() && getActiveProgram().id);
+    if (!programId) return;
+    state.programDetailModuleFocus = stage ? stage.index : null;
+    openProgramDetail(programId);
+    requestAnimationFrame(function () {
+      var focusEl = document.querySelector(
+        ".program-detail-module.is-focus, #program-modules"
+      );
+      if (focusEl && focusEl.scrollIntoView) {
+        focusEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
+  function goToModuleCheckout(moduleIndex) {
+    state.pendingModulePurchase = moduleIndex != null ? Number(moduleIndex) + 1 : null;
+    setAppNavView("programs");
+    var programId = getActiveEnrollment() && getActiveEnrollment().program_id;
+    if (programId && state.programDetailId !== programId) {
+      openProgramDetail(programId);
+    }
+  }
+
   function refreshProgramStages() {
     if (typeof EnglishAgentStages === "undefined") {
       state.programStages = [];
@@ -2077,7 +2186,17 @@
       return;
     }
     state.programStages = EnglishAgentStages.build(program, state.curriculumItems);
-    state.programStages.forEach(function (stage) {
+    var enrollment = getActiveEnrollment();
+    var unlocked = getEnrollmentModulesUnlocked(
+      enrollment,
+      state.programStages.length
+    );
+    state.programStages.forEach(function (stage, index) {
+      if (index < unlocked) {
+        stage.moduleAccess = "open";
+      } else {
+        stage.moduleAccess = index === unlocked ? "locked_next" : "locked";
+      }
       if (state.expandedStageIds[stage.id] == null && stage.status === "current") {
         state.expandedStageIds[stage.id] = true;
       }
@@ -2233,6 +2352,13 @@
       level_cefr: serverEnrollment.level_cefr,
       level_name: serverEnrollment.level_name,
       plan_id: serverEnrollment.plan_id || null,
+      modules_unlocked:
+        serverEnrollment.modules_unlocked != null
+          ? serverEnrollment.modules_unlocked
+          : modulesUnlockedFromPlan(
+              serverEnrollment.plan_id,
+              (program.stages && program.stages.length) || DEFAULT_MODULE_COUNT
+            ),
       enrolled_at: serverEnrollment.enrolled_at,
       student_confirmed: true,
       is_demo: false,
@@ -2255,6 +2381,10 @@
       level_cefr: level ? level.cefr : null,
       level_name: level ? level.label : program.levelId,
       plan_id: planId || null,
+      modules_unlocked: modulesUnlockedFromPlan(
+        planId,
+        (program.stages && program.stages.length) || DEFAULT_MODULE_COUNT
+      ),
       student_confirmed: true,
       is_demo: isDemo !== false,
     });
@@ -2329,9 +2459,14 @@
   function ensureStaticPreviewEnrollment() {
     if (!DashboardApi.isStaticPreviewMode()) return;
     if (typeof EnrollmentState === "undefined") return;
-    if (EnrollmentState.isEnrolled()) return;
     if (!getProgramById("general-intermediate")) return;
-    enrollProgramLocally("general-intermediate", "standard", true);
+    if (!EnrollmentState.isEnrolled()) {
+      enrollProgramLocally("general-intermediate", "standard", true);
+    }
+    var active = EnrollmentState.getActive();
+    if (active) {
+      EnrollmentState.updateModulesUnlocked(active.program_id, 1);
+    }
   }
 
   function loadProgramCatalogAndEnrollment() {
@@ -2683,6 +2818,148 @@
     );
   }
 
+  function buildProgramModuleSummaries(program) {
+    if (!program || typeof EnglishAgentStages === "undefined") return [];
+    var total = Number(program.classes) || 0;
+    var items = [];
+    var n;
+    for (n = 1; n <= total; n += 1) {
+      items.push({
+        classNum: n,
+        title: "Урок " + n,
+        lessonCompleted: false,
+        practiceCompleted: false,
+        completed: false,
+      });
+    }
+    return EnglishAgentStages.build(program, items);
+  }
+
+  function getModuleAccessForIndex(moduleIndex, enrollment, moduleCount) {
+    var unlocked = getEnrollmentModulesUnlocked(enrollment, moduleCount);
+    if (moduleIndex < unlocked) return "open";
+    if (moduleIndex === unlocked) return "locked_next";
+    return "locked";
+  }
+
+  function renderProgramDetailModulesSection(program) {
+    var modules = buildProgramModuleSummaries(program);
+    if (!modules.length) return "";
+
+    var enrollment =
+      typeof EnrollmentState !== "undefined" ? EnrollmentState.getActive() : null;
+    var isThisProgram =
+      enrollment && enrollment.program_id === program.id;
+    var focusIndex = state.programDetailModuleFocus;
+
+    var cards = modules
+      .map(function (module) {
+        var access = isThisProgram
+          ? getModuleAccessForIndex(module.index, enrollment, modules.length)
+          : "catalog";
+        var cardClass =
+          "program-detail-module program-detail-module--" +
+          access +
+          (focusIndex === module.index ? " is-focus" : "");
+        var lessonsHtml = module.lessons
+          .map(function (lesson) {
+            return (
+              "<li>" +
+              esc(formatReportClassLabel(lesson.classNum)) +
+              " · " +
+              esc(lesson.title) +
+              "</li>"
+            );
+          })
+          .join("");
+
+        var actionsHtml = "";
+        if (access === "locked" || access === "locked_next") {
+          actionsHtml =
+            '<div class="program-detail-module-actions">' +
+            '<button type="button" class="program-detail-module-preview-btn" data-module-index="' +
+            module.index +
+            '">программа</button>' +
+            '<button type="button" class="btn btn-secondary program-detail-module-buy-btn" data-module-index="' +
+            module.index +
+            '">Оплатить ' +
+            esc(formatModuleTitle(module.index).toLowerCase()) +
+            "</button>" +
+            "</div>";
+        }
+
+        return (
+          '<article class="' +
+          cardClass +
+          '" id="program-module-' +
+          (module.index + 1) +
+          '">' +
+          '<div class="program-detail-module-head">' +
+          "<h3>" +
+          esc(formatModuleTitle(module.index)) +
+          "</h3>" +
+          '<p class="program-detail-module-meta">' +
+          esc(module.topicsLabel) +
+          " · " +
+          module.lessonCount +
+          " " +
+          pluralize(module.lessonCount, "урок", "урока", "уроков") +
+          "</p>" +
+          "</div>" +
+          '<ul class="program-detail-module-lessons">' +
+          lessonsHtml +
+          "</ul>" +
+          actionsHtml +
+          "</article>"
+        );
+      })
+      .join("");
+
+    var lockedModules = isThisProgram
+      ? modules.filter(function (module) {
+          var access = getModuleAccessForIndex(
+            module.index,
+            enrollment,
+            modules.length
+          );
+          return access === "locked" || access === "locked_next";
+        })
+      : [];
+
+    var bundleHtml = "";
+    if (lockedModules.length >= 2) {
+      var first = lockedModules[0];
+      var last = lockedModules[lockedModules.length - 1];
+      var bundleLabel =
+        lockedModules.length === 2
+          ? "Оплатить модули " + (first.index + 1) + " и " + (last.index + 1)
+          : "Оплатить модули " +
+            (first.index + 1) +
+            "–" +
+            (last.index + 1);
+      bundleHtml =
+        '<div class="program-detail-modules-bundle">' +
+        '<button type="button" class="btn btn-primary program-detail-modules-bundle-btn" data-bundle-to="' +
+        last.index +
+        '">' +
+        esc(bundleLabel) +
+        "</button></div>";
+    }
+
+    return (
+      '<section class="program-detail-section program-detail-modules" id="program-modules" aria-labelledby="program-modules-title">' +
+      '<h2 class="program-detail-section-title" id="program-modules-title">Программа по модулям</h2>' +
+      '<p class="program-detail-text">Курс разбит на ' +
+      pluralizeModules(modules.length) +
+      ". Каждый модуль можно оплатить отдельно или докупить сразу несколько.</p>" +
+      '<div class="program-detail-modules-grid">' +
+      cards +
+      "</div>" +
+      bundleHtml +
+      "</section>"
+    );
+  }
+
   function renderProgramDetailPlansSection(program) {
     var plansHtml = PROGRAM_LEARNING_PLANS.map(function (plan) {
       return renderLearningPlanTile(program.id, plan);
@@ -2770,6 +3047,7 @@
 
   function closeProgramDetail() {
     state.programDetailId = null;
+    state.programDetailModuleFocus = null;
     updateProgramsViewMode();
     renderProgramsPage();
   }
@@ -2871,6 +3149,7 @@
       (tagsHtml ? '<div class="program-detail-tags">' + tagsHtml + "</div>" : "") +
       baseHtml +
       "</section>" +
+      renderProgramDetailModulesSection(program) +
       '<div class="program-detail-enroll-cta">' +
       (isEnrolled
         ? '<button type="button" class="btn btn-primary program-continue-btn">Continue</button>'
@@ -3030,6 +3309,34 @@
 
         if (event.target.closest("#btn-program-detail-back")) {
           closeProgramDetail();
+          return;
+        }
+
+        var modulePreviewBtn = event.target.closest(".program-detail-module-preview-btn");
+        if (modulePreviewBtn) {
+          var previewIndex = Number(modulePreviewBtn.dataset.moduleIndex);
+          state.programDetailModuleFocus = isNaN(previewIndex) ? null : previewIndex;
+          renderProgramDetailPage();
+          requestAnimationFrame(function () {
+            var el = document.getElementById(
+              "program-module-" + (previewIndex + 1)
+            );
+            if (el && el.scrollIntoView) {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          });
+          return;
+        }
+
+        var moduleBuyBtn = event.target.closest(".program-detail-module-buy-btn");
+        if (moduleBuyBtn) {
+          purchaseNextModule(Number(moduleBuyBtn.dataset.moduleIndex));
+          return;
+        }
+
+        var moduleBundleBtn = event.target.closest(".program-detail-modules-bundle-btn");
+        if (moduleBundleBtn) {
+          purchaseModulesThrough(Number(moduleBundleBtn.dataset.bundleTo));
           return;
         }
 
@@ -3395,8 +3702,7 @@
     var btn = document.getElementById("btn-buy-lessons");
     if (!btn) return;
     btn.addEventListener("click", function () {
-      // STUB: checkout / top-up flow — open Programs until billing is wired.
-      setAppNavView("programs");
+      goToModuleCheckout();
     });
   }
 
@@ -4429,15 +4735,18 @@
     return classes.join(" ");
   }
 
-  function renderCurriculumStageLessonHtml(item) {
+  function renderCurriculumStageLessonHtml(item, locked) {
     var num = String(item.classNum).padStart(2, "0");
     return (
       '<li class="curriculum-stage-lesson ' +
       getCurriculumLessonRowClass(item) +
+      (locked ? " is-locked" : "") +
       '" data-class-num="' +
       item.classNum +
       '">' +
-      '<button type="button" class="curriculum-stage-lesson-btn" data-class-num="' +
+      '<button type="button" class="curriculum-stage-lesson-btn" ' +
+      (locked ? 'disabled aria-disabled="true" ' : "") +
+      'data-class-num="' +
       item.classNum +
       '" data-topic="' +
       esc(item.title) +
@@ -4448,21 +4757,28 @@
       '<span class="curriculum-stage-lesson-title">' +
       esc(item.title) +
       "</span>" +
-      curriculumLessonStatusHtml(item) +
+      (locked
+        ? '<span class="curriculum-stage-lesson-status" aria-hidden="true">' +
+          classActionLockIcon() +
+          "</span>"
+        : curriculumLessonStatusHtml(item)) +
       "</button></li>"
     );
   }
 
   function renderCurriculumStageHtml(stage) {
     var isOpen = !!state.expandedStageIds[stage.id];
+    var isLocked = stage.moduleAccess && stage.moduleAccess !== "open";
     var isLast = stage.index === state.programStages.length - 1;
     var meta = stage.topicsLabel;
-    if (stage.status === "current") {
+    if (stage.status === "current" && !isLocked) {
       meta += " · сейчас здесь";
     }
     return (
       '<section class="curriculum-stage is-' +
       stage.status +
+      (isLocked ? " curriculum-stage--locked" : "") +
+      (stage.moduleAccess === "locked_next" ? " curriculum-stage--locked-next" : "") +
       (isOpen ? " is-open" : "") +
       '" data-stage-id="' +
       stage.id +
@@ -4473,13 +4789,11 @@
       stage.id +
       '">' +
       '<span class="curriculum-stage-marker">' +
-      stageMarkerHtml(stage, isLast) +
+      (isLocked ? classActionLockIcon() : stageMarkerHtml(stage, isLast)) +
       "</span>" +
       '<span class="curriculum-stage-head-text">' +
-      '<span class="curriculum-stage-title">Этап ' +
-      (stage.index + 1) +
-      " · " +
-      esc(stage.title) +
+      '<span class="curriculum-stage-title">' +
+      esc(formatModuleTitle(stage.index)) +
       "</span>" +
       '<span class="curriculum-stage-meta">' +
       esc(meta) +
@@ -4497,8 +4811,39 @@
       '<ul class="curriculum-stage-lessons"' +
       (isOpen ? "" : " hidden") +
       ">" +
-      stage.lessons.map(renderCurriculumStageLessonHtml).join("") +
-      "</ul></section>"
+      stage.lessons
+        .map(function (item) {
+          return renderCurriculumStageLessonHtml(item, isLocked);
+        })
+        .join("") +
+      "</ul>" +
+      (isLocked
+        ? '<div class="curriculum-stage-locked-actions">' +
+          '<button type="button" class="btn btn-secondary curriculum-stage-buy-btn" data-module-index="' +
+          stage.index +
+          '">Оплатить ' +
+          esc(formatModuleTitle(stage.index).toLowerCase()) +
+          "</button></div>"
+        : "") +
+      "</section>"
+    );
+  }
+
+  function renderCurriculumModulesBundleHtml(lockedStages) {
+    if (!lockedStages || lockedStages.length < 2) return "";
+    var first = lockedStages[0];
+    var last = lockedStages[lockedStages.length - 1];
+    var label =
+      lockedStages.length === 2
+        ? "Оплатить модули " + (first.index + 1) + " и " + (last.index + 1)
+        : "Оплатить модули " + (first.index + 1) + "–" + (last.index + 1);
+    return (
+      '<div class="curriculum-modules-bundle">' +
+      '<button type="button" class="btn btn-primary curriculum-modules-bundle-btn" data-bundle-to="' +
+      last.index +
+      '">' +
+      esc(label) +
+      "</button></div>"
     );
   }
 
@@ -4515,6 +4860,16 @@
     rootEl.querySelectorAll(".curriculum-stage-lesson-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         focusCurriculumClass(Number(btn.dataset.classNum));
+      });
+    });
+    rootEl.querySelectorAll(".curriculum-stage-buy-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        purchaseNextModule(Number(btn.dataset.moduleIndex));
+      });
+    });
+    rootEl.querySelectorAll(".curriculum-modules-bundle-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        purchaseModulesThrough(Number(btn.dataset.bundleTo));
       });
     });
   }
@@ -4564,11 +4919,11 @@
     section.hidden = false;
     if (summaryEl) {
       var programLabel = enrollment.program_name || "Программа";
-      var stagePart = stages.length ? stages.length + " этапа · " : "";
+      var modulePart = stages.length ? pluralizeModules(stages.length) + " · " : "";
       summaryEl.textContent =
         programLabel +
         " · " +
-        stagePart +
+        modulePart +
         "пройдено " +
         completedCount +
         " из " +
@@ -4592,7 +4947,15 @@
     }
 
     if (listEl) listEl.innerHTML = "";
-    stagesEl.innerHTML = stages.map(renderCurriculumStageHtml).join("");
+    stagesEl.innerHTML =
+      stages
+        .map(renderCurriculumStageHtml)
+        .join("") +
+      renderCurriculumModulesBundleHtml(
+        stages.filter(function (stage) {
+          return stage.moduleAccess === "locked" || stage.moduleAccess === "locked_next";
+        })
+      );
     bindCurriculumStageInteractions(stagesEl);
     scrollCurriculumToFocused();
 

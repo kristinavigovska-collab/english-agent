@@ -3416,6 +3416,161 @@ body.sidebar-resizing * {
   transform: rotate(180deg);
 }
 
+.curriculum-stage--locked-next {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+}
+
+.curriculum-stage--locked {
+  border-style: dashed;
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--card) 80%, var(--surface));
+}
+
+.curriculum-stage--locked .curriculum-stage-head {
+  cursor: pointer;
+}
+
+.curriculum-stage--locked .curriculum-stage-marker {
+  color: var(--text-light);
+  border-color: var(--border);
+}
+
+.curriculum-stage--locked .curriculum-stage-progress,
+.curriculum-stage--locked .curriculum-stage-meta {
+  color: var(--text-muted);
+}
+
+.curriculum-stage-locked-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.curriculum-modules-bundle {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.curriculum-modules-bundle-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.program-detail-modules-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.program-detail-module {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.125rem;
+  background: var(--surface);
+}
+
+.program-detail-module--locked,
+.program-detail-module--locked_next {
+  background: color-mix(in srgb, var(--card) 70%, var(--surface));
+}
+
+.program-detail-module--locked_next,
+.program-detail-module.is-focus {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.program-detail-module-head h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.program-detail-module-meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.program-detail-module-lessons {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.program-detail-module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.875rem;
+  align-items: center;
+}
+
+.program-detail-module-preview-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.program-detail-module-preview-btn:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.program-detail-modules-bundle {
+  margin-top: 1rem;
+}
+
+.program-detail-modules-bundle-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.curriculum-stage-locked-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.curriculum-stage-locked-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.curriculum-stage-locked-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.curriculum-stage-locked-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.curriculum-stage-buy-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 .curriculum-stage-lessons {
   list-style: none;
   margin: 0;
@@ -3460,6 +3615,7 @@ body.sidebar-resizing * {
 .curriculum-stage-lesson.is-locked .curriculum-stage-lesson-btn {
   color: var(--text-muted);
   cursor: default;
+  opacity: 0.72;
 }
 
 .curriculum-stage-lesson.is-locked .curriculum-stage-lesson-btn:hover {

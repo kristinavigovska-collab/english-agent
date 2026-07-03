@@ -1,17 +1,16 @@
 /**
- * Program stages — goal-oriented curriculum grouping.
- * A program is split into stages (default 4); each stage has 1–8 lessons.
- * Stage defs: program.stages[] or auto-split from program.classes count.
+ * Program modules — goal-oriented curriculum grouping.
+ * A program is split into modules (default 3); each module has 1–8 lessons.
+ * Module defs: program.stages[] or auto-split from program.classes count.
  */
 (function (global) {
   "use strict";
 
-  var DEFAULT_STAGE_COUNT = 4;
+  var DEFAULT_STAGE_COUNT = 3;
   var DEFAULT_STAGE_TITLES = [
     "Основы общения",
     "Митинги и переговоры",
-    "Презентации и выступления",
-    "Закрепление",
+    "Презентации и закрепление",
   ];
 
   function resolveStageDefinitions(program, totalClasses) {
@@ -19,10 +18,10 @@
     if (!total) return [];
 
     if (program && program.stages && program.stages.length) {
-      var defs = program.stages.map(function (stage, index) {
+      var defs = program.stages.slice(0, DEFAULT_STAGE_COUNT).map(function (stage, index) {
         return {
           id: stage.id != null ? stage.id : index + 1,
-          title: stage.title || "Этап " + (index + 1),
+          title: stage.title || "Модуль " + (index + 1),
           lesson_count: Math.max(1, Number(stage.lesson_count || stage.lessons) || 1),
         };
       });
@@ -50,7 +49,7 @@
       assigned += lessons;
       stages.push({
         id: i + 1,
-        title: DEFAULT_STAGE_TITLES[i] || "Этап " + (i + 1),
+        title: DEFAULT_STAGE_TITLES[i] || "Модуль " + (i + 1),
         lesson_count: lessons,
       });
     }

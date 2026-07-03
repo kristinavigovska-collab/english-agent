@@ -39,10 +39,9 @@
     "weeks": 13,
     "tags": ["Opinions", "Conditionals", "Fluency"],
     "stages": [
-      { "id": 1, "title": "Основы общения", "lesson_count": 6 },
-      { "id": 2, "title": "Митинги и переговоры", "lesson_count": 7 },
-      { "id": 3, "title": "Презентации", "lesson_count": 7 },
-      { "id": 4, "title": "Закрепление", "lesson_count": 6 }
+      { "id": 1, "title": "Основы общения", "lesson_count": 8 },
+      { "id": 2, "title": "Митинги и переговоры", "lesson_count": 9 },
+      { "id": 3, "title": "Презентации и закрепление", "lesson_count": 9 }
     ]
   },
   {

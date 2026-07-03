@@ -152,6 +152,7 @@
      * @param {string} data.program_id
      * @param {string} data.level_id
      * @param {string} [data.plan_id]
+     * @param {number} [data.modules_unlocked]
      * @param {boolean} data.student_confirmed
      */
     enroll: function (data) {
@@ -193,6 +194,8 @@
         program_name: program.title,
         track_category: program.category,
         plan_id: data.plan_id || null,
+        modules_unlocked:
+          data.modules_unlocked != null ? Math.max(1, Number(data.modules_unlocked) || 1) : null,
         enrolled_at: data.enrolled_at || new Date().toISOString(),
         student_confirmed: true,
         is_demo: data.is_demo !== false,
@@ -217,6 +220,19 @@
       this.save();
       console.log("[DEV] Enrollment confirmed by student:", record);
       return true;
+    },
+
+    updateModulesUnlocked: function (programId, count) {
+      if (!programId) return false;
+      var nextCount = Math.max(1, Number(count) || 1);
+      var updated = false;
+      this.enrollments = this.enrollments.map(function (item) {
+        if (item.program_id !== programId) return item;
+        updated = true;
+        return Object.assign({}, item, { modules_unlocked: nextCount });
+      });
+      if (updated) this.save();
+      return updated;
     },
 
     clear: function () {
