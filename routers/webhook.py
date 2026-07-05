@@ -233,6 +233,20 @@ def _finalize_lesson(bot_id: str, data: dict, transcript: str) -> None:
         return
 
     name, email = _extract_student_info(data)
+
+    # transcript.done payloads don't include attendee emails — fall back to Calendar API.
+    if email.endswith("@recall.local") and recall_service.is_configured():
+        calendar_email = recall_service.fetch_student_email_from_bot(bot_id)
+        if calendar_email:
+            logger.info("Resolved student email from Recall Calendar API: %s", calendar_email)
+            email = calendar_email
+        else:
+            logger.warning(
+                "Could not resolve student email for bot %s — report will be saved under %s",
+                bot_id,
+                email,
+            )
+
     student = supabase_service.get_or_create_student(name, email)
     lesson_topic = _resolve_lesson_topic(bot_id, data)
     lesson = _ensure_lesson(student, bot_id, lesson_topic=lesson_topic)

@@ -233,6 +233,73 @@ def _title_from_calendar_meetings(bot: dict[str, Any]) -> str:
     return ""
 
 
+def _email_from_calendar_meetings(bot: dict[str, Any]) -> str:
+    """Return first non-organizer attendee email from the bot's calendar meeting.
+
+    Recall Calendar V1: GET /api/v1/calendar/meetings/{id}/ returns an object
+    with top-level 'attendees' (Recall-normalized) or nested under 'raw'
+    (raw Google Calendar / Outlook payload). Both have the same shape:
+      { "email": "...", "organizer": true/false, "responseStatus": "..." }
+    """
+    meetings = bot.get("calendar_meetings") or []
+    if not isinstance(meetings, list):
+        return ""
+
+    for meeting in meetings:
+        if not isinstance(meeting, dict):
+            continue
+        meeting_id = meeting.get("id")
+        calendar_user = meeting.get("calendar_user") or {}
+        user_id = ""
+        if isinstance(calendar_user, dict):
+            user_id = str(calendar_user.get("external_id") or "").strip().lower()
+        if not meeting_id or not user_id:
+            continue
+        try:
+            token = get_calendar_auth_token(user_id)
+            if not token:
+                continue
+            payload = get_calendar_meeting(str(meeting_id), token)
+
+            # Recall may return attendees at top level or inside 'raw' (provider event data).
+            raw = payload.get("raw") or {}
+            attendee_sources = [
+                payload.get("attendees") or [],
+                raw.get("attendees") or [],
+            ]
+            for attendees in attendee_sources:
+                for attendee in attendees:
+                    if not isinstance(attendee, dict):
+                        continue
+                    email = (attendee.get("email") or "").strip().lower()
+                    is_organizer = attendee.get("organizer", False)
+                    # Skip organizer (school account) — student is a non-organizer attendee.
+                    if email and not is_organizer and email != user_id:
+                        return email
+        except Exception:
+            logger.exception(
+                "Failed to fetch calendar meeting attendees meeting_id=%s",
+                meeting_id,
+            )
+    return ""
+
+
+def fetch_student_email_from_bot(bot_id: str) -> str:
+    """Return student email by inspecting the bot's calendar meeting attendees.
+
+    Called when the webhook payload does not include a participant email
+    (e.g. transcript.done events do not embed attendee lists).
+    """
+    if not bot_id or bot_id == "unknown":
+        return ""
+    try:
+        bot = get_bot(bot_id)
+        return _email_from_calendar_meetings(bot)
+    except Exception:
+        logger.exception("Failed to fetch student email from bot %s", bot_id)
+        return ""
+
+
 def fetch_lesson_topic(bot_id: str, webhook_data: dict[str, Any] | None = None) -> str:
     """Resolve lesson topic: webhook hints, then Calendar V1 title, then meeting metadata."""
     if webhook_data:
