@@ -5153,7 +5153,16 @@
 
     bookBtn.disabled = false;
     bookBtn.type = "button";
-    bookBtn.classList.remove("is-locked", "has-book-hint", "btn-secondary");
+
+    if (STUB_TEACHER_CARD.nextLesson) {
+      bookBtn.classList.remove("is-locked", "has-book-hint", "btn-secondary", "btn-primary");
+      bookBtn.classList.add("btn-booked");
+      bookBtn.textContent = "Присоединиться к уроку";
+      bookBtn.setAttribute("aria-label", "Присоединиться к уроку · " + STUB_TEACHER_CARD.nextLesson);
+      return;
+    }
+
+    bookBtn.classList.remove("is-locked", "has-book-hint", "btn-secondary", "btn-booked");
     bookBtn.classList.add("btn-primary");
     bookBtn.textContent = view.bookLabel;
     bookBtn.setAttribute(
@@ -5377,7 +5386,7 @@
         btn.textContent = "Присоединиться к уроку";
         btn.classList.add("teacher-book-btn--join");
       } else {
-        btn.textContent = "Записаться на урок ↓";
+        btn.textContent = "Записаться на урок";
         btn.classList.remove("teacher-book-btn--join");
       }
     }
@@ -5457,11 +5466,15 @@
         if (pending.action === "teacher_card") {
           STUB_TEACHER_CARD.nextLesson = state.bookClassFlow.slot;
           renderTeacherCard();
+          var r = state.reports.find(function (x) { return x.id === state.selectedId; }) || null;
+          renderNextStepBanner(r);
           closeCurriculumStubOverlays();
           return;
         }
 
         if (pending.action !== "lesson") return;
+        STUB_TEACHER_CARD.nextLesson = state.bookClassFlow.slot;
+        renderTeacherCard();
         markCurriculumStubProgress(pending.classNum, { lesson: true });
         closeCurriculumStubOverlays();
       });

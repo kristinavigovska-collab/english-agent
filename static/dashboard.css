@@ -2448,6 +2448,17 @@ body.sidebar-resizing * {
   border-color: var(--btn-active-hover);
 }
 
+.btn-booked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-booked:hover {
+  background: #5070e8;
+  border-color: #5070e8;
+}
+
 .program-card-actions .program-card-cta.btn-primary {
   width: auto;
   flex: 0 0 auto;
