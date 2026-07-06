@@ -184,6 +184,14 @@
     bookClassFlow: null,
   };
 
+  // Stub teacher card data. Set nextLesson to a date string to show state B.
+  var STUB_TEACHER_CARD = {
+    initials: "АН",
+    noteLabel: "После урока 3",
+    noteText: "«Хорошо держите структуру ответа. На следующем уроке дождём вежливый отказ — доведите Practice, там ваш кейс».",
+    nextLesson: null, // e.g. "Чт, 12 июня · 18:00"
+  };
+
   var STUB_BOOKING_TEACHERS = [
     {
       id: "tutor-anna",
@@ -5340,9 +5348,47 @@
     resetBookClassFlow();
   }
 
+  function renderTeacherCard() {
+    var t = STUB_TEACHER_CARD;
+    var hasLesson = !!t.nextLesson;
+
+    var badge = document.getElementById("teacher-card-badge");
+    var avatar = document.getElementById("teacher-avatar");
+    var note = document.getElementById("teacher-card-note");
+    var lessonValue = document.getElementById("teacher-next-lesson-value");
+    var btn = document.getElementById("btn-teacher-book");
+
+    if (badge) badge.textContent = hasLesson ? "Урок назначен" : "Урок не назначен";
+
+    if (avatar) {
+      avatar.classList.toggle("teacher-avatar--scheduled", hasLesson);
+    }
+
+    if (note) {
+      note.innerHTML =
+        "<p><strong>" + t.noteLabel + ":</strong> " + t.noteText + "</p>";
+    }
+
+    if (lessonValue) {
+      lessonValue.textContent = hasLesson ? t.nextLesson : "не назначен";
+    }
+
+    if (btn) {
+      if (hasLesson) {
+        btn.textContent = "Перенести";
+        btn.classList.add("teacher-book-btn--reschedule");
+      } else {
+        btn.textContent = "Записаться на урок ↓";
+        btn.classList.remove("teacher-book-btn--reschedule");
+      }
+    }
+  }
+
   function initCurriculumActions() {
     if (state.curriculumActionsBound) return;
     state.curriculumActionsBound = true;
+
+    renderTeacherCard();
 
     function bindClose(id, handler) {
       var btn = document.getElementById(id);
@@ -5365,6 +5411,7 @@
     var teacherBook = document.getElementById("btn-teacher-book");
     if (teacherBook) {
       teacherBook.addEventListener("click", function () {
+        if (STUB_TEACHER_CARD.nextLesson) return; // reschedule — stub, no action yet
         resetBookClassFlow();
         setText("book-class-topic", "Записаться на урок");
         renderBookClassTeachers();

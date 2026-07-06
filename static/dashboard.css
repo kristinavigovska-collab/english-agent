@@ -4865,6 +4865,38 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .teacher-book-btn {
   font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.teacher-book-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.teacher-book-btn--reschedule {
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.teacher-book-btn--reschedule:hover {
+  border: none;
+  color: var(--accent-hover);
+}
+
+.teacher-avatar--scheduled {
+  background: #FEF3C7;
+  color: #92400E;
 }
 
 .home-activity-row {

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-02" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-03" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -520,25 +520,23 @@
 
       <section class="home-teacher-card" id="home-teacher-card" aria-label="Ваш преподаватель">
         <div class="teacher-card-status-row">
-          <span class="teacher-card-status-badge">Состояние А · Урок не назначен</span>
+          <span class="teacher-card-status-badge" id="teacher-card-badge">Урок не назначен</span>
         </div>
         <div class="teacher-card-body">
           <div class="teacher-card-left">
-            <div class="teacher-avatar" aria-hidden="true">АН</div>
+            <div class="teacher-avatar" id="teacher-avatar" aria-hidden="true">АН</div>
             <div class="teacher-card-info">
               <p class="teacher-card-name">Анна · <span class="teacher-card-role">ваш преподаватель</span></p>
               <p class="teacher-card-sub">ведёт вас по программе с этапа 1</p>
-              <div class="teacher-card-note">
-                <p><strong>После урока 3:</strong> «Хорошо держите структуру ответа. На следующем уроке дождём вежливый отказ — доведите Practice, там ваш кейс».</p>
-              </div>
+              <div class="teacher-card-note" id="teacher-card-note"></div>
             </div>
           </div>
           <div class="teacher-card-right">
             <div class="teacher-next-lesson">
               <span class="teacher-next-lesson-label">Следующий урок</span>
-              <strong class="teacher-next-lesson-value">не назначен</strong>
+              <strong class="teacher-next-lesson-value" id="teacher-next-lesson-value">не назначен</strong>
             </div>
-            <button type="button" class="btn-link teacher-book-btn" id="btn-teacher-book">Записаться на урок ↓</button>
+            <button type="button" class="teacher-book-btn" id="btn-teacher-book">Записаться на урок ↓</button>
           </div>
         </div>
       </section>
@@ -1252,7 +1250,7 @@
   <script src="/static/enrollment-state.js?v=20260703-01"></script>
   <script src="/static/student-learning-context.js?v=20260703-01"></script>
   <script src="/static/curriculum-stages.js?v=20260703-02"></script>
-  <script src="/static/dashboard.js?v=20260706-02" defer></script>
+  <script src="/static/dashboard.js?v=20260706-03" defer></script>
 
 </body>
 </html>
