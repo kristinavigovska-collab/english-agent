@@ -149,52 +149,40 @@ class ErrorTrackingResponse(BaseModel):
 
 
 class StudentGoalUpdate(BaseModel):
-    goal_type: GoalType = "general_level"
-    target_cefr_level: CefrLevel
+    goal_text: str = Field(min_length=1, max_length=500)
+    current_level_tag: Optional[CefrLevel] = None
     target_duration_weeks: int = Field(ge=1, le=104)
     target_date: Optional[date] = None
-    scenario_description: Optional[str] = Field(default=None, max_length=500)
-    goal_label: Optional[str] = Field(default=None, max_length=500)
     tutor_lessons_per_week: int = Field(default=2, ge=0, le=14)
     tutor_lesson_minutes: int = Field(default=60, ge=15, le=180)
     practice_days_per_week: int = Field(default=6, ge=1, le=7)
     study_intensity_preset: Optional[StudyIntensityPreset] = None
 
-    @field_validator("scenario_description", "goal_label")
+    @field_validator("goal_text")
     @classmethod
-    def strip_optional_text(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return None
-        trimmed = value.strip()
-        return trimmed or None
-
-    @model_validator(mode="after")
-    def scenario_requires_description(self) -> "StudentGoalUpdate":
-        if self.goal_type == "scenario_based":
-            text = self.scenario_description or self.goal_label
-            if not text:
-                raise ValueError(
-                    "scenario_description is required for scenario_based goals"
-                )
-        return self
+    def strip_goal_text(cls, value: str) -> str:
+        return value.strip()
 
 
 class StudentReportsResponse(BaseModel):
     student_id: str
     student_name: str
     student_email: str
-    target_cefr_level: Optional[str] = None
+    goal_text: Optional[str] = None
+    current_level_tag: Optional[str] = None
     target_date: Optional[date] = None
-    goal_label: Optional[str] = None
     goal_set_date: Optional[date] = None
-    goal_type: Optional[str] = None
     target_duration_weeks: Optional[int] = None
-    scenario_description: Optional[str] = None
-    goal_start_cefr_level: Optional[str] = None
     tutor_lessons_per_week: Optional[int] = None
     tutor_lesson_minutes: Optional[int] = None
     practice_days_per_week: Optional[int] = None
     study_intensity_preset: Optional[str] = None
+    # legacy fields kept for backward compat during transition
+    target_cefr_level: Optional[str] = None
+    goal_label: Optional[str] = None
+    goal_type: Optional[str] = None
+    scenario_description: Optional[str] = None
+    goal_start_cefr_level: Optional[str] = None
     study_plan: Optional[StudyPlanResponse] = None
     progress_tracker: Optional[ProgressTrackerResponse] = None
     error_tracking: Optional[ErrorTrackingResponse] = None

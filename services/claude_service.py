@@ -50,8 +50,8 @@ Analyze the following dimensions:
 
 5. **Recommendations** — Provide 3–5 concrete, actionable study suggestions tailored to the student's weaknesses and stated learning goal (if provided).
 
-When a learning goal is provided, frame weak_topics and recommendations as steps toward that goal.
-Compare the student's current level against the goal (e.g. B2 discussion skills) where relevant.
+When a learning goal is provided, frame weak_topics and recommendations as practical steps toward that goal.
+Use CEFR only as a diagnostic label (vocabulary_level field), not as a target or progress measure.
 
 Be constructive and specific. If the transcript is very short, note that the analysis may be limited.\
 """

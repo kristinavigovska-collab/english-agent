@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-13" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-14" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -26,29 +26,28 @@
         <button class="goal-close" type="button" id="btn-goal-close" aria-label="Закрыть">×</button>
       </div>
       <form id="goal-form" class="goal-form">
-        <fieldset class="goal-field goal-type-field">
-          <legend class="goal-field-label">Тип цели</legend>
-          <label class="goal-type-option">
-            <input type="radio" name="goal_type" value="general_level" checked />
-            <span>Общий уровень CEFR</span>
-          </label>
-          <label class="goal-type-option">
-            <input type="radio" name="goal_type" value="scenario_based" />
-            <span>Прикладная цель (собеседование, переговоры…)</span>
-          </label>
-        </fieldset>
         <label class="goal-field">
-          <span class="goal-field-label">Целевой уровень CEFR</span>
-          <select name="target_cefr_level" id="goal-cefr-select" required>
-            <option value="">Выберите уровень</option>
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-            <option value="C1">C1</option>
-            <option value="C2">C2</option>
+          <span class="goal-field-label">Ваша цель</span>
+          <textarea
+            name="goal_text"
+            id="goal-text-input"
+            rows="2"
+            maxlength="500"
+            placeholder="Например: уверенно вести переговоры с англоязычными клиентами"
+            required
+          ></textarea>
+        </label>
+        <label class="goal-field">
+          <span class="goal-field-label">Текущий уровень <span class="goal-optional">(необязательно)</span></span>
+          <select name="current_level_tag" id="goal-level-tag-select">
+            <option value="">Не знаю / не важно</option>
+            <option value="A1">A1 — Beginner</option>
+            <option value="A2">A2 — Elementary</option>
+            <option value="B1">B1 — Intermediate</option>
+            <option value="B2">B2 — Upper-Intermediate</option>
+            <option value="C1">C1 — Advanced</option>
+            <option value="C2">C2 — Proficient</option>
           </select>
-          <p class="goal-field-hint" id="goal-cefr-hint" hidden></p>
         </label>
         <div class="goal-field goal-duration-field">
           <span class="goal-field-label">Срок обучения</span>
@@ -101,16 +100,6 @@
           </div>
           <p class="goal-field-hint intensity-projection" id="goal-intensity-projection" hidden></p>
         </div>
-        <label class="goal-field goal-scenario-field" id="goal-scenario-field" hidden>
-          <span class="goal-field-label">Опишите прикладную цель</span>
-          <textarea
-            name="scenario_description"
-            id="goal-scenario-input"
-            rows="2"
-            maxlength="500"
-            placeholder="Например: собеседование на позицию менеджера"
-          ></textarea>
-        </label>
         <div class="goal-field-row goal-tutor-row" id="goal-tutor-row">
           <label class="goal-field">
             <span class="goal-field-label">Уроков с репетитором / нед</span>
@@ -121,16 +110,6 @@
             <input type="number" name="tutor_lesson_minutes" min="15" max="180" value="60" />
           </label>
         </div>
-        <label class="goal-field">
-          <span class="goal-field-label">Опишите цель своими словами <span class="goal-optional">(необязательно)</span></span>
-          <textarea
-            name="goal_label"
-            id="goal-label-input"
-            rows="2"
-            maxlength="500"
-            placeholder="Например: уверенно проходить собеседования на английском"
-          ></textarea>
-        </label>
         <p class="goal-form-error" id="goal-form-error" hidden></p>
         <div class="goal-form-actions">
           <button class="btn" type="button" id="btn-goal-cancel">Отмена</button>
@@ -366,6 +345,7 @@
             </div>
           </div>
           <ul class="sidebar-program-menu" id="sidebar-program-menu" role="listbox" hidden></ul>
+          <span class="level-tag" id="sidebar-level-tag" hidden></span>
         </div>
       </div>
 
@@ -390,17 +370,6 @@
         </div>
       </section>
 
-      <section class="sidebar-speaking-level" id="sidebar-speaking-level" hidden aria-label="Текущий уровень речи">
-        <div class="sidebar-speaking-level-inner">
-          <svg class="sidebar-speaking-level-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-            <rect x="1" y="9" width="3" height="6" rx="0.5" fill="currentColor"/>
-            <rect x="6" y="5" width="3" height="10" rx="0.5" fill="currentColor"/>
-            <rect x="11" y="2" width="3" height="13" rx="0.5" fill="currentColor"/>
-          </svg>
-          <span class="sidebar-speaking-level-label">Текущий уровень речи</span>
-          <span class="sidebar-speaking-level-badge" id="sidebar-speaking-level-value">—</span>
-        </div>
-      </section>
 
       <section
         class="sidebar-goal-plan-section"
@@ -434,11 +403,12 @@
           <div class="goal-plan-panel" id="goal-plan-panel">
             <div class="goal-plan-panel-inner" id="goal-plan-panel-inner">
               <div class="goal-info-card" id="goal-details">
+                <p class="goal-info-desc" id="goal-info-desc"></p>
+                <p class="goal-program-position" id="goal-program-position" hidden></p>
                 <div class="goal-deadline-row">
                   <span class="goal-deadline" id="goal-deadline"></span>
                   <span class="goal-remaining" id="goal-remaining"></span>
                 </div>
-                <p class="goal-info-desc" id="goal-info-desc"></p>
                 <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
               </div>
 
@@ -1253,7 +1223,7 @@
   <script src="/static/enrollment-state.js?v=20260703-01"></script>
   <script src="/static/student-learning-context.js?v=20260703-01"></script>
   <script src="/static/curriculum-stages.js?v=20260703-02"></script>
-  <script src="/static/dashboard.js?v=20260706-08" defer></script>
+  <script src="/static/dashboard.js?v=20260706-09" defer></script>
 
 </body>
 </html>

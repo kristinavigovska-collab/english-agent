@@ -142,17 +142,20 @@
     curriculumItems: [],
     reportClassMap: {},
     goal: {
-      target_cefr_level: null,
+      goal_text: null,
+      current_level_tag: null,
       target_date: null,
-      goal_label: null,
       goal_set_date: null,
-      goal_type: null,
       target_duration_weeks: null,
-      scenario_description: null,
       tutor_lessons_per_week: 2,
       tutor_lesson_minutes: 60,
       practice_days_per_week: 6,
       study_intensity_preset: null,
+      // legacy fields kept for backward compat during data transition
+      target_cefr_level: null,
+      goal_label: null,
+      goal_type: null,
+      scenario_description: null,
     },
     studyPlan: null,
     progressTracker: null,
@@ -687,7 +690,7 @@
     renderSidebarProfilePrograms();
     renderStudentGoal();
     renderSidebarGoalCompact();
-    renderSidebarSpeakingLevel();
+    renderSidebarLevelTag();
     renderStudyPlan();
     renderCurriculumProgram();
     renderActivity();
@@ -698,7 +701,7 @@
   function hasGoal() {
     return !!(
       state.goal &&
-      state.goal.target_cefr_level &&
+      state.goal.goal_text &&
       (state.goal.target_duration_weeks || state.goal.target_date)
     );
   }
@@ -740,7 +743,7 @@
   function hasGoalData(goal) {
     return !!(
       goal &&
-      goal.target_cefr_level &&
+      goal.goal_text &&
       (goal.target_duration_weeks || goal.target_date)
     );
   }
@@ -1515,27 +1518,14 @@
 
   function formatGoalShortLabel(goal) {
     if (!goal) return "цель";
-    if (goal.goal_type === "scenario_based") {
-      var scenario = String(goal.scenario_description || goal.goal_label || "").trim();
-      if (scenario) return "«" + scenario + "»";
-    }
-    if (goal.goal_label) return "«" + goal.goal_label + "»";
-    return "уровень " + (goal.target_cefr_level || "—");
+    var text = String(goal.goal_text || goal.scenario_description || goal.goal_label || "").trim();
+    return text ? "«" + text + "»" : "цель";
   }
 
   function formatAnalyticsGoalLead(goal) {
     if (!goal) return "—";
-    if (goal.goal_type === "scenario_based" && goal.scenario_description) {
-      return (
-        "Прикладная цель: «" +
-        goal.scenario_description +
-        "». Потолок по уровню — " +
-        (goal.target_cefr_level || "—") +
-        "."
-      );
-    }
-    if (goal.goal_label) return "«" + goal.goal_label + "»";
-    return "Достичь уровня " + (goal.target_cefr_level || "—");
+    var text = String(goal.goal_text || goal.scenario_description || goal.goal_label || "").trim();
+    return text || "—";
   }
 
   function countConsecutiveInactiveDays(tracker) {
@@ -1854,9 +1844,7 @@
       setText("analytics-goal-lead", formatAnalyticsGoalLead(goal));
       setText(
         "analytics-goal-target",
-        goal.goal_type === "scenario_based" && goal.scenario_description
-          ? goal.scenario_description
-          : "Уровень " + (goal.target_cefr_level || "—")
+        String(goal.goal_text || goal.scenario_description || goal.goal_label || "—").trim()
       );
       setText("analytics-goal-deadline", "к " + formatDateLocal(goal.target_date));
       setText("analytics-goal-remaining", formatRemainingDaysShort(goal.target_date));
@@ -3551,13 +3539,12 @@
   function renderSidebarGoalCompact() {
     var section = document.getElementById("sidebar-goal-compact");
     var enrollment = getActiveEnrollment();
-    if (!enrollment) {
-      if (section) section.hidden = true;
-      return;
-    }
-    if (section) section.hidden = false;
+    var goalText = state.goal && state.goal.goal_text;
+    var show = !!(enrollment && goalText);
 
-    var program = getActiveProgram();
+    if (section) section.hidden = !show;
+    if (!show) return;
+
     var titleEl = document.getElementById("sidebar-goal-title");
     var captionEl = document.getElementById("sidebar-goal-compact-caption");
     var progressWrap = document.getElementById("sidebar-goal-compact-progress");
@@ -3568,8 +3555,8 @@
 
     if (captionEl) captionEl.textContent = "Ваша цель";
     if (titleEl) {
-      titleEl.textContent = getProgramGoalTitle(program);
-      titleEl.title = titleEl.textContent;
+      titleEl.textContent = goalText;
+      titleEl.title = goalText;
     }
 
     var progress = getProgramProgressMetrics();
@@ -3578,18 +3565,13 @@
     if (progressWrap) progressWrap.hidden = !showProgress;
     if (!showProgress) return;
 
-    var computed =
-      state.learningContext && state.learningContext.computed
-        ? state.learningContext.computed
-        : null;
+    var computed = state.learningContext && state.learningContext.computed ? state.learningContext.computed : null;
     var plan = state.studyPlan;
     var paceStatus = (computed && computed.pace_status) || (plan && plan.status) || null;
 
     if (progressFill) progressFill.style.width = progress.percent + "%";
     if (progressBar) progressBar.setAttribute("aria-valuenow", String(progress.percent));
-    if (progressPct) {
-      progressPct.textContent = progress.percent + "% программы пройдено";
-    }
+    if (progressPct) progressPct.textContent = progress.percent + "% программы пройдено";
     if (paceEl) {
       if (paceStatus) {
         paceEl.textContent = formatSidebarPaceLabel(paceStatus);
@@ -3601,84 +3583,55 @@
     }
   }
 
-  function renderSidebarSpeakingLevel() {
-    var section = document.getElementById("sidebar-speaking-level");
-    var valueEl = document.getElementById("sidebar-speaking-level-value");
-    if (!section || !valueEl) return;
-
-    if (!getActiveEnrollment()) {
-      section.hidden = true;
-      return;
-    }
-
-    section.hidden = false;
-    var current =
+  function renderSidebarLevelTag() {
+    var el = document.getElementById("sidebar-level-tag");
+    if (!el) return;
+    var tag = (state.goal && state.goal.current_level_tag) ||
       getCurrentStudentCefr() ||
       (state.learningContext && state.learningContext.current_cefr_level) ||
-      "—";
-    valueEl.textContent = current;
+      null;
+    if (tag) {
+      el.textContent = tag;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
   }
 
   function renderStudentGoal() {
     var detailsEl = document.getElementById("goal-details");
     var goalPlanSection = document.getElementById("sidebar-goal-plan-section");
     var descEl = document.getElementById("goal-info-desc");
+    var posEl = document.getElementById("goal-program-position");
 
     var ctx = resolveMetricsContext();
     var previewGoal = ctx && ctx.isPreview ? ctx.goal : null;
+    var activeGoal = hasGoal() ? state.goal : (previewGoal && hasGoalData(previewGoal) ? previewGoal : null);
 
-    if (hasGoal()) {
-      var scenarioText = String(state.goal.scenario_description || "").trim();
-      var isScenarioWithDescription =
-        state.goal.goal_type === "scenario_based" && scenarioText;
-
+    if (activeGoal) {
       if (detailsEl) {
-        setText("goal-deadline", "к " + formatDateLocal(state.goal.target_date));
-        setText("goal-remaining", formatRemainingDaysShort(state.goal.target_date));
+        setText("goal-deadline", "к " + formatDateLocal(activeGoal.target_date));
+        setText("goal-remaining", formatRemainingDaysShort(activeGoal.target_date));
         if (descEl) {
-          if (isScenarioWithDescription) {
-            descEl.textContent =
-              "Прикладная цель «" +
-              scenarioText +
-              "» — план не требует полного " +
-              state.goal.target_cefr_level;
-          } else if (state.goal.goal_label) {
-            descEl.textContent = "«" + state.goal.goal_label + "»";
+          var goalText = String(activeGoal.goal_text || activeGoal.scenario_description || activeGoal.goal_label || "").trim();
+          descEl.textContent = goalText ? "«" + goalText + "»" : "";
+        }
+        if (posEl) {
+          var items = state.curriculumItems || [];
+          var stepItem = getStepCardItem();
+          var totalItems = items.length;
+          if (stepItem && totalItems) {
+            posEl.textContent = "Урок " + stepItem.classNum + " из " + totalItems;
+            posEl.hidden = false;
           } else {
-            descEl.textContent =
-              "Достичь уровня " + (state.goal.target_cefr_level || "—");
+            posEl.hidden = true;
           }
         }
       }
-
-      if (goalPlanSection) goalPlanSection.hidden = true;
-    } else if (previewGoal && hasGoalData(previewGoal)) {
-      var previewScenario = String(previewGoal.scenario_description || "").trim();
-      var previewIsScenario =
-        previewGoal.goal_type === "scenario_based" && previewScenario;
-
-      if (detailsEl) {
-        setText("goal-deadline", "к " + formatDateLocal(previewGoal.target_date));
-        setText("goal-remaining", formatRemainingDaysShort(previewGoal.target_date));
-        if (descEl) {
-          if (previewIsScenario) {
-            descEl.textContent =
-              "Прикладная цель «" +
-              previewScenario +
-              "» — план не требует полного " +
-              previewGoal.target_cefr_level;
-          } else if (previewGoal.goal_label) {
-            descEl.textContent = "«" + previewGoal.goal_label + "»";
-          } else {
-            descEl.textContent =
-              "Достичь уровня " + (previewGoal.target_cefr_level || "—");
-          }
-        }
-      }
-
       if (goalPlanSection) goalPlanSection.hidden = true;
     } else {
       if (detailsEl && descEl) descEl.textContent = "";
+      if (posEl) posEl.hidden = true;
       if (goalPlanSection) goalPlanSection.hidden = true;
     }
   }
@@ -5607,14 +5560,10 @@
     var preset = getSelectedIntensityFromContainer("goal-intensity-presets");
     var cfg = getIntensityConfig(preset);
     return {
-      target_cefr_level: form.target_cefr_level.value || state.goal.target_cefr_level,
+      goal_text: (form.goal_text ? form.goal_text.value : "") || state.goal.goal_text || "",
+      current_level_tag: (form.current_level_tag ? form.current_level_tag.value : "") || state.goal.current_level_tag || null,
       target_duration_weeks: weeks,
       goal_set_date: hasGoal() ? state.goal.goal_set_date : todayIsoDate(),
-      goal_start_cefr_level: hasGoal()
-        ? state.goal.goal_start_cefr_level
-        : getLatestReport()
-          ? getLatestReport().vocabulary_level
-          : "A1",
       study_intensity_preset: preset,
       tutor_lessons_per_week: cfg ? cfg.tutorLessons : Number(form.tutor_lessons_per_week.value) || 2,
       tutor_lesson_minutes: Number(form.tutor_lesson_minutes.value) || 60,
@@ -5782,17 +5731,19 @@
       })
       .then(function (data) {
         state.goal = {
-          target_cefr_level: data.target_cefr_level || null,
+          goal_text: data.goal_text || null,
+          current_level_tag: data.current_level_tag || null,
           target_date: data.target_date || null,
-          goal_label: data.goal_label || null,
           goal_set_date: data.goal_set_date || null,
-          goal_type: data.goal_type || null,
           target_duration_weeks: data.target_duration_weeks || null,
-          scenario_description: data.scenario_description || null,
           tutor_lessons_per_week: data.tutor_lessons_per_week || 2,
           tutor_lesson_minutes: data.tutor_lesson_minutes || 60,
           practice_days_per_week: data.practice_days_per_week || 6,
           study_intensity_preset: data.study_intensity_preset || null,
+          target_cefr_level: data.target_cefr_level || null,
+          goal_label: data.goal_label || null,
+          goal_type: data.goal_type || null,
+          scenario_description: data.scenario_description || null,
         };
         state.studyPlan = data.study_plan || null;
         state.progressTracker = data.progress_tracker || null;
@@ -5977,22 +5928,15 @@
     if (errorEl) errorEl.hidden = true;
 
     if (hasGoal()) {
-      var gt = state.goal.goal_type || "general_level";
-      var typeRadio = form.querySelector('[name="goal_type"][value="' + gt + '"]');
-      if (typeRadio) typeRadio.checked = true;
-      form.target_cefr_level.value = state.goal.target_cefr_level || "";
+      if (form.goal_text) form.goal_text.value = state.goal.goal_text || "";
+      if (form.current_level_tag) form.current_level_tag.value = state.goal.current_level_tag || "";
       form.target_duration_weeks.value = state.goal.target_duration_weeks || 12;
-      form.tutor_lessons_per_week.value = state.goal.tutor_lessons_per_week || 2;
-      form.tutor_lesson_minutes.value = state.goal.tutor_lesson_minutes || 60;
-      form.goal_label.value = state.goal.goal_label || "";
-      form.scenario_description.value = state.goal.scenario_description || "";
+      if (form.tutor_lessons_per_week) form.tutor_lessons_per_week.value = state.goal.tutor_lessons_per_week || 2;
+      if (form.tutor_lesson_minutes) form.tutor_lesson_minutes.value = state.goal.tutor_lesson_minutes || 60;
     } else {
       form.reset();
-      var defaultType = form.querySelector('[name="goal_type"][value="general_level"]');
-      if (defaultType) defaultType.checked = true;
     }
 
-    syncGoalTypeFields(form);
     syncDurationPicker(
       hasGoal() ? state.goal.target_duration_weeks || 12 : Number(form.target_duration_weeks.value) || 12
     );
@@ -6001,7 +5945,6 @@
       hasGoal() ? state.goal.study_intensity_preset : null
     );
     updateGoalFormIntensityPreview();
-    populateGoalCefrSelect(hasGoal() ? state.goal.target_cefr_level : "");
     overlay.hidden = false;
   }
 
@@ -6013,39 +5956,23 @@
   function saveGoal(form) {
     var errorEl = document.getElementById("goal-form-error");
     var saveBtn = document.getElementById("btn-goal-save");
-    var goalTypeEl = form.querySelector('[name="goal_type"]:checked');
-    var goalType = goalTypeEl ? goalTypeEl.value : "general_level";
-    var cefr = form.target_cefr_level.value;
+    var goalText = (form.goal_text ? form.goal_text.value : "").trim();
+    var levelTag = (form.current_level_tag ? form.current_level_tag.value : "").trim() || null;
     var weeks = Number(form.target_duration_weeks.value);
-    var label = (form.goal_label.value || "").trim();
-    var scenario = (form.scenario_description.value || "").trim();
-    var tutorLessons = Number(form.tutor_lessons_per_week.value);
-    var tutorMinutes = Number(form.tutor_lesson_minutes.value);
+    var tutorLessons = form.tutor_lessons_per_week ? Number(form.tutor_lessons_per_week.value) : 2;
+    var tutorMinutes = form.tutor_lesson_minutes ? Number(form.tutor_lesson_minutes.value) : 60;
     var intensity = getSelectedIntensityFromContainer("goal-intensity-presets");
     var intensityCfg = getIntensityConfig(intensity);
 
-    if (!cefr || !weeks) {
-      showGoalError("Выберите целевой уровень и срок в неделях.");
-      return;
-    }
-
-    var cefrError = validateGoalCefrChoice(cefr);
-    if (cefrError) {
-      showGoalError(cefrError);
-      return;
-    }
-
-    if (goalType === "scenario_based" && !scenario && !label) {
-      showGoalError("Опишите прикладную цель (собеседование, переговоры и т.п.).");
+    if (!goalText || !weeks) {
+      showGoalError("Опишите цель и выберите срок обучения.");
       return;
     }
 
     var payload = {
-      goal_type: goalType,
-      target_cefr_level: cefr,
+      goal_text: goalText,
+      current_level_tag: levelTag,
       target_duration_weeks: weeks,
-      goal_label: label || scenario || null,
-      scenario_description: goalType === "scenario_based" ? scenario || label : null,
       tutor_lessons_per_week: intensityCfg ? intensityCfg.tutorLessons : tutorLessons,
       tutor_lesson_minutes: tutorMinutes,
       practice_days_per_week: intensityCfg ? intensityCfg.practiceDays : 6,
@@ -6055,11 +5982,6 @@
     if (intensity) {
       var draftGoal = Object.assign({}, payload, {
         goal_set_date: hasGoal() ? state.goal.goal_set_date : todayIsoDate(),
-        goal_start_cefr_level: hasGoal()
-          ? state.goal.goal_start_cefr_level
-          : getLatestReport()
-            ? getLatestReport().vocabulary_level
-            : "A1",
       });
       payload.target_date = computeIntensityTargetDate(
         intensity,
@@ -6109,17 +6031,19 @@
       })
       .then(function (data) {
         state.goal = {
-          target_cefr_level: data.target_cefr_level || null,
+          goal_text: data.goal_text || null,
+          current_level_tag: data.current_level_tag || null,
           target_date: data.target_date || null,
-          goal_label: data.goal_label || null,
           goal_set_date: data.goal_set_date || null,
-          goal_type: data.goal_type || null,
           target_duration_weeks: data.target_duration_weeks || null,
-          scenario_description: data.scenario_description || null,
           tutor_lessons_per_week: data.tutor_lessons_per_week || 2,
           tutor_lesson_minutes: data.tutor_lesson_minutes || 60,
           practice_days_per_week: data.practice_days_per_week || 6,
           study_intensity_preset: data.study_intensity_preset || null,
+          target_cefr_level: data.target_cefr_level || null,
+          goal_label: data.goal_label || null,
+          goal_type: data.goal_type || null,
+          scenario_description: data.scenario_description || null,
         };
         state.studyPlan = data.study_plan || null;
         state.progressTracker = data.progress_tracker || null;

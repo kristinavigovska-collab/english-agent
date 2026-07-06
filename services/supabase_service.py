@@ -152,13 +152,10 @@ def get_student(student_id: str) -> Optional[dict]:
 def update_student_goal(
     student_id: str,
     *,
-    goal_type: str,
-    target_cefr_level: str,
+    goal_text: str,
     target_duration_weeks: int,
     target_date: str,
-    goal_start_cefr_level: str,
-    scenario_description: Optional[str] = None,
-    goal_label: Optional[str] = None,
+    current_level_tag: Optional[str] = None,
     tutor_lessons_per_week: int = 2,
     tutor_lesson_minutes: int = 60,
     practice_days_per_week: int = 6,
@@ -166,13 +163,10 @@ def update_student_goal(
 ) -> dict:
     db = get_supabase()
     payload = {
-        "goal_type": goal_type,
-        "target_cefr_level": target_cefr_level,
+        "goal_text": goal_text,
+        "current_level_tag": current_level_tag,
         "target_duration_weeks": target_duration_weeks,
         "target_date": target_date,
-        "goal_start_cefr_level": goal_start_cefr_level,
-        "scenario_description": scenario_description,
-        "goal_label": goal_label,
         "goal_set_date": date.today().isoformat(),
         "tutor_lessons_per_week": tutor_lessons_per_week,
         "tutor_lesson_minutes": tutor_lesson_minutes,

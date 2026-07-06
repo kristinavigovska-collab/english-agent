@@ -40,18 +40,21 @@ def _next_cefr_level(current: str) -> Optional[str]:
 
 def _student_goal_fields(student: dict) -> dict:
     return {
-        "target_cefr_level": student.get("target_cefr_level"),
+        "goal_text": student.get("goal_text"),
+        "current_level_tag": student.get("current_level_tag"),
         "target_date": student.get("target_date"),
-        "goal_label": student.get("goal_label"),
         "goal_set_date": student.get("goal_set_date"),
-        "goal_type": student.get("goal_type"),
         "target_duration_weeks": student.get("target_duration_weeks"),
-        "scenario_description": student.get("scenario_description"),
-        "goal_start_cefr_level": student.get("goal_start_cefr_level"),
         "tutor_lessons_per_week": student.get("tutor_lessons_per_week"),
         "tutor_lesson_minutes": student.get("tutor_lesson_minutes"),
         "practice_days_per_week": student.get("practice_days_per_week"),
         "study_intensity_preset": student.get("study_intensity_preset"),
+        # legacy fields kept for backward compat
+        "target_cefr_level": student.get("target_cefr_level"),
+        "goal_label": student.get("goal_label"),
+        "goal_type": student.get("goal_type"),
+        "scenario_description": student.get("scenario_description"),
+        "goal_start_cefr_level": student.get("goal_start_cefr_level"),
     }
 
 
@@ -243,37 +246,10 @@ def get_student_reports(student_id: str):
 
 @router.patch("/students/{student_id}/goal", response_model=StudentReportsResponse)
 def update_student_goal(student_id: str, body: StudentGoalUpdate):
-    """Set or update the student's learning goal and duration-based plan."""
+    """Set or update the student's learning goal and duration-based study plan."""
     student = supabase_service.get_student(student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
-
-    rows = supabase_service.get_student_reports(student_id)
-    current_cefr = None
-    if rows:
-        latest = max(
-            rows,
-            key=lambda r: r.get("created_at") or "",
-        )
-        current_cefr = latest.get("vocabulary_level")
-
-    if not current_cefr:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot set a goal without at least one lesson report",
-        )
-
-    next_cefr = _next_cefr_level(current_cefr)
-    if next_cefr is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Student is already at the maximum CEFR level (C2)",
-        )
-    if body.target_cefr_level != next_cefr:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Target level must be the next CEFR step after {current_cefr}: {next_cefr}",
-        )
 
     goal_set = date.today()
     target_date = body.target_date
@@ -281,8 +257,6 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
         target_date = goal_set + timedelta(weeks=body.target_duration_weeks)
     elif target_date <= goal_set:
         raise HTTPException(status_code=400, detail="target_date must be in the future")
-
-    scenario_text = body.scenario_description or body.goal_label
 
     intensity = normalize_intensity_preset(body.study_intensity_preset)
     tutor_lessons = body.tutor_lessons_per_week
@@ -296,13 +270,10 @@ def update_student_goal(student_id: str, body: StudentGoalUpdate):
         supabase_service.clear_daily_progress(student_id)
         supabase_service.update_student_goal(
             student_id=student_id,
-            goal_type=body.goal_type,
-            target_cefr_level=body.target_cefr_level,
+            goal_text=body.goal_text,
+            current_level_tag=body.current_level_tag,
             target_duration_weeks=body.target_duration_weeks,
             target_date=target_date.isoformat(),
-            goal_start_cefr_level=current_cefr,
-            scenario_description=scenario_text if body.goal_type == "scenario_based" else None,
-            goal_label=body.goal_label or scenario_text,
             tutor_lessons_per_week=tutor_lessons,
             tutor_lesson_minutes=body.tutor_lesson_minutes,
             practice_days_per_week=practice_days,
