@@ -186,7 +186,25 @@ class StudentReportsResponse(BaseModel):
     study_plan: Optional[StudyPlanResponse] = None
     progress_tracker: Optional[ProgressTrackerResponse] = None
     error_tracking: Optional[ErrorTrackingResponse] = None
+    hypotheses: list[ErrorHypothesisResponse] = []
     reports: list[ReportResponse]
+
+
+class HypothesisExample(BaseModel):
+    error: str = ""
+    correction: str = ""
+    explanation: str = ""
+    lesson_id: Optional[str] = None
+
+
+class ErrorHypothesisResponse(BaseModel):
+    id: str
+    pattern: str
+    pattern_label: str
+    examples: list[HypothesisExample] = []
+    occurrences: int = 1
+    status: str = "observed"
+    disputed_by_student: bool = False
 
 
 class StudentEnrollmentUpdate(BaseModel):

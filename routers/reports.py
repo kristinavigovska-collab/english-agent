@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 from models.schemas import (
+    ErrorHypothesisResponse,
     ErrorTrackingResponse,
+    HypothesisExample,
     MarkPracticeRequest,
     PrioritizedTopicResponse,
     ProgressTrackerResponse,
@@ -232,6 +234,20 @@ def get_student_reports(student_id: str):
         student, rows, tracking_view
     )
 
+    raw_hypotheses = supabase_service.get_error_hypotheses(student_id)
+    hypothesis_responses = [
+        ErrorHypothesisResponse(
+            id=h["id"],
+            pattern=h["pattern"],
+            pattern_label=h["pattern_label"],
+            examples=[HypothesisExample(**ex) for ex in (h.get("examples") or [])],
+            occurrences=h["occurrences"],
+            status=h["status"],
+            disputed_by_student=h.get("disputed_by_student", False),
+        )
+        for h in raw_hypotheses
+    ]
+
     return StudentReportsResponse(
         student_id=student["id"],
         student_name=student["name"],
@@ -240,8 +256,22 @@ def get_student_reports(student_id: str):
         study_plan=study_plan,
         progress_tracker=progress_tracker,
         error_tracking=error_tracking,
+        hypotheses=hypothesis_responses,
         **_student_goal_fields(student),
     )
+
+
+@router.post("/students/{student_id}/hypotheses/{hypothesis_id}/dismiss")
+def dismiss_hypothesis(student_id: str, hypothesis_id: str):
+    """Student marks an error pattern as a false observation."""
+    student = supabase_service.get_student(student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    try:
+        supabase_service.dismiss_hypothesis(hypothesis_id, student_id)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail="Hypothesis not found")
+    return {"status": "dismissed"}
 
 
 @router.patch("/students/{student_id}/goal", response_model=StudentReportsResponse)

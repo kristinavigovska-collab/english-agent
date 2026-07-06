@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from supabase import Client, create_client
 
 from models.schemas import LessonAnalysis
+from services.error_category_config import category_label
 
 load_dotenv()
 
@@ -251,6 +252,117 @@ def mark_practice(
 def clear_daily_progress(student_id: str) -> None:
     db = get_supabase()
     db.table("daily_progress").delete().eq("student_id", student_id).execute()
+
+
+def upsert_error_hypotheses(
+    student_id: str,
+    lesson_id: str,
+    analysis: LessonAnalysis,
+) -> None:
+    """Group grammar errors by category and upsert into error_hypotheses."""
+    db = get_supabase()
+
+    groups: dict[str, list[dict]] = {}
+    for e in analysis.grammar_errors:
+        cat = e.error_category or "other"
+        if cat not in groups:
+            groups[cat] = []
+        groups[cat].append(
+            {
+                "error": e.error,
+                "correction": e.correction,
+                "explanation": e.explanation,
+                "lesson_id": lesson_id,
+            }
+        )
+
+    if not groups:
+        return
+
+    existing_result = (
+        db.table("error_hypotheses")
+        .select("*")
+        .eq("student_id", student_id)
+        .execute()
+    )
+    existing_by_pattern = {r["pattern"]: r for r in (existing_result.data or [])}
+
+    rows_to_upsert = []
+    for pattern, new_examples in groups.items():
+        existing = existing_by_pattern.get(pattern)
+        if existing:
+            old_examples = [
+                ex for ex in (existing.get("examples") or [])
+                if ex.get("lesson_id") != lesson_id
+            ]
+            merged = (old_examples + new_examples)[-30:]
+            unique_lessons = len({ex.get("lesson_id") for ex in merged if ex.get("lesson_id")})
+            status = existing.get("status", "observed")
+            if status == "dismissed":
+                status = "observed"
+            rows_to_upsert.append(
+                {
+                    "id": existing["id"],
+                    "student_id": student_id,
+                    "pattern": pattern,
+                    "pattern_label": category_label(pattern),
+                    "examples": merged,
+                    "occurrences": max(unique_lessons, 1),
+                    "status": status,
+                    "disputed_by_student": existing.get("disputed_by_student", False),
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+            )
+        else:
+            rows_to_upsert.append(
+                {
+                    "student_id": student_id,
+                    "pattern": pattern,
+                    "pattern_label": category_label(pattern),
+                    "examples": new_examples,
+                    "occurrences": 1,
+                    "status": "observed",
+                    "disputed_by_student": False,
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+            )
+
+    db.table("error_hypotheses").upsert(
+        rows_to_upsert, on_conflict="student_id,pattern"
+    ).execute()
+
+
+def get_error_hypotheses(
+    student_id: str,
+    *,
+    include_dismissed: bool = False,
+) -> list[dict]:
+    db = get_supabase()
+    q = db.table("error_hypotheses").select("*").eq("student_id", student_id)
+    if not include_dismissed:
+        q = q.neq("status", "dismissed")
+    result = q.order("occurrences", desc=True).execute()
+    return result.data or []
+
+
+def dismiss_hypothesis(hypothesis_id: str, student_id: str) -> dict:
+    db = get_supabase()
+    result = (
+        db.table("error_hypotheses")
+        .update(
+            {
+                "status": "dismissed",
+                "disputed_by_student": True,
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+        )
+        .eq("id", hypothesis_id)
+        .eq("student_id", student_id)
+        .execute()
+    )
+    if not result.data:
+        raise RuntimeError(f"Hypothesis {hypothesis_id} not found")
+    return result.data[0]
 
 
 def upsert_error_pattern_history(student_id: str, rows: list[dict]) -> None:

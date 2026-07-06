@@ -361,6 +361,7 @@
 
     state.reports = data.reports || [];
     state.studentName = data.student_name || data.student_email || "Студент";
+    state.hypotheses = data.hypotheses || [];
 
     if (applyGoalMetrics) {
       state.goal = goalFieldsFromBundle(data);

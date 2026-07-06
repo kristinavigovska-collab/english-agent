@@ -49,9 +49,6 @@
     return cfg("plan_disclaimer_short", "");
   }
 
-  function stuckThresholdLessons() {
-    return cfg("stuck_threshold_lessons", 3);
-  }
 
   function durationWeeksMin() {
     return cfg("duration_weeks_min", 1);
@@ -162,6 +159,7 @@
     activeActivityTracker: null,
     activityTooltipHideTimer: null,
     errorTracking: null,
+    hypotheses: [],
     goalModalBound: false,
     intensityPickerBound: false,
     studyPlanCollapseBound: false,
@@ -723,21 +721,6 @@
     return labels[catId] || labels.other || catId;
   }
 
-  function inferErrorCategory(item) {
-    if (item.error_category) return item.error_category;
-    var blob = [item.error, item.correction, item.explanation].join(" ").toLowerCase();
-    if (/3-го лица|third person|doesn't|don't like|he go|she go/.test(blob)) {
-      return "third_person_singular";
-    }
-    if (/past simple|didn't|last year|yesterday/.test(blob)) return "past_simple";
-    if (/present perfect|since |for /.test(blob)) return "present_perfect";
-    if (/артикл|article| a | an /.test(blob)) return "articles";
-    if (/comparative|better|more better/.test(blob)) return "comparatives";
-    if (/conditional|if i will/.test(blob)) return "conditionals";
-    if (/gerund|infinitive|suggest|look forward/.test(blob)) return "gerunds_infinitives";
-    if (/much vs many|many people|much people/.test(blob)) return "much_many";
-    return "other";
-  }
 
 
   function hasGoalData(goal) {
@@ -6246,11 +6229,9 @@
 
     renderHomeNavTabs(report);
 
-    renderGrammarList("grammar-list-current", report.grammar_errors);
+    renderHypothesisPatterns(report, state.hypotheses);
     renderStuckTopics(state.errorTracking);
     renderPrioritizedWeakTopics(report.prioritized_weak_topics || []);
-
-    setBadge("badge-grammar-current", grammarBadge(report.grammar_errors), true);
     setBadge("badge-vocab-current", report.vocabulary_level || "—", false);
     setBadge("badge-fluency-current", formatScore(report.fluency_score), true);
 
@@ -6359,68 +6340,111 @@
     );
   }
 
-  function patternBadgeHtml(item) {
-    var status = item.pattern_status;
-    var n = item.consecutive_lessons_count || 0;
-    if (status === "stuck" && n >= stuckThresholdLessons()) {
-      return (
-        '<span class="pattern-badge pattern-stuck">Повторяется ' +
-        n +
-        "-й " +
-        pluralize(n, "урок", "урока", "уроков") +
-        " подряд</span>"
-      );
-    }
-    if (status === "new") {
-      return '<span class="pattern-badge pattern-new">Впервые</span>';
-    }
-    if (status === "recurring" && n > 1) {
-      return (
-        '<span class="pattern-badge pattern-recurring">Было на ' +
-        n +
-        " " +
-        pluralize(n, "уроке", "уроках", "уроках") +
-        " подряд</span>"
-      );
-    }
-    return "";
+  function _hypErrorItem(e) {
+    var said = esc(e.error || "");
+    var correct = esc(e.correction || "");
+    var explanation = grammarExplanation(e);
+    return (
+      '<div class="error-item">' +
+      '<div class="error-row">' +
+      (said ? '<span class="said">«' + said + '»</span>' : "") +
+      (said && correct ? '<span class="arrow">→</span>' : "") +
+      (correct ? '<span class="correct">«' + correct + '»</span>' : "") +
+      renderGrammarToggle(explanation) +
+      "</div>" +
+      renderGrammarExplanation(explanation) +
+      "</div>"
+    );
   }
 
-  function renderGrammarList(id, errors) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (!errors || !errors.length) {
-      el.innerHTML = emptyMsg("Грамматических ошибок не зафиксировано.");
+  function _hypCard(item) {
+    var hyp = item.hypothesis;
+    var label = categoryLabel(item.cat);
+    var hypId = hyp && hyp.id;
+    var n = item.occurrences;
+    var occChip =
+      n > 1
+        ? '<span class="hyp-occurrence-chip">' +
+          n +
+          " " +
+          pluralize(n, "урок", "урока", "уроков") +
+          "</span>"
+        : "";
+    var dismissBtn = hypId
+      ? '<button type="button" class="hyp-dismiss-btn" data-hid="' +
+        esc(hypId) +
+        '">Я сказал правильно</button>'
+      : "";
+    var examples = item.errors.map(_hypErrorItem).join("");
+    return (
+      '<div class="hyp-card" data-pattern="' +
+      esc(item.cat) +
+      '">' +
+      '<div class="hyp-header">' +
+      '<span class="hyp-label">' +
+      esc(label) +
+      "</span>" +
+      occChip +
+      dismissBtn +
+      "</div>" +
+      '<div class="hyp-examples">' +
+      examples +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  function renderHypothesisPatterns(report, hypotheses) {
+    var container = document.getElementById("grammar-list-current");
+    if (!container) return;
+
+    var errors = (report && report.grammar_errors) || [];
+    if (!errors.length) {
+      container.innerHTML = emptyMsg("Грамматических ошибок не зафиксировано.");
+      setBadge("badge-grammar-current", "0", true);
       return;
     }
-    el.innerHTML = errors
-      .map(function (e) {
-        var said = esc(e.error || "");
-        var correct = esc(e.correction || "");
-        var explanation = grammarExplanation(e);
-        var category = esc(e.category_label || categoryLabel(inferErrorCategory(e)));
-        var badge = patternBadgeHtml(e);
-        var meta =
-          category || badge
-            ? '<div class="error-meta">' +
-              (category ? '<span class="error-category-chip">' + category + "</span>" : "") +
-              badge +
-              "</div>"
-            : "";
-        return (
-          '<li class="error-item">' +
-          meta +
-          '<div class="error-row">' +
-          (said ? '<span class="said">«' + said + '»</span>' : "") +
-          (said && correct ? '<span class="arrow">→</span>' : "") +
-          (correct ? '<span class="correct">«' + correct + '»</span>' : "") +
-          renderGrammarToggle(explanation) +
-          "</div>" +
-          renderGrammarExplanation(explanation) +
-          "</li>"
-        );
-      })
-      .join("");
+
+    var hypMap = {};
+    (hypotheses || []).forEach(function (h) {
+      hypMap[h.pattern] = h;
+    });
+
+    var groups = {};
+    errors.forEach(function (e) {
+      var cat = e.error_category || "other";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(e);
+    });
+
+    var items = Object.keys(groups).map(function (cat) {
+      var hyp = hypMap[cat] || null;
+      return {
+        cat: cat,
+        errors: groups[cat],
+        hypothesis: hyp,
+        occurrences: (hyp && hyp.occurrences) || 1,
+      };
+    });
+
+    var recurring = items
+      .filter(function (i) { return i.occurrences > 1; })
+      .sort(function (a, b) { return b.occurrences - a.occurrences; });
+    var oneOff = items.filter(function (i) { return i.occurrences <= 1; });
+
+    var html = recurring.map(_hypCard).join("");
+    if (oneOff.length) {
+      html +=
+        '<details class="one-off-section">' +
+        '<summary class="one-off-toggle">Разовые наблюдения' +
+        ' <span class="one-off-count">(' + oneOff.length + ")</span></summary>" +
+        '<div class="one-off-body">' +
+        oneOff.map(_hypCard).join("") +
+        "</div></details>";
+    }
+
+    container.innerHTML = html;
+    setBadge("badge-grammar-current", grammarBadge(errors), true);
   }
 
   function renderStuckTopics(tracking) {
@@ -6480,6 +6504,34 @@
     if (!list || list.dataset.grammarBound) return;
     list.dataset.grammarBound = "1";
     list.addEventListener("click", function (e) {
+      // Dismiss hypothesis
+      var dismissBtn = e.target.closest(".hyp-dismiss-btn");
+      if (dismissBtn) {
+        var hid = dismissBtn.dataset.hid;
+        if (!hid || !STUDENT_ID || isDemo) return;
+        dismissBtn.disabled = true;
+        dismissBtn.textContent = "…";
+        fetch(
+          "/api/students/" + encodeURIComponent(STUDENT_ID) + "/hypotheses/" + encodeURIComponent(hid) + "/dismiss",
+          { method: "POST" }
+        )
+          .then(function (r) {
+            if (r.ok) {
+              state.hypotheses = (state.hypotheses || []).filter(function (h) { return h.id !== hid; });
+              var card = dismissBtn.closest(".hyp-card");
+              if (card) card.remove();
+            } else {
+              dismissBtn.disabled = false;
+              dismissBtn.textContent = "Я сказал правильно";
+            }
+          })
+          .catch(function () {
+            dismissBtn.disabled = false;
+            dismissBtn.textContent = "Я сказал правильно";
+          });
+        return;
+      }
+      // Expand explanation
       var btn = e.target.closest(".error-explain-toggle");
       if (!btn) return;
       var item = btn.closest(".error-item");

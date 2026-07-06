@@ -191,6 +191,18 @@ def _analyze_and_save(
         lesson_id=lesson["id"],
         analysis=analysis,
     )
+    try:
+        supabase_service.upsert_error_hypotheses(
+            student_id=student["id"],
+            lesson_id=lesson["id"],
+            analysis=analysis,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to upsert error hypotheses for student %s (lesson %s)",
+            student["id"],
+            lesson["id"],
+        )
     logger.info(
         "Report saved for student %s (lesson %s, %s chars)",
         student["id"],

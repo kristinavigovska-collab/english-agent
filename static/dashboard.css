@@ -5278,6 +5278,86 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   color: var(--text-muted);
 }
 
+/* ── Hypothesis pattern cards ── */
+.hypothesis-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.hyp-card {
+  background: #fafbfc;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.875rem 1rem;
+}
+
+.hyp-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.hyp-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1 1 auto;
+}
+
+.hyp-occurrence-chip {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: var(--amber);
+  border: 1px solid #fed7aa;
+  white-space: nowrap;
+}
+
+.hyp-dismiss-btn {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.2rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.hyp-dismiss-btn:hover { border-color: var(--green); color: var(--green); }
+.hyp-dismiss-btn:disabled { opacity: 0.5; cursor: default; }
+
+.hyp-examples { display: flex; flex-direction: column; gap: 0.5rem; }
+.hyp-examples .error-item { border-radius: 12px; }
+
+/* ── One-off observations (collapsed) ── */
+.one-off-section { margin-top: 0.25rem; }
+
+.one-off-toggle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+  user-select: none;
+}
+.one-off-toggle::-webkit-details-marker { display: none; }
+.one-off-toggle::before {
+  content: "▶";
+  font-size: 0.5625rem;
+  transition: transform 0.15s;
+}
+.one-off-section[open] .one-off-toggle::before { transform: rotate(90deg); }
+
+.one-off-count { color: var(--text-light); }
+
+.one-off-body { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+
 /* ── Vocabulary ── */
 .vocab-section { margin-bottom: 1.125rem; }
 .vocab-section:last-child { margin-bottom: 0; }

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-14" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-15" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -618,44 +618,7 @@
             </h2>
             <span class="score-badge amber" id="badge-grammar-current"><span class="num">6</span> ошибок</span>
           </div>
-          <ul class="error-list" id="grammar-list-current">
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«I have went to Paris last year»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«I went to Paris last year»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>Маркер «last year» указывает на завершённое действие в прошлом — нужен Past Simple (went). Present Perfect (have + V3) с конкретным прошлым временем не используется.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«She don't like spicy food»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«She doesn't like spicy food»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>В Present Simple с she/he/it вспомогательный глагол — doesn't, а основной глагол без окончания -s.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«I am living here since 2020»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«I have lived here since 2020»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>Since + точка в прошлом требует Present Perfect — действие началось тогда и продолжается. Present Continuous (am living) с since не сочетается.</div>
-            </li>
-            <li class="error-item">
-              <div class="error-row">
-                <span class="said">«More better than before»</span>
-                <span class="arrow">→</span>
-                <span class="correct">«Much better than before»</span>
-                <button type="button" class="error-explain-toggle" aria-expanded="false" aria-label="Показать пояснение"><span class="error-chevron" aria-hidden="true">▼</span></button>
-              </div>
-              <div class="error-explanation" hidden>У коротких прилагательных сравнительная степень — суффикс -er (better), без more. Much усиливает сравнение: much better.</div>
-            </li>
-          </ul>
+          <div class="hypothesis-list" id="grammar-list-current"></div>
         </section>
 
         <section class="card">
@@ -1219,11 +1182,11 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/dashboard-api.js?v=20260625-16"></script>
+  <script src="/static/dashboard-api.js?v=20260706-17"></script>
   <script src="/static/enrollment-state.js?v=20260703-01"></script>
   <script src="/static/student-learning-context.js?v=20260703-01"></script>
   <script src="/static/curriculum-stages.js?v=20260703-02"></script>
-  <script src="/static/dashboard.js?v=20260706-09" defer></script>
+  <script src="/static/dashboard.js?v=20260706-10" defer></script>
 
 </body>
 </html>
