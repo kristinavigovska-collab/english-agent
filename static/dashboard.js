@@ -5354,7 +5354,10 @@
     var lessonValue = document.getElementById("teacher-next-lesson-value");
     var btn = document.getElementById("btn-teacher-book");
 
-    if (badge) badge.textContent = hasLesson ? "Урок назначен" : "Урок не назначен";
+    if (badge) {
+      badge.textContent = hasLesson ? "Урок назначен" : "Урок не назначен";
+      badge.classList.toggle("teacher-card-status-badge--scheduled", hasLesson);
+    }
 
     if (avatar) {
       avatar.classList.toggle("teacher-avatar--scheduled", hasLesson);
