@@ -4881,15 +4881,15 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   color: var(--accent);
 }
 
-.teacher-book-btn--reschedule {
+.teacher-book-btn--join {
   border: none;
   padding: 0;
   border-radius: 0;
   color: var(--accent);
-  font-weight: 400;
+  font-weight: 600;
 }
 
-.teacher-book-btn--reschedule:hover {
+.teacher-book-btn--join:hover {
   border: none;
   color: var(--accent-hover);
 }

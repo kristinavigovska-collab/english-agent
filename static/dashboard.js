@@ -5375,11 +5375,11 @@
 
     if (btn) {
       if (hasLesson) {
-        btn.textContent = "Перенести";
-        btn.classList.add("teacher-book-btn--reschedule");
+        btn.textContent = "Присоединиться к уроку";
+        btn.classList.add("teacher-book-btn--join");
       } else {
         btn.textContent = "Записаться на урок ↓";
-        btn.classList.remove("teacher-book-btn--reschedule");
+        btn.classList.remove("teacher-book-btn--join");
       }
     }
   }
@@ -5411,7 +5411,8 @@
     var teacherBook = document.getElementById("btn-teacher-book");
     if (teacherBook) {
       teacherBook.addEventListener("click", function () {
-        if (STUB_TEACHER_CARD.nextLesson) return; // reschedule — stub, no action yet
+        if (STUB_TEACHER_CARD.nextLesson) return; // lesson already booked — join stub
+        state.curriculumStubPending = { action: "teacher_card" };
         resetBookClassFlow();
         setText("book-class-topic", "Записаться на урок");
         renderBookClassTeachers();
@@ -5451,8 +5452,17 @@
     if (bookConfirm) {
       bookConfirm.addEventListener("click", function () {
         var pending = state.curriculumStubPending;
-        if (!pending || pending.action !== "lesson") return;
+        if (!pending) return;
         if (!state.bookClassFlow || !state.bookClassFlow.slot) return;
+
+        if (pending.action === "teacher_card") {
+          STUB_TEACHER_CARD.nextLesson = state.bookClassFlow.slot;
+          renderTeacherCard();
+          closeCurriculumStubOverlays();
+          return;
+        }
+
+        if (pending.action !== "lesson") return;
         markCurriculumStubProgress(pending.classNum, { lesson: true });
         closeCurriculumStubOverlays();
       });
