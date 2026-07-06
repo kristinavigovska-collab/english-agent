@@ -186,10 +186,18 @@ def _analyze_and_save(
         student_name=student.get("name", ""),
         student_email=student.get("email", ""),
     )
+    drill_set = None
+    try:
+        drill_set = claude_service.generate_drills(analysis)
+    except Exception:
+        logger.exception(
+            "Failed to generate drills for lesson %s", lesson["id"]
+        )
     supabase_service.upsert_report_for_lesson(
         student_id=student["id"],
         lesson_id=lesson["id"],
         analysis=analysis,
+        drill_set=drill_set,
     )
     try:
         supabase_service.upsert_error_hypotheses(

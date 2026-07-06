@@ -193,6 +193,34 @@
     nextLesson: null, // e.g. "Чт, 12 июня · 18:00"
   };
 
+  var STUB_DRILLS = {
+    pattern: "present_perfect",
+    pattern_label: "Present Perfect / Past vs Perfect",
+    drills: [
+      {
+        prompt: "Выберите правильный вариант:",
+        context: "I ___ to Rome twice.",
+        options: ["have been", "was", "went"],
+        correct_index: 0,
+        explanation: "Present Perfect (have been) используется для опыта без указания конкретного времени.",
+      },
+      {
+        prompt: "Выберите правильный вариант:",
+        context: "She ___ her keys yesterday.",
+        options: ["has lost", "lost", "lose"],
+        correct_index: 1,
+        explanation: "Наречие yesterday указывает на конкретное время в прошлом — нужен Past Simple (lost).",
+      },
+      {
+        prompt: "Выберите правильный вариант:",
+        context: "They ___ in this city for five years.",
+        options: ["lived", "have lived", "are living"],
+        correct_index: 1,
+        explanation: "for five years без завершения действия → Present Perfect (have lived).",
+      },
+    ],
+  };
+
   var STUB_BOOKING_TEACHERS = [
     {
       id: "tutor-anna",
@@ -6232,6 +6260,7 @@
     renderHypothesisPatterns(report, state.hypotheses);
     renderStuckTopics(state.errorTracking);
     renderPrioritizedWeakTopics(report.prioritized_weak_topics || []);
+    renderDrillSet(report);
     setBadge("badge-vocab-current", report.vocabulary_level || "—", false);
     setBadge("badge-fluency-current", formatScore(report.fluency_score), true);
 
@@ -6542,6 +6571,83 @@
       btn.setAttribute("aria-expanded", expanded ? "false" : "true");
       panel.hidden = expanded;
       item.classList.toggle("is-open", !expanded);
+    });
+  }
+
+  function renderDrillSet(report) {
+    var card = document.getElementById("drill-set-card");
+    var listEl = document.getElementById("drill-list");
+    var chipEl = document.getElementById("drill-pattern-chip");
+    if (!card || !listEl) return;
+
+    var drillSet = (report && report.drills) || (isDemo ? STUB_DRILLS : null);
+    if (!drillSet || !drillSet.drills || !drillSet.drills.length) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+    if (chipEl) chipEl.textContent = drillSet.pattern_label || "";
+
+    listEl.innerHTML = drillSet.drills
+      .map(function (d, idx) {
+        var opts = (d.options || [])
+          .map(function (opt, oi) {
+            return (
+              '<button type="button" class="drill-option" data-drill-idx="' + idx +
+              '" data-opt-idx="' + oi + '" data-correct="' + (oi === d.correct_index ? "1" : "0") + '">' +
+              esc(opt) + "</button>"
+            );
+          })
+          .join("");
+        return (
+          '<div class="drill-item" id="drill-item-' + idx + '">' +
+          '<p class="drill-prompt">' + esc(d.prompt) + "</p>" +
+          (d.context ? '<p class="drill-context">' + esc(d.context) + "</p>" : "") +
+          '<div class="drill-options">' + opts + "</div>" +
+          '<div class="drill-feedback" id="drill-feedback-' + idx + '" hidden>' +
+          '<p class="drill-explanation">' + esc(d.explanation || "") + "</p>" +
+          "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    var reportId = report && report.id;
+    var hypId = drillSet.hypothesis_id || null;
+
+    listEl.querySelectorAll(".drill-option").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var drillIdx = parseInt(btn.dataset.drillIdx, 10);
+        var isCorrect = btn.dataset.correct === "1";
+        var item = document.getElementById("drill-item-" + drillIdx);
+        var feedback = document.getElementById("drill-feedback-" + drillIdx);
+        if (!item || item.dataset.answered) return;
+        item.dataset.answered = "1";
+
+        item.querySelectorAll(".drill-option").forEach(function (b) {
+          b.disabled = true;
+          if (b.dataset.correct === "1") b.classList.add("drill-option--correct");
+        });
+        btn.classList.add(isCorrect ? "drill-option--correct" : "drill-option--wrong");
+        if (feedback) feedback.hidden = false;
+
+        if (reportId && STUDENT_ID && !isDemo) {
+          fetch(
+            "/api/students/" + encodeURIComponent(STUDENT_ID) + "/drills",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                report_id: reportId,
+                drill_index: drillIdx,
+                answer: btn.textContent.trim(),
+                is_correct: isCorrect,
+                hypothesis_id: hypId,
+              }),
+            }
+          ).catch(function () {});
+        }
+      });
     });
   }
 

@@ -5,7 +5,7 @@ from typing import Any, Optional
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-from models.schemas import LessonAnalysis
+from models.schemas import DrillSet, LessonAnalysis
 from services.error_category_config import category_label
 
 load_dotenv()
@@ -105,8 +105,13 @@ def create_lesson(
     return result.data[0]
 
 
-def _report_payload(student_id: str, lesson_id: str, analysis: LessonAnalysis) -> dict:
-    return {
+def _report_payload(
+    student_id: str,
+    lesson_id: str,
+    analysis: LessonAnalysis,
+    drill_set: Optional[DrillSet] = None,
+) -> dict:
+    payload: dict[str, Any] = {
         "student_id": student_id,
         "lesson_id": lesson_id,
         "grammar_errors": [e.model_dump() for e in analysis.grammar_errors],
@@ -115,32 +120,69 @@ def _report_payload(student_id: str, lesson_id: str, analysis: LessonAnalysis) -
         "weak_topics": analysis.weak_topics,
         "recommendations": analysis.recommendations,
     }
+    if drill_set is not None:
+        payload["drills"] = drill_set.model_dump()
+    return payload
 
 
-def save_report(student_id: str, lesson_id: str, analysis: LessonAnalysis) -> dict:
+def save_report(
+    student_id: str,
+    lesson_id: str,
+    analysis: LessonAnalysis,
+    drill_set: Optional[DrillSet] = None,
+) -> dict:
     db = get_supabase()
     result = (
         db.table("reports")
-        .insert(_report_payload(student_id, lesson_id, analysis))
+        .insert(_report_payload(student_id, lesson_id, analysis, drill_set))
         .execute()
     )
     return result.data[0]
 
 
 def upsert_report_for_lesson(
-    student_id: str, lesson_id: str, analysis: LessonAnalysis
+    student_id: str,
+    lesson_id: str,
+    analysis: LessonAnalysis,
+    drill_set: Optional[DrillSet] = None,
 ) -> dict:
     db = get_supabase()
     existing = (
         db.table("reports").select("id").eq("lesson_id", lesson_id).limit(1).execute()
     )
-    payload = _report_payload(student_id, lesson_id, analysis)
+    payload = _report_payload(student_id, lesson_id, analysis, drill_set)
     if existing.data:
         result = (
             db.table("reports").update(payload).eq("lesson_id", lesson_id).execute()
         )
     else:
         result = db.table("reports").insert(payload).execute()
+    return result.data[0]
+
+
+def save_drill_result(
+    student_id: str,
+    report_id: str,
+    drill_index: int,
+    answer: str,
+    is_correct: bool,
+    hypothesis_id: Optional[str] = None,
+) -> dict:
+    db = get_supabase()
+    result = (
+        db.table("drill_results")
+        .insert(
+            {
+                "student_id": student_id,
+                "report_id": report_id,
+                "hypothesis_id": hypothesis_id,
+                "drill_index": drill_index,
+                "answer": answer,
+                "is_correct": is_correct,
+            }
+        )
+        .execute()
+    )
     return result.data[0]
 
 

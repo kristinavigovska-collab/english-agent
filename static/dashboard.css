@@ -5358,6 +5358,82 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .one-off-body { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
 
+/* ── Drill exercises ── */
+.drill-pattern-chip {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.drill-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.drill-item { display: flex; flex-direction: column; gap: 0.625rem; }
+
+.drill-prompt {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.drill-context {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0;
+}
+
+.drill-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.drill-option {
+  padding: 0.4375rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.875rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.drill-option:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.drill-option:disabled { cursor: default; }
+.drill-option--correct {
+  border-color: var(--green) !important;
+  background: #f0fdf4 !important;
+  color: var(--green) !important;
+}
+.drill-option--wrong {
+  border-color: var(--red) !important;
+  background: #fff5f5 !important;
+  color: var(--red) !important;
+  text-decoration: line-through;
+}
+
+.drill-feedback {
+  padding: 0.625rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+}
+
+.drill-explanation {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ── Vocabulary ── */
 .vocab-section { margin-bottom: 1.125rem; }
 .vocab-section:last-child { margin-bottom: 0; }

@@ -6,8 +6,8 @@ import os
 import anthropic
 from dotenv import load_dotenv
 
-from models.schemas import LessonAnalysis
-from services.error_category_config import ERROR_CATEGORY_IDS, normalize_category
+from models.schemas import Drill, DrillSet, LessonAnalysis
+from services.error_category_config import ERROR_CATEGORY_IDS, category_label, normalize_category
 from services.rubric_service import get_rubric_prompt
 from services.student_profiles import get_student_profile
 
@@ -200,3 +200,74 @@ def analyze_transcript(
     for item in data.get("grammar_errors", []):
         item["error_category"] = normalize_category(item.get("error_category"))
     return LessonAnalysis(**data)
+
+
+_DRILL_JSON_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "drills": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string"},
+                    "context": {"type": "string"},
+                    "options": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": {"type": "string"},
+                    },
+                    "correct_index": {"type": "integer"},
+                    "explanation": {"type": "string"},
+                },
+                "required": ["prompt", "context", "options", "correct_index", "explanation"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["drills"],
+    "additionalProperties": False,
+}
+
+
+def generate_drills(analysis: LessonAnalysis) -> DrillSet | None:
+    """Generate 3 multiple-choice drills targeting the most frequent error pattern."""
+    if not analysis.grammar_errors:
+        return None
+
+    counts: dict[str, int] = {}
+    for e in analysis.grammar_errors:
+        counts[e.error_category] = counts.get(e.error_category, 0) + 1
+    top_cat = max(counts, key=lambda k: counts[k])
+    top_errors = [e for e in analysis.grammar_errors if e.error_category == top_cat][:3]
+    label = category_label(top_cat)
+
+    examples = "\n".join(
+        f"- Ошибка: «{e.error}» → Правильно: «{e.correction}»"
+        for e in top_errors
+    )
+    prompt = (
+        f"Грамматический паттерн: {label}\n\n"
+        f"Реальные ошибки студента:\n{examples}\n\n"
+        "Создай ровно 3 упражнения с выбором ответа (multiple choice) на этот паттерн. "
+        "Каждое: короткое предложение с пропуском или ошибкой (context), "
+        "3 варианта ответа (options), правильный индекс (0–2), "
+        "краткое объяснение на русском (explanation). "
+        "Не повторяй дословно ошибки студента — создай похожие, но новые примеры."
+    )
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+        output_config={"format": {"type": "json_schema", "schema": _DRILL_JSON_SCHEMA}},
+    )
+    text = next(b.text for b in response.content if b.type == "text")
+    data = json.loads(text)
+    drills = [Drill(**d) for d in data.get("drills", [])]
+    if not drills:
+        return None
+    return DrillSet(pattern=top_cat, pattern_label=label, drills=drills)

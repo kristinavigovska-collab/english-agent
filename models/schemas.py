@@ -60,6 +60,7 @@ class ReportResponse(BaseModel):
     lesson_date: Optional[datetime] = None
     lesson_topic: Optional[str] = None
     prioritized_weak_topics: list[PrioritizedTopicResponse] = []
+    drills: Optional[DrillSet] = None
 
 
 class StudyPlanResponse(BaseModel):
@@ -188,6 +189,30 @@ class StudentReportsResponse(BaseModel):
     error_tracking: Optional[ErrorTrackingResponse] = None
     hypotheses: list[ErrorHypothesisResponse] = []
     reports: list[ReportResponse]
+
+
+class Drill(BaseModel):
+    type: str = "choice"
+    prompt: str
+    context: str = ""
+    options: list[str] = []
+    correct_index: int = 0
+    explanation: str = ""
+
+
+class DrillSet(BaseModel):
+    pattern: str
+    pattern_label: str
+    hypothesis_id: Optional[str] = None
+    drills: list[Drill] = []
+
+
+class DrillResultRequest(BaseModel):
+    report_id: str
+    drill_index: int = Field(ge=0, le=9)
+    answer: str
+    is_correct: bool
+    hypothesis_id: Optional[str] = None
 
 
 class HypothesisExample(BaseModel):

@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 from models.schemas import (
+    DrillResultRequest,
+    DrillSet,
     ErrorHypothesisResponse,
     ErrorTrackingResponse,
     HypothesisExample,
@@ -86,6 +88,8 @@ def _report_models(
             if row["id"] == latest_id
             else []
         )
+        raw_drills = row.get("drills")
+        drill_set = DrillSet(**raw_drills) if isinstance(raw_drills, dict) else None
         reports.append(
             ReportResponse(
                 id=row["id"],
@@ -103,6 +107,7 @@ def _report_models(
                 prioritized_weak_topics=[
                     PrioritizedTopicResponse(**item) for item in report_prioritized
                 ],
+                drills=drill_set,
             )
         )
     return reports
@@ -259,6 +264,23 @@ def get_student_reports(student_id: str):
         hypotheses=hypothesis_responses,
         **_student_goal_fields(student),
     )
+
+
+@router.post("/students/{student_id}/drills")
+def save_drill_result(student_id: str, body: DrillResultRequest):
+    """Record the student's answer to a drill exercise."""
+    student = supabase_service.get_student(student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    supabase_service.save_drill_result(
+        student_id=student_id,
+        report_id=body.report_id,
+        drill_index=body.drill_index,
+        answer=body.answer,
+        is_correct=body.is_correct,
+        hypothesis_id=body.hypothesis_id,
+    )
+    return {"status": "saved"}
 
 
 @router.post("/students/{student_id}/hypotheses/{hypothesis_id}/dismiss")
