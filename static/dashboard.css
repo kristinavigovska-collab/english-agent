@@ -4466,9 +4466,21 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
 
 .class-next-step-progress {
   display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+}
+
+.class-next-step-progress-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.class-next-step-progress-bar-row {
+  display: flex;
   align-items: center;
   gap: 0.625rem;
-  margin-top: 0.75rem;
 }
 
 .class-next-step-progress-track {

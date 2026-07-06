@@ -5213,15 +5213,7 @@
 
   function renderNextStepPracticeButton(practiceBtn, view) {
     if (!practiceBtn) return;
-    practiceBtn.classList.toggle("has-practice-pct", !!view.showPracticePctOnBtn);
-    if (view.showPracticePctOnBtn) {
-      practiceBtn.innerHTML =
-        '<span class="next-step-practice-label">Продолжить Practice</span>' +
-        '<span class="next-step-practice-pct">' +
-        view.progressPct +
-        "%</span>";
-      return;
-    }
+    practiceBtn.classList.remove("has-practice-pct");
     practiceBtn.textContent = view.practiceLabel;
   }
 
@@ -5292,6 +5284,10 @@
           "aria-label",
           "Прогресс Practice: " + view.progressPct + " процентов"
         );
+        var progressLabelEl = document.getElementById("class-next-step-progress-label");
+        if (progressLabelEl) {
+          progressLabelEl.textContent = "Practice к уроку " + view.classNum;
+        }
       }
     }
 
