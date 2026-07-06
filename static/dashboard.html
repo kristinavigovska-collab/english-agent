@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260703-06" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260706-01" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -518,55 +518,28 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
       </div>
 
-      <section class="home-activity-summary" id="home-activity-summary" hidden aria-label="Активность и обучение">
-        <div class="activity-bottom-row home-activity-row">
-          <article class="activity-tile activity-tile--breakdown">
-            <div class="activity-tile-head">
-              <h3 class="activity-tile-title">Как вы учитесь</h3>
-              <span class="activity-tile-kicker" id="home-activity-total-kicker">—</span>
+      <section class="home-teacher-card" id="home-teacher-card" aria-label="Ваш преподаватель">
+        <div class="teacher-card-status-row">
+          <span class="teacher-card-status-badge">Состояние А · Урок не назначен</span>
+        </div>
+        <div class="teacher-card-body">
+          <div class="teacher-card-left">
+            <div class="teacher-avatar" aria-hidden="true">АН</div>
+            <div class="teacher-card-info">
+              <p class="teacher-card-name">Анна · <span class="teacher-card-role">ваш преподаватель</span></p>
+              <p class="teacher-card-sub">ведёт вас по программе с этапа 1</p>
+              <div class="teacher-card-note">
+                <p><strong>После урока 3:</strong> «Хорошо держите структуру ответа. На следующем уроке дождём вежливый отказ — доведите Practice, там ваш кейс».</p>
+              </div>
             </div>
-            <div class="activity-breakdown" id="home-activity-breakdown"></div>
-          </article>
-
-          <article class="activity-tile activity-tile--heatmap">
-            <div class="activity-tile-head">
-              <h3 class="activity-tile-title" id="home-activity-heatmap-streak">—</h3>
-              <span class="activity-tile-kicker" id="home-activity-heatmap-longest">—</span>
+          </div>
+          <div class="teacher-card-right">
+            <div class="teacher-next-lesson">
+              <span class="teacher-next-lesson-label">Следующий урок</span>
+              <strong class="teacher-next-lesson-value">не назначен</strong>
             </div>
-            <div class="activity-heatmap-wrap" id="home-activity-heatmap" aria-label="Календарь активности"></div>
-            <div
-              class="activity-day-popover"
-              id="home-activity-day-popover"
-              role="dialog"
-              aria-labelledby="home-activity-day-popover-date"
-              hidden
-            >
-              <p class="activity-day-popover-date" id="home-activity-day-popover-date"></p>
-              <dl class="activity-day-popover-rows">
-                <div class="activity-day-popover-row">
-                  <dt>Время на платформе</dt>
-                  <dd id="home-activity-day-platform">—</dd>
-                </div>
-                <div class="activity-day-popover-row">
-                  <dt>Работа с агентом</dt>
-                  <dd id="home-activity-day-agent">—</dd>
-                </div>
-                <div class="activity-day-popover-row">
-                  <dt>Урок с преподавателем</dt>
-                  <dd id="home-activity-day-teacher">—</dd>
-                </div>
-              </dl>
-            </div>
-            <div class="activity-heatmap-legend" aria-hidden="true">
-              <span class="activity-heatmap-legend-label">Меньше</span>
-              <span class="activity-heatmap-legend-cell level-0"></span>
-              <span class="activity-heatmap-legend-cell level-1"></span>
-              <span class="activity-heatmap-legend-cell level-2"></span>
-              <span class="activity-heatmap-legend-cell level-3"></span>
-              <span class="activity-heatmap-legend-cell level-4"></span>
-              <span class="activity-heatmap-legend-label">Больше</span>
-            </div>
-          </article>
+            <button type="button" class="btn-link teacher-book-btn" id="btn-teacher-book">Записаться на урок ↓</button>
+          </div>
         </div>
       </section>
 
@@ -1284,7 +1257,7 @@
   <script src="/static/enrollment-state.js?v=20260703-01"></script>
   <script src="/static/student-learning-context.js?v=20260703-01"></script>
   <script src="/static/curriculum-stages.js?v=20260703-02"></script>
-  <script src="/static/dashboard.js?v=20260703-06" defer></script>
+  <script src="/static/dashboard.js?v=20260706-01" defer></script>
 
 </body>
 </html>

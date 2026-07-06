@@ -5362,6 +5362,17 @@
       });
     }
 
+    var teacherBook = document.getElementById("btn-teacher-book");
+    if (teacherBook) {
+      teacherBook.addEventListener("click", function () {
+        resetBookClassFlow();
+        setText("book-class-topic", "Записаться на урок");
+        renderBookClassTeachers();
+        var overlay = document.getElementById("book-class-overlay");
+        if (overlay) overlay.hidden = false;
+      });
+    }
+
     var nextBook = document.getElementById("btn-next-step-book");
     if (nextBook) {
       nextBook.addEventListener("click", function () {
