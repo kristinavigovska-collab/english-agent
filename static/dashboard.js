@@ -4243,7 +4243,7 @@
   }
 
   function canBookClass(item) {
-    if (!item || item.lessonCompleted) return false;
+    if (!item || item.lessonCompleted || item.lessonReportId) return false;
     return !!(item.isCurrent || item.isNextStep || item.isNext);
   }
 
@@ -5014,7 +5014,8 @@
   function getCurriculumStepActions(item) {
     var pct = normalizedPracticePercent(item);
     var practiceDone = isPracticeDone(item);
-    var bookable = canBookClass(item);
+    var hasAiReport = !!(item.lessonCompleted && item.lessonReportId);
+    var bookable = canBookClass(item) && !hasAiReport;
     return {
       practiceCompleted: practiceDone,
       practiceAvailable: isPracticeAvailable(item),
@@ -5023,7 +5024,7 @@
       lessonReportId: item.lessonReportId || null,
       showBookClass: bookable,
       bookRecommendPractice: bookable && !practiceDone,
-      showAiReport: !!(item.lessonCompleted && item.lessonReportId),
+      showAiReport: hasAiReport,
       showAiReportPreview:
         !item.lessonCompleted && !!(item.isCurrent || item.isNext),
       lessonLocked: !item.lessonCompleted && !isLessonAvailable(item),
@@ -5031,16 +5032,96 @@
     };
   }
 
+  function formatLessonEyebrow(classNum) {
+    return "Урок " + String(classNum).padStart(2, "0");
+  }
+
+  function getStepCardEyebrow(item, actions) {
+    if (actions.lessonCompleted) {
+      return formatLessonEyebrow(item.classNum);
+    }
+    if (
+      state.focusedClassNum &&
+      state.focusedClassNum !==
+        (getNextStepClassItem(state.curriculumItems) || {}).classNum
+    ) {
+      return formatLessonEyebrow(item.classNum);
+    }
+    if (item.isNext && !item.isCurrent) return "Следующая";
+    return "Текущий шаг";
+  }
+
+  function getStepCardAriaLabel(view) {
+    if (view.eyebrow === "Следующая") return "Следующая тема программы";
+    if (view.isPastLesson) return view.eyebrow + " · " + view.title;
+    if (view.eyebrow && view.eyebrow.indexOf("Урок ") === 0) {
+      return view.eyebrow + " · " + view.title;
+    }
+    return "Текущий шаг · " + formatReportClassLabel(view.classNum);
+  }
+
+  function getPastLessonPracticePercent(actions) {
+    var pct = actions.practicePercent;
+    if (actions.practiceCompleted || pct >= 100) return 100;
+    if (pct > 0) return pct;
+    return 100;
+  }
+
+  function buildPastLessonStepCardViewModel(
+    item,
+    actions,
+    title,
+    badge,
+    hasAiReport,
+    hasReportPreview
+  ) {
+    var displayPct = getPastLessonPracticePercent(actions);
+    var lead = hasAiReport
+      ? "Practice пройдена на " +
+        displayPct +
+        "%. Откройте AI Report по уроку или вернитесь к материалам для повторения."
+      : "Practice пройдена на " +
+        displayPct +
+        "%. Повторите материалы перед следующим live-уроком.";
+
+    return {
+      eyebrow: formatLessonEyebrow(item.classNum),
+      isPastLesson: true,
+      title: title,
+      lead: lead,
+      badge: badge,
+      showProgress: true,
+      progressPct: displayPct,
+      progressLabel: "Practice",
+      progressComplete: displayPct >= 100,
+      showPracticePctOnBtn: false,
+      showBook: actions.showBookClass && !actions.showAiReport,
+      bookRecommendPractice: false,
+      showReport: actions.showAiReport,
+      showReportPreview: hasReportPreview,
+      reportIsActive:
+        actions.showAiReport &&
+        actions.lessonReportId &&
+        actions.lessonReportId === state.selectedId,
+      practiceIsPrimary: false,
+      practiceLabel: "Повторить Practice",
+      bookLabel: "Book Class",
+      bookPreviewHint: BOOK_CLASS_PRACTICE_HINT,
+      reportLabel: "AI Report →",
+      reportPreviewLabel: "AI Report",
+      reportPreviewHint: actions.lessonLocked
+        ? actions.lessonLockedLabel
+        : "После урока",
+      reportId: actions.lessonReportId,
+      classNum: item.classNum,
+      topic: item.title,
+    };
+  }
+
   function buildStepCardViewModel(item) {
     var actions = getCurriculumStepActions(item);
     var pct = actions.practicePercent;
-    var eyebrow =
-      state.focusedClassNum && state.focusedClassNum !==
-        (getNextStepClassItem(state.curriculumItems) || {}).classNum
-        ? "Урок " + String(item.classNum).padStart(2, "0")
-        : item.isNext && !item.isCurrent
-          ? "Следующая"
-          : "Текущий шаг";
+    var eyebrow = getStepCardEyebrow(item, actions);
     var title = formatReportClassLabel(item.classNum) + " · " + item.title;
     var hasAiReport = actions.showAiReport;
     var hasReportPreview = actions.showAiReportPreview;
@@ -5052,16 +5133,20 @@
       badge = { text: "Нужно ускориться", tone: "warn" };
     }
 
+    if (actions.lessonCompleted) {
+      return buildPastLessonStepCardViewModel(
+        item,
+        actions,
+        title,
+        badge,
+        hasAiReport,
+        hasReportPreview
+      );
+    }
+
     if (!actions.practiceCompleted) {
       var lead;
-      if (actions.lessonCompleted) {
-        lead =
-          pct > 0
-            ? "Вы остановились на " +
-              pct +
-              "% — завершите Practice по этой теме. Урок уже пройден: преподаватель видит ваш AI Report и ждёт, когда вы закроете подготовку."
-            : "Начните Practice по этой теме. Урок уже состоялся — преподаватель изучил ваш AI Report и готов продолжить с того места, где вы остановились.";
-      } else if (pct > 0) {
+      if (pct > 0) {
         lead =
           "Вы остановились на " +
           pct +
@@ -5078,7 +5163,7 @@
         showProgress: pct > 0,
         progressPct: pct,
         showPracticePctOnBtn: pct > 0,
-        showBook: actions.showBookClass,
+        showBook: actions.showBookClass && !actions.showAiReport,
         bookRecommendPractice: actions.bookRecommendPractice,
         showReport: actions.showAiReport,
         showReportPreview: hasReportPreview,
@@ -5121,7 +5206,7 @@
       showProgress: false,
       progressPct: 100,
       showPracticePctOnBtn: false,
-      showBook: actions.showBookClass,
+      showBook: actions.showBookClass && !actions.showAiReport,
       bookRecommendPractice: false,
       showReport: actions.showAiReport,
       showReportPreview: hasReportPreview,
@@ -5150,6 +5235,13 @@
 
   function renderNextStepBookButton(bookBtn, view) {
     if (!bookBtn) return;
+    if (view.showReport) {
+      bookBtn.hidden = true;
+      bookBtn.disabled = true;
+      bookBtn.classList.remove("btn-primary", "btn-booked", "has-book-hint");
+      bookBtn.classList.add("btn-secondary", "is-locked");
+      return;
+    }
     bookBtn.hidden = !view.showBook;
     if (!view.showBook) return;
 
@@ -5263,13 +5355,11 @@
     };
 
     var eyebrowEl = document.getElementById("class-next-step-eyebrow");
-    if (eyebrowEl) eyebrowEl.textContent = view.eyebrow;
-    banner.setAttribute(
-      "aria-label",
-      view.eyebrow === "Следующая"
-        ? "Следующая тема программы"
-        : "Текущий шаг · " + formatReportClassLabel(view.classNum)
-    );
+    if (eyebrowEl) {
+      eyebrowEl.textContent = view.eyebrow;
+      eyebrowEl.hidden = !view.eyebrow;
+    }
+    banner.setAttribute("aria-label", getStepCardAriaLabel(view));
 
     if (titleEl) titleEl.textContent = view.title;
     leadEl.textContent = view.lead;
@@ -5287,8 +5377,11 @@
 
     if (progressWrap && progressFill && progressPctEl) {
       progressWrap.hidden = !view.showProgress;
+      progressWrap.classList.toggle("is-complete", !!view.progressComplete);
       if (view.showProgress) {
-        var width = Math.max(4, Math.min(100, view.progressPct));
+        var width = view.progressComplete
+          ? 100
+          : Math.max(4, Math.min(100, view.progressPct));
         progressFill.style.width = width + "%";
         progressPctEl.textContent = view.progressPct + "%";
         progressWrap.setAttribute(
@@ -5297,7 +5390,8 @@
         );
         var progressLabelEl = document.getElementById("class-next-step-progress-label");
         if (progressLabelEl) {
-          progressLabelEl.textContent = "Practice к уроку " + view.classNum;
+          progressLabelEl.textContent =
+            view.progressLabel || "Practice к уроку " + view.classNum;
         }
       }
     }

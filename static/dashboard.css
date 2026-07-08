@@ -4530,6 +4530,10 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   margin-top: 0.75rem;
 }
 
+.class-next-step-progress.is-complete .class-next-step-progress-pct {
+  color: var(--progress-deep);
+}
+
 .class-next-step-progress-label {
   font-size: 0.75rem;
   color: var(--text-muted);
