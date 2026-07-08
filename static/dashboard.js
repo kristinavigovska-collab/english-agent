@@ -4598,6 +4598,29 @@
     return label;
   }
 
+  function getSidebarCurrentLessonClassNum(items) {
+    items = items || state.curriculumItems || [];
+    var current = items.find(function (item) {
+      return !item.lessonCompleted;
+    });
+    return current ? current.classNum : null;
+  }
+
+  function isSidebarCurrentLesson(item) {
+    if (!item) return false;
+    var currentNum = getSidebarCurrentLessonClassNum();
+    return currentNum != null && item.classNum === currentNum;
+  }
+
+  function curriculumLessonPlayIconHtml() {
+    return (
+      '<span class="curriculum-stage-lesson-status curriculum-stage-lesson-play" aria-hidden="true">' +
+      '<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">' +
+      '<path d="M6 4.25l5.75 3.75L6 11.75V4.25z" fill="currentColor"/>' +
+      "</svg></span>"
+    );
+  }
+
   function stageMarkerHtml(stage, isLast) {
     if (stage.status === "completed") {
       return (
@@ -4620,17 +4643,13 @@
     if (item.lessonCompleted && item.lessonReportId) {
       return '<span class="curriculum-stage-lesson-status is-report">Репорт</span>';
     }
+    if (isSidebarCurrentLesson(item)) {
+      return curriculumLessonPlayIconHtml();
+    }
     if (item.completed || item.lessonCompleted) {
       return (
         '<span class="curriculum-stage-lesson-status" aria-hidden="true">' +
         '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4.5 8.25L7 10.75L11.75 5.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-        "</span>"
-      );
-    }
-    if (item.isCurrent || item.isNextStep) {
-      return (
-        '<span class="curriculum-stage-lesson-status curriculum-stage-lesson-play" aria-hidden="true">' +
-        '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M6 4.5l5.5 3.5L6 11.5V4.5z" fill="currentColor"/></svg>' +
         "</span>"
       );
     }
@@ -4647,7 +4666,7 @@
   function getCurriculumLessonRowClass(item) {
     var classes = [];
     if (state.focusedClassNum === item.classNum) classes.push("is-focused");
-    if (item.isCurrent || item.isNextStep) classes.push("is-current");
+    if (isSidebarCurrentLesson(item)) classes.push("is-current");
     if (!isPracticeAvailable(item) && !item.lessonCompleted && !item.completed) {
       classes.push("is-locked");
     }
