@@ -2869,7 +2869,7 @@
             '">программа</button>' +
             '<button type="button" class="btn btn-secondary program-detail-module-buy-btn" data-module-index="' +
             module.index +
-            '">Оплатить ' +
+            '">Открыть ' +
             esc(formatModuleTitle(module.index).toLowerCase()) +
             "</button>" +
             "</div>";
@@ -2920,8 +2920,8 @@
       var last = lockedModules[lockedModules.length - 1];
       var bundleLabel =
         lockedModules.length === 2
-          ? "Оплатить модули " + (first.index + 1) + " и " + (last.index + 1)
-          : "Оплатить модули " +
+          ? "Открыть модули " + (first.index + 1) + " и " + (last.index + 1)
+          : "Открыть модули " +
             (first.index + 1) +
             "–" +
             (last.index + 1);
@@ -2939,7 +2939,7 @@
       '<h2 class="program-detail-section-title" id="program-modules-title">Программа по модулям</h2>' +
       '<p class="program-detail-text">Курс разбит на ' +
       pluralizeModules(modules.length) +
-      ". Каждый модуль можно оплатить отдельно или докупить сразу несколько.</p>" +
+      ". Каждый модуль можно открыть отдельно или сразу несколько.</p>" +
       '<div class="program-detail-modules-grid">' +
       cards +
       "</div>" +
@@ -4741,7 +4741,7 @@
         ? '<div class="curriculum-stage-locked-actions">' +
           '<button type="button" class="btn btn-secondary curriculum-stage-buy-btn" data-module-index="' +
           stage.index +
-          '">Оплатить ' +
+          '">Открыть ' +
           esc(formatModuleTitle(stage.index).toLowerCase()) +
           "</button></div>"
         : "") +
@@ -4755,8 +4755,8 @@
     var last = lockedStages[lockedStages.length - 1];
     var label =
       lockedStages.length === 2
-        ? "Оплатить модули " + (first.index + 1) + " и " + (last.index + 1)
-        : "Оплатить модули " + (first.index + 1) + "–" + (last.index + 1);
+        ? "Открыть модули " + (first.index + 1) + " и " + (last.index + 1)
+        : "Открыть модули " + (first.index + 1) + "–" + (last.index + 1);
     return (
       '<div class="curriculum-modules-bundle">' +
       '<button type="button" class="btn btn-primary curriculum-modules-bundle-btn" data-bundle-to="' +
