@@ -46,6 +46,22 @@ class PrioritizedTopicResponse(BaseModel):
     consecutive_lessons_count: int = 0
 
 
+class Drill(BaseModel):
+    type: str = "choice"
+    prompt: str
+    context: str = ""
+    options: list[str] = []
+    correct_index: int = 0
+    explanation: str = ""
+
+
+class DrillSet(BaseModel):
+    pattern: str
+    pattern_label: str
+    hypothesis_id: Optional[str] = None
+    drills: list[Drill] = []
+
+
 class ReportResponse(BaseModel):
     id: str
     lesson_id: str
@@ -165,6 +181,23 @@ class StudentGoalUpdate(BaseModel):
         return value.strip()
 
 
+class HypothesisExample(BaseModel):
+    error: str = ""
+    correction: str = ""
+    explanation: str = ""
+    lesson_id: Optional[str] = None
+
+
+class ErrorHypothesisResponse(BaseModel):
+    id: str
+    pattern: str
+    pattern_label: str
+    examples: list[HypothesisExample] = []
+    occurrences: int = 1
+    status: str = "observed"
+    disputed_by_student: bool = False
+
+
 class StudentReportsResponse(BaseModel):
     student_id: str
     student_name: str
@@ -191,45 +224,12 @@ class StudentReportsResponse(BaseModel):
     reports: list[ReportResponse]
 
 
-class Drill(BaseModel):
-    type: str = "choice"
-    prompt: str
-    context: str = ""
-    options: list[str] = []
-    correct_index: int = 0
-    explanation: str = ""
-
-
-class DrillSet(BaseModel):
-    pattern: str
-    pattern_label: str
-    hypothesis_id: Optional[str] = None
-    drills: list[Drill] = []
-
-
 class DrillResultRequest(BaseModel):
     report_id: str
     drill_index: int = Field(ge=0, le=9)
     answer: str
     is_correct: bool
     hypothesis_id: Optional[str] = None
-
-
-class HypothesisExample(BaseModel):
-    error: str = ""
-    correction: str = ""
-    explanation: str = ""
-    lesson_id: Optional[str] = None
-
-
-class ErrorHypothesisResponse(BaseModel):
-    id: str
-    pattern: str
-    pattern_label: str
-    examples: list[HypothesisExample] = []
-    occurrences: int = 1
-    status: str = "observed"
-    disputed_by_student: bool = False
 
 
 class StudentEnrollmentUpdate(BaseModel):

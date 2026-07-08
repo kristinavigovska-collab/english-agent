@@ -2884,6 +2884,7 @@
           '<div class="program-detail-module-head">' +
           "<h3>" +
           esc(formatModuleTitle(module.index)) +
+          (module.title ? " · " + esc(module.title) : "") +
           "</h3>" +
           '<p class="program-detail-module-meta">' +
           esc(module.topicsLabel) +
@@ -4676,6 +4677,7 @@
       '<span class="curriculum-stage-head-text">' +
       '<span class="curriculum-stage-title">' +
       esc(formatModuleTitle(stage.index)) +
+      (stage.title ? " · " + esc(stage.title) : "") +
       "</span>" +
       '<span class="curriculum-stage-meta">' +
       esc(meta) +
