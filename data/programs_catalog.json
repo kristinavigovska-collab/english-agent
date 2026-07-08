@@ -39,9 +39,9 @@
     "weeks": 13,
     "tags": ["Opinions", "Conditionals", "Fluency"],
     "stages": [
-      { "id": 1, "title": "Основы общения", "lesson_count": 8 },
-      { "id": 2, "title": "Митинги и переговоры", "lesson_count": 9 },
-      { "id": 3, "title": "Презентации и закрепление", "lesson_count": 9 }
+      { "id": 1, "title": "Communication basics", "lesson_count": 8 },
+      { "id": 2, "title": "Meetings & negotiations", "lesson_count": 9 },
+      { "id": 3, "title": "Presentations & consolidation", "lesson_count": 9 }
     ]
   },
   {
@@ -139,9 +139,9 @@
       "Negotiation role-play"
     ],
     "stages": [
-      { "id": 1, "title": "Основы переговоров", "lesson_count": 4 },
-      { "id": 2, "title": "Убеждение и возражения", "lesson_count": 3 },
-      { "id": 3, "title": "Закрытие сделки", "lesson_count": 3 }
+      { "id": 1, "title": "Negotiation foundations", "lesson_count": 4 },
+      { "id": 2, "title": "Persuasion & objections", "lesson_count": 3 },
+      { "id": 3, "title": "Closing the deal", "lesson_count": 3 }
     ],
     "base": { "category": "business", "levelId": "upper_intermediate" }
   },

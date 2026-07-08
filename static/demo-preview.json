@@ -1,6 +1,6 @@
 {
   "student_id": "demo",
-  "student_name": "Кристина Виговская",
+  "student_name": "Pavel Cardenas",
   "student_email": "kristina.vigovska@gmail.com",
   "demo_activity_today": "2026-06-30",
   "reports": [
@@ -4492,7 +4492,7 @@
       {
         "class_index": 3,
         "class_num": 4,
-        "title": "Модуль 2: Opinions",
+        "title": "Module 2: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4507,7 +4507,7 @@
       {
         "class_index": 4,
         "class_num": 5,
-        "title": "Модуль 2: Conditionals",
+        "title": "Module 2: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4522,7 +4522,7 @@
       {
         "class_index": 5,
         "class_num": 6,
-        "title": "Модуль 2: Fluency",
+        "title": "Module 2: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4535,7 +4535,7 @@
       {
         "class_index": 6,
         "class_num": 7,
-        "title": "Модуль 3: Opinions",
+        "title": "Module 3: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4548,7 +4548,7 @@
       {
         "class_index": 7,
         "class_num": 8,
-        "title": "Модуль 3: Conditionals",
+        "title": "Module 3: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4561,7 +4561,7 @@
       {
         "class_index": 8,
         "class_num": 9,
-        "title": "Модуль 3: Fluency",
+        "title": "Module 3: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4574,7 +4574,7 @@
       {
         "class_index": 9,
         "class_num": 10,
-        "title": "Модуль 4: Opinions",
+        "title": "Module 4: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4587,7 +4587,7 @@
       {
         "class_index": 10,
         "class_num": 11,
-        "title": "Модуль 4: Conditionals",
+        "title": "Module 4: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4600,7 +4600,7 @@
       {
         "class_index": 11,
         "class_num": 12,
-        "title": "Модуль 4: Fluency",
+        "title": "Module 4: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4613,7 +4613,7 @@
       {
         "class_index": 12,
         "class_num": 13,
-        "title": "Модуль 5: Opinions",
+        "title": "Module 5: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4626,7 +4626,7 @@
       {
         "class_index": 13,
         "class_num": 14,
-        "title": "Модуль 5: Conditionals",
+        "title": "Module 5: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4639,7 +4639,7 @@
       {
         "class_index": 14,
         "class_num": 15,
-        "title": "Модуль 5: Fluency",
+        "title": "Module 5: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4652,7 +4652,7 @@
       {
         "class_index": 15,
         "class_num": 16,
-        "title": "Модуль 6: Opinions",
+        "title": "Module 6: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4665,7 +4665,7 @@
       {
         "class_index": 16,
         "class_num": 17,
-        "title": "Модуль 6: Conditionals",
+        "title": "Module 6: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4678,7 +4678,7 @@
       {
         "class_index": 17,
         "class_num": 18,
-        "title": "Модуль 6: Fluency",
+        "title": "Module 6: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4691,7 +4691,7 @@
       {
         "class_index": 18,
         "class_num": 19,
-        "title": "Модуль 7: Opinions",
+        "title": "Module 7: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4704,7 +4704,7 @@
       {
         "class_index": 19,
         "class_num": 20,
-        "title": "Модуль 7: Conditionals",
+        "title": "Module 7: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4717,7 +4717,7 @@
       {
         "class_index": 20,
         "class_num": 21,
-        "title": "Модуль 7: Fluency",
+        "title": "Module 7: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4730,7 +4730,7 @@
       {
         "class_index": 21,
         "class_num": 22,
-        "title": "Модуль 8: Opinions",
+        "title": "Module 8: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4743,7 +4743,7 @@
       {
         "class_index": 22,
         "class_num": 23,
-        "title": "Модуль 8: Conditionals",
+        "title": "Module 8: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4756,7 +4756,7 @@
       {
         "class_index": 23,
         "class_num": 24,
-        "title": "Модуль 8: Fluency",
+        "title": "Module 8: Fluency",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4769,7 +4769,7 @@
       {
         "class_index": 24,
         "class_num": 25,
-        "title": "Модуль 9: Opinions",
+        "title": "Module 9: Opinions",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,
@@ -4782,7 +4782,7 @@
       {
         "class_index": 25,
         "class_num": 26,
-        "title": "Модуль 9: Conditionals",
+        "title": "Module 9: Conditionals",
         "program_id": "general-intermediate",
         "lesson_completed": false,
         "practice_completed": false,

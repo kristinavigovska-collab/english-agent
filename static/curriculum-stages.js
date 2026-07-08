@@ -8,9 +8,9 @@
 
   var DEFAULT_STAGE_COUNT = 3;
   var DEFAULT_STAGE_TITLES = [
-    "Основы общения",
-    "Митинги и переговоры",
-    "Презентации и закрепление",
+    "Communication basics",
+    "Meetings & negotiations",
+    "Presentations & consolidation",
   ];
 
   function resolveStageDefinitions(program, totalClasses) {
@@ -21,7 +21,7 @@
       var defs = program.stages.slice(0, DEFAULT_STAGE_COUNT).map(function (stage, index) {
         return {
           id: stage.id != null ? stage.id : index + 1,
-          title: stage.title || "Модуль " + (index + 1),
+          title: stage.title || "Module " + (index + 1),
           lesson_count: Math.max(1, Number(stage.lesson_count || stage.lessons) || 1),
         };
       });
@@ -49,7 +49,7 @@
       assigned += lessons;
       stages.push({
         id: i + 1,
-        title: DEFAULT_STAGE_TITLES[i] || "Модуль " + (i + 1),
+        title: DEFAULT_STAGE_TITLES[i] || "Module " + (i + 1),
         lesson_count: lessons,
       });
     }
@@ -63,8 +63,8 @@
 
   function lessonTopicsLabel(startNum, endNum) {
     if (!startNum || !endNum) return "";
-    if (startNum === endNum) return "Тема " + startNum;
-    return "Темы " + startNum + "–" + endNum;
+    if (startNum === endNum) return "Class " + startNum;
+    return "Class " + startNum + "–" + endNum;
   }
 
   function countStageCompleted(lessons) {

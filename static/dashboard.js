@@ -2085,11 +2085,11 @@
   }
 
   function formatModuleTitle(moduleIndex) {
-    return "Модуль " + (Number(moduleIndex) + 1);
+    return "Module " + (Number(moduleIndex) + 1);
   }
 
   function pluralizeModules(count) {
-    return count + " " + pluralize(count, "модуль", "модуля", "модулей");
+    return count + " " + pluralize(count, "module", "modules", "modules");
   }
 
   function purchaseModulesThrough(lastModuleIndex) {
@@ -3912,7 +3912,7 @@
   }
 
   function formatCurriculumLessonTitle(title) {
-    return String(title || "").replace(/^Модуль\s+\d+\s*:\s*/i, "");
+    return String(title || "").replace(/^(?:Модуль|Module)\s+\d+\s*:\s*/i, "");
   }
 
   function collectCompletedLessonTopics(reports) {
@@ -4641,7 +4641,7 @@
 
   function curriculumLessonStatusHtml(item) {
     if (item.lessonCompleted && item.lessonReportId) {
-      return '<span class="curriculum-stage-lesson-status is-report">Репорт</span>';
+      return '<span class="curriculum-stage-lesson-status is-report">Report</span>';
     }
     if (isSidebarCurrentLesson(item)) {
       return curriculumLessonPlayIconHtml();
@@ -4710,7 +4710,7 @@
     var isLast = stage.index === state.programStages.length - 1;
     var meta = stage.topicsLabel;
     if (stage.status === "current" && !isLocked) {
-      meta += " · сейчас здесь";
+      meta += " · current";
     }
     return (
       '<section class="curriculum-stage is-' +
@@ -4760,7 +4760,7 @@
         ? '<div class="curriculum-stage-locked-actions">' +
           '<button type="button" class="btn btn-secondary curriculum-stage-buy-btn" data-module-index="' +
           stage.index +
-          '">Открыть ' +
+          '">Open ' +
           esc(formatModuleTitle(stage.index).toLowerCase()) +
           "</button></div>"
         : "") +
@@ -4774,8 +4774,8 @@
     var last = lockedStages[lockedStages.length - 1];
     var label =
       lockedStages.length === 2
-        ? "Открыть модули " + (first.index + 1) + " и " + (last.index + 1)
-        : "Открыть модули " + (first.index + 1) + "–" + (last.index + 1);
+        ? "Open modules " + (first.index + 1) + " and " + (last.index + 1)
+        : "Open modules " + (first.index + 1) + "–" + (last.index + 1);
     return (
       '<div class="curriculum-modules-bundle">' +
       '<button type="button" class="btn btn-primary curriculum-modules-bundle-btn" data-bundle-to="' +
@@ -4826,13 +4826,13 @@
     if (!enrollment) {
       section.hidden = false;
       if (summaryEl) {
-        summaryEl.textContent = "Программа не выбрана";
+        summaryEl.textContent = "No program selected";
       }
       if (progressFill) progressFill.style.width = "0%";
       stagesEl.innerHTML =
         '<div class="curriculum-empty">' +
-        '<p>Выберите программу обучения — от неё зависит путь к цели.</p>' +
-        '<button type="button" class="btn btn-secondary" id="btn-choose-program">Выбрать программу</button>' +
+        '<p>Choose a learning program — it shapes your path to the goal.</p>' +
+        '<button type="button" class="btn btn-secondary" id="btn-choose-program">Choose program</button>' +
         "</div>";
       var chooseBtn = document.getElementById("btn-choose-program");
       if (chooseBtn) {
@@ -4857,17 +4857,16 @@
 
     section.hidden = false;
     if (summaryEl) {
-      var programLabel = enrollment.program_name || "Программа";
+      var programLabel = enrollment.program_name || "Program";
       var modulePart = stages.length ? pluralizeModules(stages.length) + " · " : "";
       summaryEl.textContent =
         programLabel +
         " · " +
         modulePart +
-        "пройдено " +
         completedCount +
-        " из " +
+        " of " +
         items.length +
-        " уроков";
+        " lessons completed";
     }
     if (progressFill) {
       progressFill.style.width = progressPercent + "%";
@@ -4879,7 +4878,7 @@
 
     if (!items.length || !stages.length) {
       stagesEl.innerHTML =
-        '<div class="curriculum-empty">Нет уроков в программе</div>';
+        '<div class="curriculum-empty">No lessons in this program</div>';
       if (scrollEl) scrollEl.scrollTop = 0;
       renderHomeActivitySummary();
       return;
