@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260708-03" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260708-06" />
 </head>
 <body>
   <div id="dash-loading" hidden>Загрузка отчётов…</div>
@@ -315,7 +315,10 @@
               >
                 Выбрать цель
               </button>
-              <p class="sidebar-profile-subtitle" id="sidebar-profile-subtitle" hidden></p>
+              <div class="sidebar-program-meta">
+                <span class="level-tag sidebar-program-level-tag" id="sidebar-level-tag" hidden></span>
+                <p class="sidebar-profile-subtitle" id="sidebar-profile-subtitle" hidden></p>
+              </div>
               <span class="sidebar-program-active" id="sidebar-program-active" hidden></span>
               <div class="sidebar-program-actions" id="sidebar-program-actions" hidden>
                 <button
@@ -345,7 +348,6 @@
             </div>
           </div>
           <ul class="sidebar-program-menu" id="sidebar-program-menu" role="listbox" hidden></ul>
-          <span class="level-tag" id="sidebar-level-tag" hidden></span>
         </div>
       </div>
 
