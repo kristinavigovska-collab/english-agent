@@ -164,13 +164,20 @@
    * Темы Class — из program.tags (циклично), не из PLACEHOLDER_CEFR_CURRICULUM.
    */
   function buildClassTitlesForProgram(program, classCount) {
+    var explicit =
+      program.lesson_titles && program.lesson_titles.length
+        ? program.lesson_titles.slice()
+        : null;
     var tags = program.tags && program.tags.length ? program.tags.slice() : ["Практика"];
     var titles = [];
     var i;
 
     for (i = 0; i < classCount; i += 1) {
-      var tag = tags[i % tags.length];
-      titles.push(tag);
+      if (explicit && explicit[i]) {
+        titles.push(explicit[i]);
+      } else {
+        titles.push(tags[i % tags.length]);
+      }
     }
     return titles;
   }

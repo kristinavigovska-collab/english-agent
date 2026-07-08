@@ -15,6 +15,17 @@ def _normalize_topic(text: str) -> str:
 
 def _class_titles(program: dict[str, Any]) -> list[str]:
     count = max(0, int(program.get("classes") or 0))
+    explicit = program.get("lesson_titles") or []
+    if explicit:
+        titles = [str(title) for title in explicit[:count]]
+        if len(titles) < count:
+            tags = list(program.get("tags") or []) or ["Практика"]
+            index = len(titles)
+            while len(titles) < count:
+                titles.append(str(tags[index % len(tags)]))
+                index += 1
+        return titles
+
     tags = list(program.get("tags") or []) or ["Практика"]
     titles: list[str] = []
     for i in range(count):

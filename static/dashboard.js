@@ -4039,6 +4039,26 @@
     return items;
   }
 
+  function applyCurriculumFromEnrollment() {
+    var items = getCurriculumItemsFromContext();
+    if (!items.length) return;
+
+    items = applyCurriculumCompletions(items, state.reports, state.progressTracker);
+    state.reportClassMap = buildReportClassMap(items, state.reports);
+    attachClassIndexToReports(state.reports, state.reportClassMap);
+    state.curriculumItems = normalizeCurriculumItems(
+      enrichCurriculumWithReportIds(items, state.reportClassMap)
+    );
+    if (state.learningContext && typeof EnglishAgentSLC !== "undefined") {
+      EnglishAgentSLC.syncComputed(
+        state.learningContext,
+        state.curriculumItems,
+        state.studyPlan,
+        state.goal
+      );
+    }
+  }
+
   function refreshCurriculumState() {
     var enrollment = getActiveEnrollment();
     if (!enrollment) {
@@ -4050,7 +4070,8 @@
     if (
       typeof DashboardApi !== "undefined" &&
       DashboardApi.isStaticPreviewMode() &&
-      state.serverCurriculum
+      state.serverCurriculum &&
+      state.serverCurriculum.program_id === enrollment.program_id
     ) {
       applyServerCurriculum(state.serverCurriculum);
       return;
@@ -4058,6 +4079,11 @@
 
     if (state.serverCurriculum && state.serverCurriculum.program_id === enrollment.program_id) {
       applyServerCurriculum(state.serverCurriculum);
+      return;
+    }
+
+    if (state.learningContext && state.learningContext.curriculum) {
+      applyCurriculumFromEnrollment();
       return;
     }
 
@@ -4087,21 +4113,31 @@
     var lessonMetaByTopic = buildLessonMetaByTopic(reports);
     var practiceDates = collectPracticeDates(progressTracker);
     var usedSelfPractice = {};
+    var lessonMetaByClass = {};
+
+    (reports || []).forEach(function (report) {
+      var classNum = report.class_num != null ? Number(report.class_num) : null;
+      if (!classNum) return;
+      var lessonDate = parseIsoDate(report.lesson_date || report.created_at);
+      var existing = lessonMetaByClass[classNum];
+      if (!existing || (lessonDate && (!existing.date || lessonDate > existing.date))) {
+        lessonMetaByClass[classNum] = { reportId: report.id, date: lessonDate };
+      }
+    });
 
     items.forEach(function (item) {
       var key = normalizeCurriculumTopic(item.title);
-      item.lessonCompleted = !!completedTopics[key];
+      var classMeta = lessonMetaByClass[item.classNum];
+      item.lessonCompleted = !!completedTopics[key] || !!classMeta;
       item.practiceCompleted = false;
       item.lessonReportId = null;
       item.lessonDateIso = null;
 
-      if (item.lessonCompleted) {
-        var meta = lessonMetaByTopic[key];
-        if (meta) {
-          item.lessonReportId = meta.reportId;
-          item.lessonDateIso = meta.date ? isoDateOnly(meta.date) : null;
-        }
-        var lessonDate = meta ? meta.date : null;
+      var meta = lessonMetaByTopic[key] || classMeta;
+      if (item.lessonCompleted && meta) {
+        item.lessonReportId = meta.reportId;
+        item.lessonDateIso = meta.date ? isoDateOnly(meta.date) : null;
+        var lessonDate = meta.date || null;
         for (var i = 0; i < practiceDates.length; i += 1) {
           var practiceDate = practiceDates[i];
           var practiceKey = practiceDate.getTime();

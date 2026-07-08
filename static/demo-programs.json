@@ -253,6 +253,23 @@
         "Deals",
         "Objections"
       ],
+      "lesson_titles": [
+        "Opening & rapport",
+        "Interests vs positions",
+        "Active listening",
+        "Strategic questions",
+        "Making proposals",
+        "Handling objections",
+        "Persuasion tactics",
+        "Concessions & trade-offs",
+        "Closing the deal",
+        "Negotiation role-play"
+      ],
+      "stages": [
+        { "id": 1, "title": "Основы переговоров", "lesson_count": 4 },
+        { "id": 2, "title": "Убеждение и возражения", "lesson_count": 3 },
+        { "id": 3, "title": "Закрытие сделки", "lesson_count": 3 }
+      ],
       "base": {
         "category": "business",
         "levelId": "upper_intermediate"
