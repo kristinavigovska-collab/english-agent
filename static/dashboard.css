@@ -4488,6 +4488,10 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   margin-bottom: 0.5rem;
 }
 
+.class-next-step-meta[hidden] {
+  display: none;
+}
+
 .class-next-step-eyebrow {
   font-size: 0.6875rem;
   font-weight: 600;

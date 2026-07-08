@@ -5050,32 +5050,25 @@
     };
   }
 
-  function formatLessonEyebrow(classNum) {
-    return "Урок " + String(classNum).padStart(2, "0");
-  }
-
   function getStepCardEyebrow(item, actions) {
-    if (actions.lessonCompleted) {
-      return formatLessonEyebrow(item.classNum);
+    if (!item) return "";
+
+    var nextStep = getNextStepClassItem(state.curriculumItems);
+    if (nextStep && item.classNum === nextStep.classNum) {
+      return "Current";
     }
-    if (
-      state.focusedClassNum &&
-      state.focusedClassNum !==
-        (getNextStepClassItem(state.curriculumItems) || {}).classNum
-    ) {
-      return formatLessonEyebrow(item.classNum);
-    }
-    if (item.isNext && !item.isCurrent) return "Следующая";
-    return "Текущий шаг";
+
+    if (actions && actions.lessonCompleted) return "";
+    if (item.isNext) return "Next";
+    return "";
   }
 
   function getStepCardAriaLabel(view) {
-    if (view.eyebrow === "Следующая") return "Следующая тема программы";
-    if (view.isPastLesson) return view.eyebrow + " · " + view.title;
-    if (view.eyebrow && view.eyebrow.indexOf("Урок ") === 0) {
-      return view.eyebrow + " · " + view.title;
+    if (view.eyebrow === "Next") return "Next class · " + view.title;
+    if (view.eyebrow === "Current") {
+      return "Current · " + formatReportClassLabel(view.classNum);
     }
-    return "Текущий шаг · " + formatReportClassLabel(view.classNum);
+    return view.title || "Class step";
   }
 
   function getPastLessonPracticePercent(actions) {
@@ -5094,6 +5087,7 @@
     hasReportPreview
   ) {
     var displayPct = getPastLessonPracticePercent(actions);
+    var eyebrow = getStepCardEyebrow(item, actions);
     var lead = hasAiReport
       ? "Practice пройдена на " +
         displayPct +
@@ -5103,7 +5097,7 @@
         "%. Повторите материалы перед следующим live-уроком.";
 
     return {
-      eyebrow: formatLessonEyebrow(item.classNum),
+      eyebrow: eyebrow,
       isPastLesson: true,
       title: title,
       lead: lead,
@@ -5373,9 +5367,19 @@
     };
 
     var eyebrowEl = document.getElementById("class-next-step-eyebrow");
+    var metaEl = banner.querySelector(".class-next-step-meta");
+    var showEyebrow = !!view.eyebrow;
+    var showBadge = !!(view.badge && view.badge.text);
     if (eyebrowEl) {
-      eyebrowEl.textContent = view.eyebrow;
-      eyebrowEl.hidden = !view.eyebrow;
+      eyebrowEl.textContent = view.eyebrow || "";
+      eyebrowEl.hidden = !showEyebrow;
+      if (showEyebrow) eyebrowEl.removeAttribute("hidden");
+      else eyebrowEl.setAttribute("hidden", "");
+    }
+    if (metaEl) {
+      metaEl.hidden = !showEyebrow && !showBadge;
+      if (!showEyebrow && !showBadge) metaEl.setAttribute("hidden", "");
+      else metaEl.removeAttribute("hidden");
     }
     banner.setAttribute("aria-label", getStepCardAriaLabel(view));
 
@@ -5388,8 +5392,10 @@
         badgeEl.className =
           "class-next-step-badge " + (view.badge.tone === "warn" ? "is-warn" : "is-positive");
         badgeEl.hidden = false;
+        badgeEl.removeAttribute("hidden");
       } else {
         badgeEl.hidden = true;
+        badgeEl.setAttribute("hidden", "");
       }
     }
 
