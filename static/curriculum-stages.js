@@ -61,10 +61,20 @@
     return stages;
   }
 
+  function t(key, vars) {
+    if (typeof global.t === "function") return global.t(key, vars);
+    if (typeof global.DashboardI18n !== "undefined" && global.DashboardI18n.t) {
+      return global.DashboardI18n.t(key, vars);
+    }
+    return key;
+  }
+
   function lessonTopicsLabel(startNum, endNum) {
     if (!startNum || !endNum) return "";
-    if (startNum === endNum) return "Class " + startNum;
-    return "Class " + startNum + "–" + endNum;
+    if (startNum === endNum) {
+      return t("program.classes_one", { n: startNum });
+    }
+    return t("program.classes_range", { from: startNum, to: endNum });
   }
 
   function countStageCompleted(lessons) {

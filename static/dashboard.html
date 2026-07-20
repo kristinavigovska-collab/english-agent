@@ -504,25 +504,25 @@
         <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
       </div>
 
-      <section class="home-teacher-card" id="home-teacher-card" aria-label="Ваш преподаватель">
+      <section class="home-teacher-card" id="home-teacher-card" aria-label="Ваш преподаватель" data-i18n-aria="teacher.card">
         <div class="teacher-card-status-row">
-          <span class="teacher-card-status-badge" id="teacher-card-badge">Урок не назначен</span>
+          <span class="teacher-card-status-badge" id="teacher-card-badge" data-i18n="teacher.unscheduled">Урок не назначен</span>
         </div>
         <div class="teacher-card-body">
           <div class="teacher-card-left">
             <div class="teacher-avatar" id="teacher-avatar" aria-hidden="true">АН</div>
             <div class="teacher-card-info">
-              <p class="teacher-card-name">Анна · <span class="teacher-card-role">ваш преподаватель</span></p>
-              <p class="teacher-card-sub">ведёт вас по программе с модуля 1</p>
+              <p class="teacher-card-name">Анна · <span class="teacher-card-role" data-i18n="teacher.your_teacher">ваш преподаватель</span></p>
+              <p class="teacher-card-sub" data-i18n="teacher.leads_from_module" data-i18n-n="1">ведёт вас по программе с модуля 1</p>
               <div class="teacher-card-note" id="teacher-card-note"></div>
             </div>
           </div>
           <div class="teacher-card-right">
             <div class="teacher-next-lesson">
-              <span class="teacher-next-lesson-label">Следующий урок</span>
-              <strong class="teacher-next-lesson-value" id="teacher-next-lesson-value">не назначен</strong>
+              <span class="teacher-next-lesson-label" data-i18n="next_lesson.title">Следующий урок</span>
+              <strong class="teacher-next-lesson-value" id="teacher-next-lesson-value" data-i18n="next_lesson.not_scheduled">не назначен</strong>
             </div>
-            <button type="button" class="teacher-book-btn" id="btn-teacher-book">Записаться на урок ↓</button>
+            <button type="button" class="teacher-book-btn" id="btn-teacher-book" data-i18n="next_lesson.book">Записаться на урок ↓</button>
           </div>
         </div>
       </section>
@@ -546,7 +546,7 @@
               </div>
               <span class="class-next-step-progress-pct" id="class-next-step-progress-pct">0%</span>
             </div>
-            <span class="class-next-step-progress-label" id="class-next-step-progress-label">Practice</span>
+            <span class="class-next-step-progress-label" id="class-next-step-progress-label" data-i18n="lesson.practice">Практика</span>
           </div>
         </div>
         <div class="class-next-step-actions">
@@ -575,8 +575,8 @@
         <div class="lesson-topic-plaque" id="lesson-topic-plaque">
           <span class="lesson-topic-icon" aria-hidden="true">📋</span>
           <div class="lesson-topic-content">
-            <p class="lesson-topic-value" id="lesson-report-heading">Разбор урока</p>
-            <p class="lesson-report-goal" id="lesson-report-goal">Цель урока появится после подключения программы</p>
+            <p class="lesson-topic-value" id="lesson-report-heading" data-i18n="report.ai_report">Разбор урока</p>
+            <p class="lesson-report-goal" id="lesson-report-goal" data-i18n="lesson.goal_todo">Цель урока появится здесь</p>
             <p class="lesson-report-meta" id="lesson-report-meta">—</p>
           </div>
         </div>
@@ -602,7 +602,7 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-summary">📝</span>
-              <span data-i18n="report.summary">Краткое саммари урока</span>
+              <span data-i18n="report.summary">Коротко об уроке</span>
             </h2>
             <span class="score-badge"><span class="num" id="summary-score-num">7</span>/10</span>
           </div>
@@ -630,7 +630,7 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-grammar">✏️</span>
-              <span data-i18n="report.grammar">Грамматические ошибки</span>
+              <span data-i18n="report.grammar">Грамматика</span>
             </h2>
             <span class="score-badge amber" id="badge-grammar-current"><span class="num">0</span></span>
           </div>
@@ -641,7 +641,7 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-vocab">📚</span>
-              <span data-i18n="report.vocab">Словарный запас</span>
+              <span data-i18n="report.vocabulary">Словарный запас</span>
             </h2>
             <span class="score-badge" id="badge-vocab-current" hidden><span class="num">—</span>/10</span>
           </div>
@@ -666,7 +666,7 @@
             <div class="card-header">
               <h2 class="card-title">
                 <span class="card-icon icon-fluency">💬</span>
-                <span data-i18n="report.fluency">Беглость речи</span>
+                <span data-i18n="report.fluency">Беглость</span>
               </h2>
               <span class="score-badge green" id="badge-fluency-current"><span class="num">8</span>/10</span>
             </div>
@@ -695,12 +695,12 @@
           <div class="card-header">
             <h2 class="card-title">
               <span class="card-icon icon-plan">📋</span>
-              <span data-i18n="report.plan">План на следующий урок</span>
+              <span data-i18n="report.plan">План следующего урока</span>
             </h2>
           </div>
           <div class="plan-grid">
             <div class="plan-block">
-              <h4 data-i18n="report.plan_topics">Темы для проработки</h4>
+              <h4 data-i18n="report.plan_topics">Темы</h4>
               <div id="plan-weak-topics"></div>
             </div>
             <div class="plan-block">
@@ -1096,12 +1096,12 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/i18n.js?v=20260720-01"></script>
+  <script src="/static/i18n.js?v=20260720-02"></script>
   <script src="/static/dashboard-api.js?v=20260706-17"></script>
   <script src="/static/enrollment-state.js?v=20260703-01"></script>
   <script src="/static/student-learning-context.js?v=20260708-01"></script>
-  <script src="/static/curriculum-stages.js?v=20260720-01"></script>
-  <script src="/static/dashboard.js?v=20260720-01" defer></script>
+  <script src="/static/curriculum-stages.js?v=20260720-02"></script>
+  <script src="/static/dashboard.js?v=20260720-02" defer></script>
 
 </body>
 </html>

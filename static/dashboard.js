@@ -133,7 +133,7 @@
   var SUBSCRIPTION_STORAGE_KEY = "english_agent_subscription_v1";
   var FREE_PLAN_TRIAL_DAYS = 15;
   var BOOK_CLASS_PRACTICE_HINT =
-    "Рекомендуем пройти Practice на 100%, затем бронировать";
+    "Рекомендуем пройти практику на 100%, затем бронировать";
 
   var state = {
     reports: [],
@@ -466,12 +466,14 @@
       return;
     }
 
-    titleEl.textContent = t("notify.module_done_title", {
+    titleEl.textContent = t("notify.module_done", {
       n: completedModule.index + 1,
+      lessons: completedModule.lessonCount,
     });
-    leadEl.textContent = t("notify.module_done_lead", {
-      count: completedModule.lessonCount,
-    });
+    if (leadEl) {
+      leadEl.textContent = "";
+      leadEl.hidden = true;
+    }
     if (ctaBtn) ctaBtn.textContent = t("notify.module_done_cta");
     widget.hidden = false;
   }
@@ -4296,7 +4298,7 @@
   }
 
   function getLessonLockedLabel(item) {
-    if (!isPracticeDone(item)) return "После подготовки";
+    if (!isPracticeDone(item)) return t("lesson.after_practice");
     return "Недоступно";
   }
 
@@ -4424,8 +4426,8 @@
 
   function renderCurriculumLessonStatus(item) {
     var done = item.lessonCompleted;
-    var pendingLabel = "Урок не пройден";
-    var doneLabel = "Урок пройден";
+    var pendingLabel = t("lesson.not_done");
+    var doneLabel = t("lesson.done");
     var reportLabel = t("lesson.report");
     var className = "curriculum-status-pill " + (done ? "is-done" : "is-pending");
 
@@ -4438,8 +4440,10 @@
         active +
         '" data-report-id="' +
         esc(item.lessonReportId) +
-        '" aria-label="AI Report — разбор урока ' +
-        esc(formatReportClassLabel(item.classNum)) +
+        '" aria-label="' +
+        esc(t("report.ai_report")) +
+        " — " +
+        esc(formatLessonBreakdownTitle(item.classNum)) +
         '">' +
         classActionCheckIcon() +
         '<span class="curriculum-status-text">' +
@@ -4465,9 +4469,9 @@
   function renderCurriculumActionBtn(kind, classNum, topic, disabled, options) {
     options = options || {};
     var isBook = kind === "lesson";
-    var label = isBook ? t("lesson.book_class") : "Practice";
+    var label = isBook ? t("lesson.book_class") : t("lesson.practice");
     if (kind === "practice" && options.availableLabel) {
-      label = "Доступно";
+      label = t("lesson.available");
     }
     var btnClass = isBook ? "class-action-btn--primary" : "class-action-btn--outline";
     if (kind === "practice" && options.availableLabel) {
@@ -4484,7 +4488,9 @@
       progressPct != null &&
       progressPct > 0;
     var labelHtml = showProgress
-      ? '<span>Practice</span><span class="practice-progress-pct">' +
+      ? "<span>" +
+        esc(t("lesson.practice")) +
+        '</span><span class="practice-progress-pct">' +
         Math.round(progressPct) +
         "%</span>"
       : "<span>" + label + "</span>";
@@ -4517,7 +4523,7 @@
       });
     }
     if (!isPracticeAvailable(item)) {
-      return renderCurriculumLockedSlot("Недоступно");
+      return renderCurriculumLockedSlot(t("lesson.unavailable"));
     }
     if (pct > 0) {
       return renderCurriculumActionBtn("practice", item.classNum, item.title, false, {
@@ -5158,23 +5164,15 @@
   ) {
     var displayPct = getPastLessonPracticePercent(actions);
     var eyebrow = getStepCardEyebrow(item, actions);
-    var lead = hasAiReport
-      ? "Practice пройдена на " +
-        displayPct +
-        "%. Откройте AI Report по уроку или вернитесь к материалам для повторения."
-      : "Practice пройдена на " +
-        displayPct +
-        "%. Повторите материалы перед следующим live-уроком.";
-
     return {
       eyebrow: eyebrow,
       isPastLesson: true,
       title: title,
-      lead: lead,
+      lead: t("lesson.practice_done", { percent: displayPct }),
       badge: badge,
       showProgress: true,
       progressPct: displayPct,
-      progressLabel: "Practice",
+      progressLabel: t("lesson.practice"),
       progressComplete: displayPct >= 100,
       showPracticePctOnBtn: false,
       showBook: actions.showBookClass && !actions.showAiReport,
@@ -5193,7 +5191,7 @@
       reportPreviewLabel: t("lesson.report"),
       reportPreviewHint: actions.lessonLocked
         ? actions.lessonLockedLabel
-        : "После урока",
+        : t("lesson.after_class"),
       reportId: actions.lessonReportId,
       classNum: item.classNum,
       topic: item.title,
@@ -5232,10 +5230,10 @@
         lead =
           "Вы остановились на " +
           pct +
-          "%. Можете записаться на урок сейчас, но лучше сначала довести Practice до 100% — так live-сессия пройдёт продуктивнее.";
+          "%. Можете записаться на урок сейчас, но лучше сначала довести практику до 100% — так live-сессия пройдёт продуктивнее.";
       } else {
         lead =
-          "Начните Practice по теме. Book Class уже доступен, но мы рекомендуем сначала пройти подготовку на 100%, а затем бронировать занятие с преподавателем.";
+          "Начните практику по теме. Запись на урок уже доступна, но мы рекомендуем сначала пройти подготовку на 100%, а затем бронировать занятие с преподавателем.";
       }
       return {
         eyebrow: eyebrow,
@@ -5244,6 +5242,7 @@
         badge: badge,
         showProgress: pct > 0,
         progressPct: pct,
+        progressLabel: t("lesson.practice"),
         showPracticePctOnBtn: pct > 0,
         showBook: actions.showBookClass && !actions.showAiReport,
         bookRecommendPractice: actions.bookRecommendPractice,
@@ -5268,14 +5267,13 @@
       };
     }
 
-    var leadReady =
-      "Practice закрыта — вы готовы к live-сессии. ";
+    var leadReady = "Практика закрыта — вы готовы к live-сессии. ";
     if (actions.showBookClass) {
       leadReady +=
-        "Забронируйте урок на платформе — так же, как кнопка Book Class в программе слева. После занятия с преподавателем здесь появится ваш AI Report.";
+        "Забронируйте урок на платформе — так же, как кнопка «Записаться на урок» в программе слева. После занятия с преподавателем здесь появится разбор урока.";
     } else if (hasAiReport) {
       leadReady +=
-        "Откройте AI Report по пройденному уроку или вернитесь к Practice для повторения.";
+        "Откройте разбор пройденного урока или вернитесь к практике для повторения.";
     } else {
       leadReady += "Запишитесь на живой урок с преподавателем.";
     }
@@ -5304,7 +5302,7 @@
       reportPreviewLabel: t("lesson.report"),
       reportPreviewHint: actions.lessonLocked
         ? actions.lessonLockedLabel
-        : "После урока",
+        : t("lesson.after_class"),
       reportId: actions.lessonReportId,
       classNum: item.classNum,
       topic: item.title,
@@ -5374,10 +5372,7 @@
       reportBtn.classList.toggle("is-active", !!view.reportIsActive);
       reportBtn.classList.remove("is-locked");
       reportBtn.classList.remove("btn-link-style");
-      reportBtn.setAttribute(
-        "aria-label",
-        "AI Report — отчёт AI-агента с урока"
-      );
+      reportBtn.setAttribute("aria-label", t("report.ai_report"));
       return;
     }
 
@@ -5385,10 +5380,7 @@
     reportBtn.type = "button";
     reportBtn.classList.remove("class-next-step-report-btn", "is-active", "btn-link-style");
     reportBtn.classList.add("is-locked");
-    reportBtn.setAttribute(
-      "aria-label",
-      "AI Report появится после занятия с преподавателем"
-    );
+    reportBtn.setAttribute("aria-label", t("report.ai_report_pending"));
     reportBtn.innerHTML =
       classActionLockIcon() +
       '<span class="class-next-step-action-label">' +
@@ -5480,12 +5472,12 @@
         progressPctEl.textContent = view.progressPct + "%";
         progressWrap.setAttribute(
           "aria-label",
-          "Прогресс Practice: " + view.progressPct + " процентов"
+          t("lesson.practice") + ": " + view.progressPct + "%"
         );
         var progressLabelEl = document.getElementById("class-next-step-progress-label");
         if (progressLabelEl) {
           progressLabelEl.textContent =
-            view.progressLabel || "Practice к уроку " + view.classNum;
+            view.progressLabel || t("lesson.practice");
         }
       }
     }
@@ -5544,17 +5536,26 @@
   }
 
   function renderTeacherCard() {
-    var t = STUB_TEACHER_CARD;
-    var hasLesson = !!t.nextLesson;
+    var card = STUB_TEACHER_CARD;
+    var hasLesson = !!card.nextLesson;
 
     var badge = document.getElementById("teacher-card-badge");
     var avatar = document.getElementById("teacher-avatar");
     var note = document.getElementById("teacher-card-note");
     var lessonValue = document.getElementById("teacher-next-lesson-value");
+    var roleEl = document.querySelector(".teacher-card-role");
+    var subEl = document.querySelector(".teacher-card-sub");
+    var nextLabelEl = document.querySelector(".teacher-next-lesson-label");
     var btn = document.getElementById("btn-teacher-book");
 
+    if (roleEl) roleEl.textContent = t("teacher.your_teacher");
+    if (subEl) subEl.textContent = t("teacher.leads_from_module", { n: 1 });
+    if (nextLabelEl) nextLabelEl.textContent = t("next_lesson.title");
+
     if (badge) {
-      badge.textContent = hasLesson ? "Урок назначен" : "Урок не назначен";
+      badge.textContent = hasLesson
+        ? t("teacher.scheduled")
+        : t("teacher.unscheduled");
       badge.classList.toggle("teacher-card-status-badge--scheduled", hasLesson);
     }
 
@@ -5564,19 +5565,25 @@
 
     if (note) {
       note.innerHTML =
-        "<p><strong>" + t.noteLabel + ":</strong> " + t.noteText + "</p>";
+        "<p><strong>" +
+        esc(t("teacher.after_lesson", { n: 3 })) +
+        "</strong> " +
+        esc(card.noteText) +
+        "</p>";
     }
 
     if (lessonValue) {
-      lessonValue.textContent = hasLesson ? t.nextLesson : "не назначен";
+      lessonValue.textContent = hasLesson
+        ? card.nextLesson
+        : t("next_lesson.not_scheduled");
     }
 
     if (btn) {
       if (hasLesson) {
-        btn.textContent = "Присоединиться к уроку";
+        btn.textContent = t("teacher.join");
         btn.classList.add("teacher-book-btn--join");
       } else {
-        btn.textContent = "Записаться на урок";
+        btn.textContent = t("next_lesson.book");
         btn.classList.remove("teacher-book-btn--join");
       }
     }
@@ -5612,7 +5619,7 @@
         if (STUB_TEACHER_CARD.nextLesson) return; // lesson already booked — join stub
         state.curriculumStubPending = { action: "teacher_card" };
         resetBookClassFlow();
-        setText("book-class-topic", "Записаться на урок");
+        setText("book-class-topic", t("lesson.book_class"));
         renderBookClassTeachers();
         var overlay = document.getElementById("book-class-overlay");
         if (overlay) overlay.hidden = false;
@@ -6398,7 +6405,7 @@
     if (!classNum) return t("lesson.report");
     var stepNum = getCurrentStepClassNum();
     if (stepNum && classNum && classNum < stepNum) {
-      return t("lesson.report_title_previous", { n: classNum });
+      return t("lesson.report_title_previous", { lesson: classNum });
     }
     return t("lesson.report_title", { n: classNum });
   }
@@ -6542,20 +6549,9 @@
     if (!leadEl) return;
 
     var recs = (report && report.recommendations) || [];
-    var quote =
-      recs.length > 0
-        ? recs[0]
-        : t("report.next_step_empty");
-    if (classNum) {
-      leadEl.textContent =
-        t("report.next_step") +
-        " · Class " +
-        classNum +
-        ": " +
-        quote;
-    } else {
-      leadEl.textContent = quote;
-    }
+    // Card title is already report.next_step — lead is content only.
+    leadEl.textContent =
+      recs.length > 0 ? recs[0] : t("report.next_step_empty");
 
     if (ctaEl) {
       var item = findCurriculumItemByClassNum(classNum) || getNextStepClassItem(state.curriculumItems);
@@ -6875,7 +6871,9 @@
           .join("");
         return (
           '<div class="drill-item" id="drill-item-' + idx + '">' +
-          '<p class="drill-prompt">' + esc(d.prompt) + "</p>" +
+          '<p class="drill-prompt">' +
+          esc(d.prompt || t("practice_widget.choose_correct")) +
+          "</p>" +
           (d.context ? '<p class="drill-context">' + esc(d.context) + "</p>" : "") +
           '<div class="drill-options">' + opts + "</div>" +
           '<div class="drill-feedback" id="drill-feedback-' + idx + '" hidden>' +
@@ -7385,7 +7383,20 @@
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       var key = el.getAttribute("data-i18n");
       if (!key) return;
-      el.textContent = t(key);
+      var vars = {};
+      Array.prototype.forEach.call(el.attributes, function (attr) {
+        if (attr.name.indexOf("data-i18n-") === 0 && attr.name !== "data-i18n") {
+          var name = attr.name.slice("data-i18n-".length);
+          if (name === "aria") return;
+          vars[name] = attr.value;
+        }
+      });
+      el.textContent = t(key, Object.keys(vars).length ? vars : undefined);
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n-aria");
+      if (!key) return;
+      el.setAttribute("aria-label", t(key));
     });
   }
 

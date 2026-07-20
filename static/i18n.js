@@ -12,6 +12,7 @@
   var currentLocale = DEFAULT_LOCALE;
   var ready = false;
   var readyPromise = null;
+  var warnedKeys = Object.create(null);
 
   function nestedGet(obj, path) {
     if (!obj || !path) return undefined;
@@ -24,6 +25,18 @@
     return cur;
   }
 
+  function lookup(dict, key) {
+    if (!dict) return undefined;
+    var nested = nestedGet(dict, key);
+    if (nested != null && typeof nested !== "object") return nested;
+    // Flat-key fallback for legacy dictionaries.
+    if (Object.prototype.hasOwnProperty.call(dict, key)) {
+      var flat = dict[key];
+      if (flat != null && typeof flat !== "object") return flat;
+    }
+    return undefined;
+  }
+
   function interpolate(template, vars) {
     if (template == null) return "";
     var out = String(template);
@@ -34,12 +47,29 @@
     return out;
   }
 
-  function t(key, vars) {
-    var primary = nestedGet(dictionaries[currentLocale], key);
-    if (primary == null && currentLocale !== DEFAULT_LOCALE) {
-      primary = nestedGet(dictionaries[DEFAULT_LOCALE], key);
+  function humanizeKey(key) {
+    var parts = String(key).split(".");
+    var last = parts[parts.length - 1] || String(key);
+    return last.replace(/_/g, " ");
+  }
+
+  function warnMissing(key) {
+    if (warnedKeys[key]) return;
+    warnedKeys[key] = true;
+    if (typeof console !== "undefined" && typeof console.warn === "function") {
+      console.warn("[i18n] missing key:", key);
     }
-    if (primary == null) return key;
+  }
+
+  function t(key, vars) {
+    var primary = lookup(dictionaries[currentLocale], key);
+    if (primary == null && currentLocale !== DEFAULT_LOCALE) {
+      primary = lookup(dictionaries[DEFAULT_LOCALE], key);
+    }
+    if (primary == null) {
+      warnMissing(key);
+      return humanizeKey(key);
+    }
     return interpolate(primary, vars);
   }
 
@@ -111,6 +141,11 @@
     return ready;
   }
 
+  /** Test helper: resolve a key against an in-memory dict (Node / unit tests). */
+  function hasKey(dict, key) {
+    return lookup(dict, key) != null;
+  }
+
   global.DashboardI18n = {
     init: init,
     t: t,
@@ -120,6 +155,7 @@
     formatDateShort: formatDateShort,
     formatNumber: formatNumber,
     isReady: isReady,
+    hasKey: hasKey,
     SUPPORTED: SUPPORTED,
     DEFAULT_LOCALE: DEFAULT_LOCALE,
   };
