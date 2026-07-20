@@ -77,8 +77,9 @@
 
   function isStageFullyComplete(lessons) {
     if (!lessons || !lessons.length) return false;
+    // Single source of truth: a lesson counts when the live class is done.
     return lessons.every(function (item) {
-      return item.completed;
+      return !!item.lessonCompleted;
     });
   }
 

@@ -4810,6 +4810,26 @@ button.curriculum-status-pill--report.is-active .curriculum-status-arrow {
   line-height: 1.4;
 }
 
+.lesson-report-goal {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.report-next-step-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+#report-goal-progress-card .empty-msg {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
 /* ── Main content ── */
 .main {
   flex: 1;
