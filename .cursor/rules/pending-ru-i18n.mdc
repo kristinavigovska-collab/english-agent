@@ -1,0 +1,31 @@
+---
+description: Pending RU i18n / copy follow-ups after locale fill
+alwaysApply: true
+---
+
+# Pending: RU locale & copy
+
+After the nested `locales/ru.json` fill (raw keys fixed), still open:
+
+## Approve or edit extra keys
+
+Keys outside the approved brief — keep or reword before treating as final copy:
+
+- `program.none`, `choose`, `choose_lead`, `empty_lessons`, `modules_one`, `open_modules_range`, `classes_one`
+- `lesson.report_title`, `start_practice`, `continue_practice`, `more_practice`, `practice`, `current`, `next`, `after_class`, `after_practice`, `unavailable`, `done`, `not_done`, `available`
+- `step.*`, `report.next_step_empty` / `focus_empty` / `practice_empty` / `ai_report_pending`, `report.vocab` (alias)
+- `teacher.card` / `scheduled` / `unscheduled` / `book` / `join`
+- `nav.*`, `goal.*`, `common.*`
+
+## Product follow-ups
+
+- Pluralization for «N уроков позади» / «X из Y уроков» (now neutral «уроков»)
+- Wire reserved keys when UI appears: `practice_widget.consolidate`, `report.first_time`, `report.words_per_min`
+- Sweep remaining hard-coded strings in Programs / Analytics / goal modal into `t()`
+- Run `node scripts/check_i18n_keys.js` (or `pytest tests/test_i18n_locale.py`) when adding UI copy
+
+## Do not regress
+
+- Nested keys in `static/locales/ru.json` (not flat `"a.b"` leaves)
+- UI chrome: «практика», not «Practice»; `report.ai_report` = «Разбор урока»
+- Lesson/module **titles** stay as learning content (not translated into the dictionary)
