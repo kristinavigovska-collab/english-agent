@@ -1,95 +1,6 @@
 {
   "programs": [
     {
-      "id": "general-beginner",
-      "category": "general",
-      "levelId": "beginner",
-      "title": "General English — Beginner",
-      "description": "Старт с нуля: алфавит, базовые фразы, понимание простых вопросов и ответов в быту.",
-      "classes": 24,
-      "weeks": 12,
-      "tags": [
-        "Алфавит",
-        "Быт",
-        "Listening"
-      ]
-    },
-    {
-      "id": "general-elementary",
-      "category": "general",
-      "levelId": "elementary",
-      "title": "General English — Elementary",
-      "description": "Расширяем словарь и говорим о себе, семье, работе и повседневных ситуациях.",
-      "classes": 26,
-      "weeks": 13,
-      "tags": [
-        "Speaking",
-        "Present Simple",
-        "Travel"
-      ]
-    },
-    {
-      "id": "general-pre-intermediate",
-      "category": "general",
-      "levelId": "pre_intermediate",
-      "title": "General English — Pre-Intermediate",
-      "description": "Переходный уровень: увереннее в прошедшем времени, модальных глаголах и диалогах.",
-      "classes": 26,
-      "weeks": 13,
-      "tags": [
-        "Past tenses",
-        "Modal verbs",
-        "Dialogues"
-      ]
-    },
-    {
-      "id": "general-intermediate",
-      "category": "general",
-      "levelId": "intermediate",
-      "title": "General English — Intermediate",
-      "description": "Свободнее обсуждаете новости, планы и мнения; закрепляете грамматику среднего уровня.",
-      "classes": 26,
-      "weeks": 13,
-      "tags": [
-        "Opinions",
-        "Conditionals",
-        "Fluency"
-      ],
-      "stages": [
-        { "id": 1, "title": "Communication basics", "lesson_count": 8 },
-        { "id": 2, "title": "Meetings & negotiations", "lesson_count": 9 },
-        { "id": 3, "title": "Presentations & consolidation", "lesson_count": 9 }
-      ]
-    },
-    {
-      "id": "general-upper-intermediate",
-      "category": "general",
-      "levelId": "upper_intermediate",
-      "title": "General English — Upper-Intermediate",
-      "description": "Сложные темы, идиомы и точность речи — подготовка к продвинутому уровню и экзаменам.",
-      "classes": 28,
-      "weeks": 14,
-      "tags": [
-        "Idioms",
-        "Accuracy",
-        "Debates"
-      ]
-    },
-    {
-      "id": "general-advanced",
-      "category": "general",
-      "levelId": "advanced",
-      "title": "General English — Advanced",
-      "description": "Почти носительский уровень: нюансы, стили речи, профессиональные и академические контексты.",
-      "classes": 30,
-      "weeks": 15,
-      "tags": [
-        "Nuances",
-        "Academic",
-        "Professional"
-      ]
-    },
-    {
       "id": "business-intermediate",
       "category": "business",
       "levelId": "intermediate",
@@ -132,83 +43,11 @@
       ]
     },
     {
-      "id": "special-interview-it",
-      "category": "special",
-      "levelId": "upper_intermediate",
-      "title": "English for IT Interviews",
-      "goal_title": "Подготовка к IT-интервью в международную компанию",
-      "description": "Prepare for HR, technical, and final interviews for IT roles: practice answers about your stack and projects, and run mock sessions with a tutor.",
-      "classes": 12,
-      "weeks": 6,
-      "tags": [
-        "Technical",
-        "HR screen",
-        "Mock interview"
-      ],
-      "base": {
-        "category": "general",
-        "levelId": "upper_intermediate"
-      }
-    },
-    {
-      "id": "special-interview-pm",
-      "category": "special",
-      "levelId": "upper_intermediate",
-      "title": "English for Product Manager Interviews",
-      "description": "Product sense, roadmap, metrics, and stakeholder questions — plus case interviews with structured feedback from your tutor.",
-      "classes": 12,
-      "weeks": 6,
-      "tags": [
-        "Product sense",
-        "Metrics",
-        "Case interview"
-      ],
-      "base": {
-        "category": "general",
-        "levelId": "upper_intermediate"
-      }
-    },
-    {
-      "id": "special-interview-marketing",
-      "category": "special",
-      "levelId": "upper_intermediate",
-      "title": "English for Marketing Interviews",
-      "description": "Campaigns, analytics, performance marketing, and client cases — from HR screen to final round with role-play practice.",
-      "classes": 12,
-      "weeks": 6,
-      "tags": [
-        "Campaigns",
-        "Analytics",
-        "Client cases"
-      ],
-      "base": {
-        "category": "business",
-        "levelId": "upper_intermediate"
-      }
-    },
-    {
-      "id": "special-interview-sales",
-      "category": "special",
-      "levelId": "upper_intermediate",
-      "title": "English for Sales Interviews",
-      "description": "Pitch, discovery, objections, and role-play scenarios across every interview stage — with AI review after each live session.",
-      "classes": 12,
-      "weeks": 6,
-      "tags": [
-        "Pitch",
-        "Discovery",
-        "Objections"
-      ],
-      "base": {
-        "category": "business",
-        "levelId": "upper_intermediate"
-      }
-    },
-    {
       "id": "special-interview",
       "category": "special",
       "levelId": "upper_intermediate",
       "title": "Interview Preparation",
+      "goal_title": "Подготовка к собеседованию на английском",
       "description": "Собеседования на английском: self-pitch, ответы на типовые вопросы, mock interview.",
       "classes": 12,
       "weeks": 6,
@@ -216,11 +55,7 @@
         "CV",
         "HR questions",
         "Mock interview"
-      ],
-      "base": {
-        "category": "general",
-        "levelId": "upper_intermediate"
-      }
+      ]
     },
     {
       "id": "special-ielts",
@@ -234,11 +69,7 @@
         "Reading",
         "Writing",
         "Speaking"
-      ],
-      "base": {
-        "category": "general",
-        "levelId": "upper_intermediate"
-      }
+      ]
     },
     {
       "id": "special-negotiations",
@@ -266,9 +97,21 @@
         "Negotiation role-play"
       ],
       "stages": [
-        { "id": 1, "title": "Negotiation foundations", "lesson_count": 4 },
-        { "id": 2, "title": "Persuasion & objections", "lesson_count": 3 },
-        { "id": 3, "title": "Closing the deal", "lesson_count": 3 }
+        {
+          "id": 1,
+          "title": "Negotiation foundations",
+          "lesson_count": 4
+        },
+        {
+          "id": 2,
+          "title": "Persuasion & objections",
+          "lesson_count": 3
+        },
+        {
+          "id": 3,
+          "title": "Closing the deal",
+          "lesson_count": 3
+        }
       ],
       "base": {
         "category": "business",
@@ -305,11 +148,7 @@
         "Travel",
         "Culture",
         "Small talk"
-      ],
-      "base": {
-        "category": "general",
-        "levelId": "elementary"
-      }
+      ]
     },
     {
       "id": "special-customer-support",

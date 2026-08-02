@@ -427,7 +427,7 @@ def complete_curriculum_class(student_id: str, class_id: int):
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    program_id = student.get("program_id") or "general-intermediate"
+    program_id = student.get("program_id") or "special-negotiations"
     rows = supabase_service.get_student_reports(student_id)
     tracking_view = error_pattern_service.build_error_tracking(rows)
     plan = goal_plan_service.compute_study_plan(

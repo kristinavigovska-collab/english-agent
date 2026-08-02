@@ -107,7 +107,13 @@
         }
       }
     }
-    return "general-" + levelId.replace(/_/g, "-");
+    var fallbackCatalog = input.programCatalog || [];
+    for (var j = 0; j < fallbackCatalog.length; j += 1) {
+      if (fallbackCatalog[j].category === "special") {
+        return fallbackCatalog[j].id;
+      }
+    }
+    return "special-negotiations";
   }
 
   function normalizePlanTier(planId) {

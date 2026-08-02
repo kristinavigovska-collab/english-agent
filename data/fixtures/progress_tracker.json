@@ -655,7 +655,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-06-26",
@@ -664,7 +664,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-06-27",
@@ -673,7 +673,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-06-28",
@@ -682,7 +682,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-06-29",
@@ -691,7 +691,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-06-30",
@@ -700,7 +700,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-01",
@@ -709,7 +709,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-02",
@@ -718,7 +718,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-03",
@@ -727,7 +727,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-04",
@@ -736,7 +736,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-05",
@@ -745,7 +745,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-06",
@@ -754,7 +754,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-07",
@@ -763,7 +763,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-08",
@@ -772,7 +772,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-09",
@@ -781,7 +781,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-10",
@@ -790,7 +790,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-11",
@@ -799,7 +799,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-12",
@@ -808,7 +808,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-13",
@@ -817,7 +817,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-14",
@@ -826,7 +826,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-15",
@@ -835,7 +835,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-16",
@@ -844,7 +844,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-17",
@@ -853,7 +853,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-18",
@@ -862,7 +862,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-19",
@@ -871,7 +871,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-20",
@@ -880,7 +880,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-21",
@@ -889,7 +889,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-22",
@@ -898,7 +898,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-23",
@@ -907,7 +907,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-24",
@@ -916,7 +916,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-25",
@@ -925,7 +925,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-26",
@@ -934,7 +934,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-27",
@@ -943,7 +943,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-28",
@@ -952,7 +952,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-29",
@@ -961,7 +961,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-30",
@@ -970,7 +970,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-07-31",
@@ -979,7 +979,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-08-01",
@@ -988,7 +988,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-08-02",
@@ -997,7 +997,7 @@
       "completed": false,
       "completed_minutes": null,
       "source": null,
-      "state": "future"
+      "state": "missed"
     },
     {
       "date": "2026-08-03",
@@ -2766,7 +2766,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-06-26",
@@ -2775,7 +2775,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-06-27",
@@ -2784,7 +2784,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-06-28",
@@ -2793,7 +2793,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-06-29",
@@ -2802,7 +2802,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       }
     ],
     [
@@ -2813,7 +2813,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-01",
@@ -2822,7 +2822,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-02",
@@ -2831,7 +2831,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-03",
@@ -2840,7 +2840,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-04",
@@ -2849,7 +2849,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-05",
@@ -2858,7 +2858,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-06",
@@ -2867,7 +2867,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       }
     ],
     [
@@ -2878,7 +2878,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-08",
@@ -2887,7 +2887,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-09",
@@ -2896,7 +2896,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-10",
@@ -2905,7 +2905,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-11",
@@ -2914,7 +2914,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-12",
@@ -2923,7 +2923,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-13",
@@ -2932,7 +2932,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       }
     ],
     [
@@ -2943,7 +2943,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-15",
@@ -2952,7 +2952,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-16",
@@ -2961,7 +2961,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-17",
@@ -2970,7 +2970,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-18",
@@ -2979,7 +2979,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-19",
@@ -2988,7 +2988,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-20",
@@ -2997,7 +2997,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       }
     ],
     [
@@ -3008,7 +3008,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-22",
@@ -3017,7 +3017,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-23",
@@ -3026,7 +3026,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-24",
@@ -3035,7 +3035,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-25",
@@ -3044,7 +3044,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-26",
@@ -3053,7 +3053,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-27",
@@ -3062,7 +3062,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       }
     ],
     [
@@ -3073,7 +3073,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-29",
@@ -3082,7 +3082,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-30",
@@ -3091,7 +3091,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-07-31",
@@ -3100,7 +3100,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-08-01",
@@ -3109,7 +3109,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-08-02",
@@ -3118,7 +3118,7 @@
         "completed": false,
         "completed_minutes": null,
         "source": null,
-        "state": "future"
+        "state": "missed"
       },
       {
         "date": "2026-08-03",
@@ -4248,7 +4248,7 @@
     ]
   ],
   "completed_days": 3,
-  "planned_days_elapsed": 72,
+  "planned_days_elapsed": 111,
   "streak": 0,
   "pace_warning": "Темп ниже плана — выполнено 0% дней за последние 14 дней. Необходимая нагрузка выросла до 8.8 ч/нед",
   "can_mark_today": true,

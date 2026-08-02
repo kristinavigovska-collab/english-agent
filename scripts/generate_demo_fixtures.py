@@ -118,7 +118,7 @@ def main() -> None:
         daily_progress_service.tracker_to_dict(tracker) if tracker else None
     )
 
-    program_id = "general-intermediate"
+    program_id = "special-negotiations"
     curriculum = build_curriculum(
         program_id, DEMO_REPORTS, progress_tracker
     )

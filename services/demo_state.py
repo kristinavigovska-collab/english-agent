@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "data" / "fixtures"
 
-DEMO_PROGRAM_ID = "general-intermediate"
+DEMO_PROGRAM_ID = "special-negotiations"
 
 _default_goal: dict[str, Any] = {
     "goal_type": "scenario_based",

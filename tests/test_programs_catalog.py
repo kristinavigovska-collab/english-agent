@@ -10,16 +10,19 @@ def test_load_programs_catalog_not_empty():
     catalog = load_programs_catalog()
     assert len(catalog) >= 6
     assert all(p.get("id") for p in catalog)
+    assert all(p.get("category") != "general" for p in catalog)
+    assert all(not str(p.get("id", "")).startswith("general-") for p in catalog)
 
 
 def test_get_program_by_id():
-    program = get_program("general-beginner")
+    program = get_program("special-negotiations")
     assert program is not None
-    assert program["title"] == "General English — Beginner"
+    assert program["title"] == "Negotiations in English"
 
 
 def test_get_program_missing_returns_none():
     assert get_program("does-not-exist") is None
+    assert get_program("general-beginner") is None
 
 
 def test_program_row_to_api_maps_db_columns():
@@ -32,25 +35,25 @@ def test_program_row_to_api_maps_db_columns():
         "classes_count": 16,
         "weeks_count": 8,
         "tags": ["Reading"],
-        "base_category": "general",
+        "base_category": "business",
         "base_level_id": "upper_intermediate",
     }
     program = program_row_to_api(row)
     assert program["levelId"] == "upper_intermediate"
     assert program["classes"] == 16
     assert program["base"] == {
-        "category": "general",
+        "category": "business",
         "levelId": "upper_intermediate",
     }
 
 
 def test_program_api_to_row_roundtrip():
     program = {
-        "id": "general-beginner",
-        "category": "general",
-        "levelId": "beginner",
-        "title": "General English — Beginner",
-        "description": "Start",
+        "id": "business-intermediate",
+        "category": "business",
+        "levelId": "intermediate",
+        "title": "Business English — Intermediate",
+        "description": "Office English",
         "classes": 24,
         "weeks": 12,
         "tags": ["A"],
@@ -73,7 +76,7 @@ def test_validate_programs_catalog_rejects_duplicate_ids():
         [
             {
                 "id": "dup",
-                "category": "general",
+                "category": "special",
                 "levelId": "beginner",
                 "title": "A",
                 "description": "A",
@@ -83,7 +86,7 @@ def test_validate_programs_catalog_rejects_duplicate_ids():
             },
             {
                 "id": "dup",
-                "category": "general",
+                "category": "special",
                 "levelId": "beginner",
                 "title": "B",
                 "description": "B",
@@ -94,3 +97,23 @@ def test_validate_programs_catalog_rejects_duplicate_ids():
         ]
     )
     assert any("duplicate" in error for error in errors)
+
+
+def test_validate_rejects_general_category():
+    from services.programs_catalog import validate_programs_catalog
+
+    errors = validate_programs_catalog(
+        [
+            {
+                "id": "general-beginner",
+                "category": "general",
+                "levelId": "beginner",
+                "title": "General English — Beginner",
+                "description": "Start",
+                "classes": 24,
+                "weeks": 12,
+                "tags": [],
+            }
+        ]
+    )
+    assert any("invalid category" in error for error in errors)

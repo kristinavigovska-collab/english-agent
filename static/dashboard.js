@@ -174,7 +174,7 @@
     goalPlanCollapseBound: false,
     activityPopoverBound: false,
     activityPopoverDate: null,
-    programCategory: "general",
+    programCategory: "special",
     programLevel: "all",
     programsFilterBound: false,
     programDetailId: null,
@@ -232,7 +232,7 @@
     {
       id: "tutor-anna",
       name: "Anna K.",
-      note: "General & Business · B2–C1",
+      note: "Business & Special · B2–C1",
       slots: ["Сегодня 18:00", "Завтра 10:30", "Завтра 19:00"],
     },
     {
@@ -269,7 +269,6 @@
   };
 
   var PROGRAM_CATEGORY_LABELS = {
-    general: "General English",
     business: "Business English",
     special: "Special Program",
   };
@@ -2473,9 +2472,12 @@
     if (typeof EnrollmentState === "undefined") return;
     var previewProgramId = "special-negotiations";
     if (!getProgramById(previewProgramId)) {
-      previewProgramId = "general-intermediate";
+      var specials = getProgramCatalog().filter(function (p) {
+        return p.category === "special";
+      });
+      previewProgramId = specials.length ? specials[0].id : null;
     }
-    if (!getProgramById(previewProgramId)) return;
+    if (!previewProgramId || !getProgramById(previewProgramId)) return;
     if (!EnrollmentState.isEnrolled()) {
       enrollProgramLocally(previewProgramId, "standard", true);
     } else {
@@ -2586,6 +2588,7 @@
 
   function getProgramsForCategory(category, levelFilter) {
     return getProgramCatalog().filter(function (program) {
+      if (program.category === "general") return false;
       if (program.category !== category) return false;
       if (!levelFilter || levelFilter === "all") return true;
       if (program.category === "special") {
@@ -2602,16 +2605,7 @@
     var options = [{ id: "all", label: "Все уровни" }];
     var allowed = [];
 
-    if (category === "general") {
-      allowed = [
-        "beginner",
-        "elementary",
-        "pre_intermediate",
-        "intermediate",
-        "upper_intermediate",
-        "advanced",
-      ];
-    } else if (category === "business") {
+    if (category === "business") {
       allowed = ["intermediate", "upper_intermediate", "advanced"];
     } else {
       var seen = { all: true };
@@ -3017,15 +3011,7 @@
     var categoryLabel = PROGRAM_CATEGORY_LABELS[program.category] || program.category;
     var paragraphs = [program.description];
 
-    if (program.category === "general") {
-      paragraphs.push(
-        "Ступень линейной программы " +
-          categoryLabel +
-          " для уровня " +
-          (level ? level.label + " (" + level.cefr + ")" : program.levelId) +
-          ": говорение, аудирование, чтение и письмо в связной повседневной и учебной практике."
-      );
-    } else if (program.category === "business") {
+    if (program.category === "business") {
       paragraphs.push(
         "Программа " +
           categoryLabel +
@@ -3035,7 +3021,7 @@
       );
     } else {
       paragraphs.push(
-        "Специализированный курс с узким фокусом: вы тренируете конкретный навык поверх базовой программы English."
+        "Специализированный профессиональный курс: вы тренируете конкретный навык для рабочих и карьерных задач."
       );
     }
 
@@ -3220,15 +3206,13 @@
     if (hintEl) {
       if (state.programCategory === "special") {
         hintEl.textContent =
-          "Special Programs включают модули поверх General или Business — смотрите блок «Построено на базе».";
+          "Специализированные программы для рабочих и карьерных задач — фильтруйте по уровню.";
         hintEl.hidden = false;
       } else if (state.programCategory === "business") {
         hintEl.textContent = "Business English доступен с уровня Intermediate.";
         hintEl.hidden = false;
       } else {
-        hintEl.textContent =
-          "General English — линейный путь из 6 уровней от Beginner до Advanced.";
-        hintEl.hidden = false;
+        hintEl.hidden = true;
       }
     }
 
@@ -3260,7 +3244,7 @@
 
     document.querySelectorAll(".programs-category-tab").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        state.programCategory = btn.dataset.programCategory || "general";
+        state.programCategory = btn.dataset.programCategory || "special";
         state.programLevel = "all";
         renderProgramsPage();
       });

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 CATALOG_JSON_PATH = Path(__file__).resolve().parent.parent / "data" / "programs_catalog.json"
 _CATALOG_PATH = CATALOG_JSON_PATH
 
-VALID_CATEGORIES = frozenset({"general", "business", "special"})
+VALID_CATEGORIES = frozenset({"business", "special"})
 
 
 def program_row_to_api(row: dict[str, Any]) -> dict[str, Any]:
@@ -135,7 +135,12 @@ def load_programs_catalog_from_db() -> Optional[list[dict[str, Any]]]:
         rows = result.data or []
         if not rows:
             return None
-        return [program_row_to_api(row) for row in rows]
+        return [
+            program_row_to_api(row)
+            for row in rows
+            if row.get("category") != "general"
+            and not str(row.get("id") or "").startswith("general-")
+        ]
     except Exception as exc:
         logger.warning("Programs catalog DB load failed, using JSON fallback: %s", exc)
         return None

@@ -8,19 +8,19 @@ from services.programs_catalog import get_program
 
 def test_enrollment_row_to_api_shape():
     row = {
-        "program_id": "general-intermediate",
+        "program_id": "special-negotiations",
         "plan_id": "standard",
         "status": "active",
         "started_at": "2026-06-01T10:00:00+00:00",
     }
-    program = get_program("general-intermediate")
+    program = get_program("special-negotiations")
     assert program is not None
 
     api = enrollment_row_to_api(row, program)
-    assert api["program_id"] == "general-intermediate"
+    assert api["program_id"] == "special-negotiations"
     assert api["plan_id"] == "standard"
-    assert api["level_id"] == "intermediate"
-    assert api["level_cefr"] == "B1"
+    assert api["level_id"] == "upper_intermediate"
+    assert api["level_cefr"] == "B2"
     assert api["program_name"] == program["title"]
     assert api["student_confirmed"] is True
 

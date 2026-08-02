@@ -14,7 +14,7 @@ def test_get_enrollment_unknown_student_returns_404():
 def test_put_enrollment_unknown_student_returns_404():
     response = client.put(
         f"/api/students/{UNKNOWN_STUDENT}/enrollment",
-        json={"program_id": "general-beginner", "plan_id": "standard"},
+        json={"program_id": "special-negotiations", "plan_id": "standard"},
     )
     assert response.status_code == 404
 

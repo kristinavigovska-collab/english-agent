@@ -10,8 +10,9 @@ SQL files live in `scripts/migrations/`. Apply **in numeric order** on a project
 | `004_add_error_pattern_history.sql` | `error_pattern_history` for cross-lesson error tracking |
 | `005_add_lesson_topic.sql` | `lessons.lesson_topic` from calendar event title / Recall metadata |
 | `006_add_study_intensity_preset.sql` | `students.study_intensity_preset` (`once_week` \| `few_times_week` \| `daily`) |
-| `007_add_programs_catalog.sql` | `programs`, `program_plans`, `student_enrollments` + seed catalog (16 programs, 5 plans) |
+| `007_add_programs_catalog.sql` | `programs`, `program_plans`, `student_enrollments` + seed catalog |
 | `008_rename_practice_terminology.sql` | `daily_progress.source`: `self_practice` → `practice`; solo plan copy |
+| `011_deactivate_general_programs.sql` | Soft-disable General English rows (`is_active = false`) |
 
 ## Apply via CLI
 

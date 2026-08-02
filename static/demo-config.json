@@ -53,7 +53,6 @@
   "duration_weeks_min": 1,
   "duration_weeks_max": 104,
   "activity_heatmap_weeks": 16,
-  "demo_activity_today": "2026-06-30",
   "min_lessons_for_forecast": 5,
   "cefr_caption": "Уровень CEFR (международная шкала A1–C2)",
   "error_category_labels": {
