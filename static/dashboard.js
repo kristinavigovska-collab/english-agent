@@ -244,28 +244,20 @@
     {
       id: "tutor-maria",
       name: "Maria S.",
-      note: "Beginner – Intermediate",
+      note: "Intermediate – Upper-Intermediate",
       slots: ["Завтра 08:30", "Завтра 16:00", "Сб 11:00"],
     },
   ];
 
   var PROGRAM_LEVELS = {
-    beginner: { id: "beginner", label: "Beginner", cefr: "A1", order: 1 },
-    elementary: { id: "elementary", label: "Elementary", cefr: "A2", order: 2 },
-    pre_intermediate: {
-      id: "pre_intermediate",
-      label: "Pre-Intermediate",
-      cefr: "A2–B1",
-      order: 3,
-    },
-    intermediate: { id: "intermediate", label: "Intermediate", cefr: "B1", order: 4 },
+    intermediate: { id: "intermediate", label: "Intermediate", cefr: "B1", order: 1 },
     upper_intermediate: {
       id: "upper_intermediate",
       label: "Upper-Intermediate",
       cefr: "B2",
-      order: 5,
+      order: 2,
     },
-    advanced: { id: "advanced", label: "Advanced", cefr: "C1", order: 6 },
+    advanced: { id: "advanced", label: "Advanced", cefr: "C1", order: 3 },
   };
 
   var PROGRAM_CATEGORY_LABELS = {
@@ -2313,8 +2305,6 @@
 
   function cefrToProgramLevel(cefr) {
     var level = String(cefr || "").toUpperCase();
-    if (level === "A1") return "beginner";
-    if (level === "A2") return "elementary";
     if (level === "B1") return "intermediate";
     if (level === "B2") return "upper_intermediate";
     if (level === "C1" || level === "C2") return "advanced";

@@ -137,20 +137,6 @@
       }
     },
     {
-      "id": "special-travel",
-      "category": "special",
-      "levelId": "elementary",
-      "title": "Travel & Culture",
-      "description": "Поездки, аэропорт, отель и культурные ситуации — практичный английский для путешествий.",
-      "classes": 8,
-      "weeks": 4,
-      "tags": [
-        "Travel",
-        "Culture",
-        "Small talk"
-      ]
-    },
-    {
       "id": "special-customer-support",
       "category": "special",
       "levelId": "intermediate",

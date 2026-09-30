@@ -73,6 +73,8 @@ Nav labels in **English**; program copy mostly **Russian**.
 
 ### Special programs (`base` field)
 
+**Levels:** Intermediate, Upper-Intermediate, Advanced only — no Beginner / Elementary / Pre-Intermediate (migration 012 deactivates any such rows).
+
 Special programs reference a **base** General/Business level for curriculum anchoring:
 
 | Program id | `base` |
@@ -80,7 +82,6 @@ Special programs reference a **base** General/Business level for curriculum anch
 | `special-interview`, `special-ielts` | general / upper_intermediate |
 | `special-negotiations` | business / upper_intermediate |
 | `special-presentations`, `special-customer-support` | business / intermediate |
-| `special-travel` | general / elementary |
 | `special-management` | business / advanced |
 
 Stored in DB as `base_category` + `base_level_id` (nullable).
@@ -155,11 +156,11 @@ Expected future behavior: validate plan + program → Stripe Checkout Session �
 
 ## Catalog seed ids (007)
 
-**General:** `general-beginner`, `general-elementary`, `general-pre-intermediate`, `general-intermediate`, `general-upper-intermediate`, `general-advanced`
+**General:** `general-*` — deactivated in 011 (no General English on the platform).
 
 **Business:** `business-intermediate`, `business-upper-intermediate`, `business-advanced`
 
-**Special:** `special-interview`, `special-ielts`, `special-negotiations`, `special-presentations`, `special-travel`, `special-customer-support`, `special-management`
+**Special:** `special-interview`, `special-ielts`, `special-negotiations`, `special-presentations`, `special-customer-support`, `special-management`
 
 ## Related docs
 

@@ -8,6 +8,8 @@ SaaS for an English school: Recall.ai bot joins lessons → transcript → Claud
 
 **School model:** one Google Calendar on Recall (school account later). Student = guest email on calendar event. Not “invite agent by email”.
 
+**Levels:** platform serves **Intermediate and above only** (Intermediate · Upper-Intermediate · Advanced). No Beginner / Elementary / Pre-Intermediate programs, rubrics or level pickers. Claude's CEFR diagnostic (`vocabulary_level`) still uses the full A1–C2 scale.
+
 **Two product tracks (important):**
 
 | Track | Status | Source of truth |
@@ -201,7 +203,7 @@ uvicorn main:app --reload --port 8000
 python scripts/run_supabase_migration.py 005_add_lesson_topic.sql
 python scripts/run_supabase_migration.py 006_add_study_intensity_preset.sql
 python scripts/run_supabase_migration.py 007_add_programs_catalog.sql
-python scripts/run_supabase_migration.py 007_add_programs_catalog.sql
+python scripts/run_supabase_migration.py 012_deactivate_below_intermediate_programs.sql
 
 # Ops / debug
 python scripts/reprocess_lesson.py --help
