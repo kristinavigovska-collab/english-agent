@@ -2490,6 +2490,15 @@
         EnrollmentState.setActive(previewProgramId);
       }
     }
+    // Second example program so the profile switcher has something to switch to.
+    var secondaryProgramId = "special-presentations";
+    var hasSecondary = EnrollmentState.list().some(function (item) {
+      return item.program_id === secondaryProgramId;
+    });
+    if (!hasSecondary && getProgramById(secondaryProgramId)) {
+      enrollProgramLocally(secondaryProgramId, "standard", true);
+      EnrollmentState.setActive(previewProgramId);
+    }
     var enrollment = EnrollmentState.getActive();
     if (enrollment) {
       EnrollmentState.updateModulesUnlocked(enrollment.program_id, 1);

@@ -65,6 +65,17 @@
         }
       }
 
+      // Drop cached enrollments for programs no longer in the catalog (e.g. General English).
+      var catalog = this._catalog;
+      var pruned = false;
+      if (catalog.length) {
+        var before = this.enrollments.length;
+        this.enrollments = this.enrollments.filter(function (item) {
+          return !!findProgram(catalog, item.program_id);
+        });
+        pruned = this.enrollments.length !== before;
+      }
+
       try {
         this.activeProgramId = global.localStorage.getItem(ACTIVE_KEY) || null;
       } catch (errActive) {
@@ -86,7 +97,8 @@
           : null;
       }
 
-      this._syncCurrent();
+      if (pruned) this.save();
+      else this._syncCurrent();
       return this.getActive();
     },
 
