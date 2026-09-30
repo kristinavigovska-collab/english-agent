@@ -117,3 +117,31 @@ def test_validate_rejects_general_category():
         ]
     )
     assert any("invalid category" in error for error in errors)
+
+
+def test_catalog_has_no_levels_below_intermediate():
+    from services.programs_catalog import SUPPORTED_LEVELS, read_catalog_json_file
+
+    catalog = read_catalog_json_file()
+    assert all(p["levelId"] in SUPPORTED_LEVELS for p in catalog)
+    assert get_program("special-travel") is None
+
+
+def test_validate_rejects_level_below_intermediate():
+    from services.programs_catalog import validate_programs_catalog
+
+    errors = validate_programs_catalog(
+        [
+            {
+                "id": "special-travel",
+                "category": "special",
+                "levelId": "elementary",
+                "title": "Travel & Culture",
+                "description": "Trips",
+                "classes": 8,
+                "weeks": 4,
+                "tags": [],
+            }
+        ]
+    )
+    assert any("unsupported level" in error for error in errors)

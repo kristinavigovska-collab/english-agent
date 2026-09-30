@@ -13,6 +13,7 @@ SQL files live in `scripts/migrations/`. Apply **in numeric order** on a project
 | `007_add_programs_catalog.sql` | `programs`, `program_plans`, `student_enrollments` + seed catalog |
 | `008_rename_practice_terminology.sql` | `daily_progress.source`: `self_practice` → `practice`; solo plan copy |
 | `011_deactivate_general_programs.sql` | Soft-disable General English rows (`is_active = false`) |
+| `012_deactivate_below_intermediate_programs.sql` | Soft-disable programs below Intermediate, incl. `special-travel` |
 
 ## Apply via CLI
 

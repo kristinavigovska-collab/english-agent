@@ -37,6 +37,7 @@ Analyze the following dimensions:
 
 2. **Vocabulary level** — Rate the student's vocabulary range using the CEFR scale:
    A1 (Beginner) | A2 (Elementary) | B1 (Intermediate) | B2 (Upper-Intermediate) | C1 (Advanced) | C2 (Proficient)
+   The platform only teaches Intermediate and above, but label honestly: if the student's vocabulary is below B1, say A1 or A2.
 
 3. **Fluency score** — Rate overall spoken fluency from 0.0 to 10.0:
    - 0–3: Very basic, many pauses and errors

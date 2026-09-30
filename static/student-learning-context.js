@@ -61,8 +61,6 @@
 
   function cefrToProgramLevel(cefr) {
     var level = String(cefr || "").toUpperCase();
-    if (level === "A1") return "beginner";
-    if (level === "A2") return "elementary";
     if (level === "B1") return "intermediate";
     if (level === "B2") return "upper_intermediate";
     if (level === "C1" || level === "C2") return "advanced";

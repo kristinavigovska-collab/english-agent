@@ -13,9 +13,6 @@ VALID_PLAN_IDS = frozenset(
 ACTIVE_STATUSES = frozenset({"active", "trial"})
 
 PROGRAM_LEVEL_META: dict[str, dict[str, str]] = {
-    "beginner": {"label": "Beginner", "cefr": "A1"},
-    "elementary": {"label": "Elementary", "cefr": "A2"},
-    "pre_intermediate": {"label": "Pre-Intermediate", "cefr": "A2–B1"},
     "intermediate": {"label": "Intermediate", "cefr": "B1"},
     "upper_intermediate": {"label": "Upper-Intermediate", "cefr": "B2"},
     "advanced": {"label": "Advanced", "cefr": "C1"},

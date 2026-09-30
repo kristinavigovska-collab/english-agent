@@ -2,20 +2,18 @@
 
 Инструкции методиста для анализа уроков. Claude получает **только файл уровня студента**, не весь комплект сразу.
 
+Платформа работает только с уровнями **от Intermediate и выше** — Beginner, Elementary и Pre-Intermediate нет.
+
 ## Структура
 
 ```
 docs/rubrics/speaking/
-  beginner.yaml         # Beginner (A1) — готово
-  elementary.yaml       # Elementary (A2) — готово
-  pre_intermediate.yaml # Pre-Intermediate (B1) — готово
   intermediate.yaml       # Intermediate (B2) — готово
   upper_intermediate.yaml # Upper-Intermediate (B2+) — готово
   advanced.yaml           # Advanced (C1) — готово
-  ...
 ```
 
-## Шкала (Beginner · Elementary)
+## Шкала
 
 Одинаковая для всех уровней Yappi. По каждой категории: **5 · 10 · 15 · 20 · 25**
 

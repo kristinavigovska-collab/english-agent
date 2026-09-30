@@ -14,6 +14,8 @@ CATALOG_JSON_PATH = Path(__file__).resolve().parent.parent / "data" / "programs_
 _CATALOG_PATH = CATALOG_JSON_PATH
 
 VALID_CATEGORIES = frozenset({"business", "special"})
+# Platform serves Intermediate and above only.
+SUPPORTED_LEVELS = frozenset({"intermediate", "upper_intermediate", "advanced"})
 
 
 def program_row_to_api(row: dict[str, Any]) -> dict[str, Any]:
@@ -68,6 +70,10 @@ def validate_program_entry(entry: dict[str, Any], index: int) -> list[str]:
     category = entry.get("category")
     if category and category not in VALID_CATEGORIES:
         errors.append(f"{prefix}: invalid category '{category}'")
+
+    level_id = entry.get("levelId")
+    if level_id and level_id not in SUPPORTED_LEVELS:
+        errors.append(f"{prefix}: unsupported level '{level_id}' (Intermediate and above only)")
 
     for numeric in ("classes", "weeks"):
         value = entry.get(numeric)
@@ -140,6 +146,7 @@ def load_programs_catalog_from_db() -> Optional[list[dict[str, Any]]]:
             for row in rows
             if row.get("category") != "general"
             and not str(row.get("id") or "").startswith("general-")
+            and row.get("level_id") in SUPPORTED_LEVELS
         ]
     except Exception as exc:
         logger.warning("Programs catalog DB load failed, using JSON fallback: %s", exc)

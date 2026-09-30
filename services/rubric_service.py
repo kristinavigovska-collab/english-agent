@@ -12,9 +12,6 @@ RUBRICS_DIR = Path(__file__).resolve().parent.parent / "docs" / "rubrics" / "spe
 
 COURSE_LEVELS = frozenset(
     {
-        "beginner",
-        "elementary",
-        "pre_intermediate",
         "intermediate",
         "upper_intermediate",
         "advanced",
