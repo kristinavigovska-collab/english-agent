@@ -3170,7 +3170,6 @@
           '">Get started</button>') +
       "</div>" +
       "</div>" +
-      renderProgramDetailPlansSection(program) +
       "</div>";
   }
 
