@@ -38,7 +38,7 @@ MAX_PHRASE_GROUPS = 6
 MAX_PHRASES_PER_GROUP = 3
 STEP_IDS = ("position", "reason", "example", "conclusion")
 
-LANGUAGE_NAMES = {"en": "English", "es": "Spanish", "de": "German", "fr": "French"}
+LANGUAGE_NAMES = {"en": "English", "es": "Spanish", "de": "German", "pl": "Polish"}
 UI_LANGUAGE_NAMES = {"ru": "Russian", "en": "English", "uk": "Ukrainian", "pl": "Polish", "pt": "Brazilian Portuguese"}
 
 SYSTEM_PROMPT = """\
@@ -49,6 +49,7 @@ General rules:
 - The transcript is speech-recognition output. Ignore punctuation, capitalisation and likely recognition slips; flag only clear learner errors or clearly weak phrasing.
 - Refer to words only by their index. "from" and "to" are inclusive word indexes; keep each range as short as possible (usually 1-6 words).
 - Write every headline, rule, note and next_step in the EXPLANATION language given in the user message, in short plain sentences. Corrected wording ("better") is always in the SPOKEN language.
+- The speaker's gender is unknown: never flag gender-marked forms (for example Polish -łem/-łam, Spanish or German endings that depend on the speaker being male or female) as errors.
 - Never mention word indexes, positions or numbers like "word 24" in any text the learner will read; quote the actual words instead.
 - Be honest and kind. Do not invent mistakes; if the answer is strong, say so and report fewer items.
 
@@ -216,6 +217,12 @@ REPORT_SCHEMA = {
     "required": ["headline", "on_topic", "issues", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step", "model_answer", "phrase_bank", "signposting"],
     "additionalProperties": False,
 }
+
+def _thinking() -> dict:
+    """Reasoning is switched off: it multiplies latency and cost for no visible gain in this task.
+    Set DRILL_THINKING=on to let the model reason again."""
+    return {} if os.getenv("DRILL_THINKING") == "on" else {"thinking": {"type": "between_tools"}}
+
 
 _client: Optional[anthropic.Anthropic] = None
 
@@ -420,11 +427,14 @@ def expert_answer(topic: str, language: str, ui_locale: str, context: str) -> di
     )
     response = _get_client().messages.create(
         model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-        max_tokens=2500,
+        max_tokens=4000,
         system=[{"type": "text", "text": EXPERT_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": msg}],
         output_config={"format": {"type": "json_schema", "schema": EXPERT_SCHEMA}},
+        **_thinking(),
     )
+    if response.stop_reason == "max_tokens":
+        raise ValueError("expert answer was cut off")
     text = next(b.text for b in response.content if b.type == "text")
     return _expert_answer(json.loads(text))
 
@@ -444,7 +454,10 @@ def analyze(words: List[dict], metrics: dict, topic: str, language: str, ui_loca
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": build_user_message(words, metrics, topic, language, ui_locale, context)}],
             output_config={"format": {"type": "json_schema", "schema": REPORT_SCHEMA}},
+            **_thinking(),
         )
+        if response.stop_reason == "max_tokens":
+            raise ValueError("review was cut off")
         text = next(b.text for b in response.content if b.type == "text")
         return finalize(json.loads(text), words)
 

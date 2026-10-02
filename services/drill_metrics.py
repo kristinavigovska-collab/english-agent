@@ -20,13 +20,13 @@ FILLER_WORDS: Dict[str, set] = {
     "en": {"um", "uh", "uhm", "umm", "er", "erm", "ah", "hmm", "mm", "mhm"},
     "es": {"eh", "em", "ehm", "mm", "hmm", "este", "pues"},
     "de": {"äh", "ähm", "ehm", "öh", "hm", "hmm", "also"},
-    "fr": {"euh", "heu", "hum", "ben", "bah", "bref"},
+    "pl": {"yyy", "yy", "yyyy", "eee", "ee", "eeee", "eem", "ehm", "hmm", "mm", "mhm"},
 }
 FILLER_PHRASES: Dict[str, List[Tuple[str, ...]]] = {
     "en": [("you", "know"), ("i", "mean"), ("sort", "of"), ("kind", "of")],
     "es": [("o", "sea"), ("es", "decir"), ("¿sabes?",)],
     "de": [("sag", "mal"), ("ich", "meine"), ("weißt", "du")],
-    "fr": [("tu", "vois"), ("c'est-à-dire",), ("en", "fait")],
+    "pl": [("no", "wiesz"), ("to", "znaczy"), ("tak", "jakby"), ("jak", "by")],
 }
 # "sort of / kind of" are only fillers when they hedge; keep them out of the
 # deterministic pass and let the model decide.
