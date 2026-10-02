@@ -65,7 +65,9 @@ def base_raw(**over):
         "strengths": [],
         "structure": {"steps": {sid: {"present": False, "quote": ""} for sid in ("position", "reason", "example", "conclusion")}, "note": "n"},
         "fillers_note": "f", "hedges_note": "h", "next_step": "step",
-        "model_answer": {"parts": [{"role": "position", "text": "I would stay home.", "connectors": []}], "tips": ["a"]},
+        "model_answer": {"parts": [{"role": "position", "text": "I would stay home.", "connectors": [], "why": ""}], "tips": ["a"]},
+        "expert_answer": {"persona": "Hiring manager", "framework": "STAR", "tips": ["t"], "parts": [
+            {"role": "situation", "text": "Last quarter our launch slipped.", "connectors": [], "why": "sets the scene"}]},
         "phrase_bank": [],
         "signposting": {"used": [], "missing": []},
     }
@@ -97,17 +99,19 @@ def test_finalize_routes_issue_types_and_validates_ranges():
     assert out["strengths"] == [{"from": 0, "to": 0, "note": "ok"}]
     assert len(out["rewrites"]) == 1 and out["rewrites"][0]["original"].startswith("I am walking")
     assert out["headline"] and out["onTopic"] == "yes" and out["nextStep"] == "step"
-    assert out["modelAnswer"] == {"parts": [{"role": "position", "text": "I would stay home.", "connectors": []}], "tips": ["a"]}
+    assert out["modelAnswer"] == {"parts": [{"role": "position", "text": "I would stay home.", "connectors": [], "why": ""}], "tips": ["a"]}
+    assert out["expertAnswer"]["persona"] == "Hiring manager" and out["expertAnswer"]["framework"] == "STAR"
+    assert out["expertAnswer"]["parts"][0]["role"] == "situation" and out["expertAnswer"]["parts"][0]["why"] == "sets the scene"
 
 
 def test_model_answer_is_sanitised():
     words = make_words("one two three four five six seven eight")
     raw = base_raw(model_answer={
-        "parts": [{"role": "bogus", "text": "x", "connectors": []}, {"role": "reason", "text": "  ", "connectors": []}] + [{"role": "example", "text": f"p{i}", "connectors": []} for i in range(9)],
+        "parts": [{"role": "bogus", "text": "x", "connectors": [], "why": ""}, {"role": "reason", "text": "  ", "connectors": [], "why": ""}] + [{"role": "example", "text": f"p{i}", "connectors": [], "why": ""} for i in range(9)],
         "tips": ["", "t1", "t2", "t3", "t4"],
     })
     ma = drill_analysis_service.finalize(raw, words)["modelAnswer"]
-    assert len(ma["parts"]) == drill_analysis_service.MAX_MODEL_PARTS and ma["parts"][0] == {"role": "example", "text": "p0", "connectors": []}
+    assert len(ma["parts"]) == drill_analysis_service.MAX_MODEL_PARTS and ma["parts"][0] == {"role": "example", "text": "p0", "connectors": [], "why": ""}
     assert ma["tips"] == ["t1", "t2", "t3"]
     assert drill_analysis_service.finalize(base_raw(model_answer={}), words)["modelAnswer"] == {"parts": [], "tips": []}
 
@@ -183,7 +187,11 @@ def fake_stt(text, step=0.5):
     return _t
 
 
-def fake_analysis(words, metrics, topic, language, ui_locale):
+SEEN = {}
+
+
+def fake_analysis(words, metrics, topic, language, ui_locale, context="general"):
+    SEEN["context"] = context
     return drill_analysis_service.finalize(
         base_raw(issues=[{"from": 2, "to": 3, "type": "hedge", "kind": "other", "better": "The key thing", "rule": "hedge"}]),
         words,
@@ -192,6 +200,16 @@ def fake_analysis(words, metrics, topic, language, ui_locale):
 
 def post(client, data=b"x" * 5000, ctype="audio/webm;codecs=opus", **form):
     return client.post("/api/drill/analyze", files={"audio": ("a.webm", data, ctype)}, data={"language": "en", "topic": "T", "ui_locale": "ru", **form})
+
+
+def test_context_is_validated_and_passed_on(client, monkeypatch):
+    monkeypatch.setattr(deepgram_service, "transcribe", fake_stt(GOOD_TEXT))
+    monkeypatch.setattr(drill_analysis_service, "analyze", fake_analysis)
+    monkeypatch.setenv("DRILL_DISABLE_LIMIT", "1")
+    assert post(client, context="negotiation").status_code == 200 and SEEN["context"] == "negotiation"
+    assert post(client, context="<script>").status_code == 200 and SEEN["context"] == "general"
+    body = post(client, context="sales").json()
+    assert body["expertAnswer"]["framework"] == "STAR"
 
 
 def test_happy_path(client, monkeypatch):

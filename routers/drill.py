@@ -1,6 +1,6 @@
 """Public endpoint behind the website's 1-minute speaking drill.
 
-POST /api/drill/analyze  (multipart: audio, language, topic, ui_locale)
+POST /api/drill/analyze  (multipart: audio, language, topic, ui_locale, context)
 Nothing is stored: the audio and transcript live in memory for the length of the request.
 """
 from __future__ import annotations
@@ -48,11 +48,14 @@ async def analyze_drill(
     language: str = Form("en"),
     topic: str = Form(""),
     ui_locale: str = Form("en"),
+    context: str = Form("general"),
 ):
     if language not in LANGUAGES:
         return _error(400, "bad_request", "unsupported language")
     if ui_locale not in UI_LOCALES:
         ui_locale = "en"
+    if context not in drill_analysis_service.CONTEXTS:
+        context = "general"
     topic = topic.strip()[:MAX_TOPIC_CHARS]
 
     content_type = (audio.content_type or "").split(";")[0].strip().lower()
@@ -90,7 +93,7 @@ async def analyze_drill(
         metrics = drill_metrics.compute_metrics(words, duration)
         try:
             analysis = await run_in_threadpool(
-                drill_analysis_service.analyze, words, metrics, topic, language, ui_locale
+                drill_analysis_service.analyze, words, metrics, topic, language, ui_locale, context
             )
         except Exception:  # model/JSON/provider failure; details stay out of the response
             logger.exception("drill: analysis failed")
