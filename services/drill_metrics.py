@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 PAUSE_MIN_SEC = 0.8
 LONG_PAUSE_SEC = 2.0
-TARGET_WPM = [120, 160]
+TARGET_WPM = [110, 150]
 SERIES_BUCKET_SEC = 10
 
 # Unambiguous hesitation sounds and discourse fillers per speaking language.
