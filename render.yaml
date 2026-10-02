@@ -22,3 +22,7 @@ services:
         value: eu-central-1
       - key: RECALL_WEBHOOK_SECRET
         sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: DRILL_CORS_ORIGINS
+        sync: false
