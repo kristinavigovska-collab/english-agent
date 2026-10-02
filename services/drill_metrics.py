@@ -10,6 +10,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 PAUSE_MIN_SEC = 0.8
+LONG_PAUSE_SEC = 2.0
 TARGET_WPM = [120, 160]
 SERIES_BUCKET_SEC = 10
 
@@ -86,7 +87,7 @@ def count_fillers(words: List[dict]) -> Dict[str, int]:
 
 def compute_metrics(words: List[dict], duration: Optional[float] = None) -> dict:
     if not words:
-        return {"wpm": 0, "targetWpm": TARGET_WPM, "pauseRatio": 0.0, "pauses": [], "wpmSeries": [], "fillers": {}}
+        return {"wpm": 0, "targetWpm": TARGET_WPM, "pauseRatio": 0.0, "pauses": [], "longPauses": 0, "wpmSeries": [], "fillers": {}}
     first_s = words[0]["s"]
     last_e = words[-1]["e"]
     total = max(duration or 0.0, last_e)
@@ -115,6 +116,7 @@ def compute_metrics(words: List[dict], duration: Optional[float] = None) -> dict
         "targetWpm": TARGET_WPM,
         "pauseRatio": round(pause_time / span, 2),
         "pauses": pauses,
+        "longPauses": len([p for p in pauses if p["dur"] >= LONG_PAUSE_SEC]),
         "wpmSeries": series,
         "fillers": count_fillers(words),
     }

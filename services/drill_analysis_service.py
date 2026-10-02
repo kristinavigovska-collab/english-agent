@@ -16,31 +16,48 @@ DEFAULT_MODEL = "claude-sonnet-5-5"
 MAX_ISSUES = 10
 MAX_STRENGTHS = 4
 PART_IDS = ("intro", "main", "examples", "conclusion")
-ISSUE_TYPES = ("grammar", "vocabulary", "confidence", "filler")
+ISSUE_TYPES = ("grammar", "vocabulary", "filler", "hedge")
+KINDS = ("form", "missing_word", "agreement", "tense", "article", "word_order", "preposition", "word_choice", "other")
+ON_TOPIC = ("yes", "partly", "no")
+MAX_REWRITES = 2
 
 LANGUAGE_NAMES = {"en": "English", "es": "Spanish", "de": "German", "fr": "French"}
 UI_LANGUAGE_NAMES = {"ru": "Russian", "en": "English", "uk": "Ukrainian", "pl": "Polish", "pt": "Brazilian Portuguese"}
 
 SYSTEM_PROMPT = """\
-You are an expert speaking coach reviewing a learner's ONE-minute spoken answer to a prompt.
+You are an expert speaking coach reviewing a learner's ONE-minute spoken answer to a question.
 You receive an automatic transcript with every word numbered, plus measured pace/pause/filler data.
 
-Rules:
-- The transcript is speech-recognition output. Ignore punctuation, capitalisation and likely recognition slips. Flag only clear learner errors or clearly weak phrasing.
+General rules:
+- The transcript is speech-recognition output. Ignore punctuation, capitalisation and likely recognition slips; flag only clear learner errors or clearly weak phrasing.
 - Refer to words only by their index. "from" and "to" are inclusive word indexes; keep each range as short as possible (usually 1-6 words).
-- Issue types: "grammar" (wrong form, tense, article, word order), "vocabulary" (imprecise or unnatural word choice), "confidence" (hedging such as "I think maybe", self-undermining or trailing off), "filler" (discourse fillers the recogniser kept, e.g. "like", "basically", "you know" used as filler; not hesitation sounds already marked).
-- "better" is the corrected or stronger wording in the SPOKEN language (not the explanation language). For "filler" use an empty string.
-- Write every explanation, note, signal, priority and suggestion in the EXPLANATION language given in the user message, in short plain sentences.
-- Report at most {max_issues} issues, ordered by importance, never overlapping. Report 2-{max_strengths} genuine strengths (specific phrases that were strong), never overlapping issues.
-- structure.parts must contain exactly these four ids, each once: intro, main, examples, conclusion. status is good, ok or weak. Judge how the answer was organised for a one-minute talk; "suggestion" is a concrete one- or two-sentence skeleton the learner could use next time.
-- confidence.score is 0-100 and must reflect the measured data (fillers, long pauses, hedging, self-corrections); "signals" are 2-4 short observations that cite those facts.
-- priorities: 1-3 concrete things to work on next, most valuable first.
-- Be honest and kind. Do not invent mistakes; if the answer is strong, say so and report fewer issues.
-""".format(max_issues=MAX_ISSUES, max_strengths=MAX_STRENGTHS)
+- Write every headline, rule, note and next_step in the EXPLANATION language given in the user message, in short plain sentences. Corrected wording ("better") is always in the SPOKEN language.
+- Never mention word indexes, positions or numbers like "word 24" in any text the learner will read; quote the actual words instead.
+- Be honest and kind. Do not invent mistakes; if the answer is strong, say so and report fewer items.
+
+Fields:
+- headline: a verdict in at most 8 words that names the biggest strength and the biggest gap, e.g. "The idea is clear, but it needs specifics".
+- on_topic: "yes", "partly" or "no" - did the answer address the question?
+- issues (at most {max_issues}, ordered by importance, never overlapping):
+  * "grammar": a wrong form. Set "kind" to the closest of: form, missing_word, agreement, tense, article, word_order, preposition, other. "rule" is one short sentence naming the rule.
+  * "vocabulary": an imprecise or unnatural word choice. kind = word_choice.
+  * "filler": a discourse filler the recogniser kept that is NOT already marked {{filler}} (for example "actually", "like", "basically", "so" used as filler). better = "".
+  * "hedge": softening that weakens a point ("maybe", "I think", "kind of", "sort of"). better = the firm version. rule = why it weakens the point.
+  For filler and hedge set kind = "other".
+  For grammar and vocabulary, "better" must NEVER be empty: when a word has to be deleted or inserted, widen the range to include a neighbouring word so "better" is a complete replacement phrase (e.g. range "should to" -> better "should"; range "for meeting" with a missing article -> better "for a meeting").
+- rewrites (0-{max_rewrites}): rewrite the one or two weakest whole sentences or clauses (from/to cover the original stretch, typically 8-25 words) into a clearer, shorter, stronger version in the spoken language. "reason" is one sentence on why it is better. Rewrites may overlap issues; they are shown separately.
+- strengths (1-{max_strengths}): specific phrases that worked, never overlapping issues, with a one-sentence note.
+- structure: intro_end = index of the last word of the opening (the learner's framing before the main content), or -1 if there is no real opening; conclusion_start = index of the first word of a closing/summary, or -1 if the answer simply stops. has_position / has_reason / has_example / has_conclusion say whether the answer states a position, gives a reason, gives an example, and ends with a conclusion. "note" is 2-3 sentences quoting a short phrase from the answer.
+- fillers_note: 1-2 sentences about the learner's fillers (or praise if there are almost none), citing specific words.
+- hedges_note: 1-2 sentences about hedging, citing the phrase, or praise if there is none.
+- next_step: ONE concrete thing to try tomorrow, as a single actionable sentence.
+""".format(max_issues=MAX_ISSUES, max_rewrites=MAX_REWRITES, max_strengths=MAX_STRENGTHS)
 
 REPORT_SCHEMA = {
     "type": "object",
     "properties": {
+        "headline": {"type": "string"},
+        "on_topic": {"type": "string", "enum": list(ON_TOPIC)},
         "issues": {
             "type": "array",
             "items": {
@@ -49,10 +66,25 @@ REPORT_SCHEMA = {
                     "from": {"type": "integer"},
                     "to": {"type": "integer"},
                     "type": {"type": "string", "enum": list(ISSUE_TYPES)},
+                    "kind": {"type": "string", "enum": list(KINDS)},
                     "better": {"type": "string"},
-                    "explanation": {"type": "string"},
+                    "rule": {"type": "string"},
                 },
-                "required": ["from", "to", "type", "better", "explanation"],
+                "required": ["from", "to", "type", "kind", "better", "rule"],
+                "additionalProperties": False,
+            },
+        },
+        "rewrites": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "from": {"type": "integer"},
+                    "to": {"type": "integer"},
+                    "better": {"type": "string"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["from", "to", "better", "reason"],
                 "additionalProperties": False,
             },
         },
@@ -68,33 +100,22 @@ REPORT_SCHEMA = {
         "structure": {
             "type": "object",
             "properties": {
-                "parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "id": {"type": "string", "enum": list(PART_IDS)},
-                            "status": {"type": "string", "enum": ["good", "ok", "weak"]},
-                            "note": {"type": "string"},
-                        },
-                        "required": ["id", "status", "note"],
-                        "additionalProperties": False,
-                    },
-                },
-                "suggestion": {"type": "string"},
+                "intro_end": {"type": "integer"},
+                "conclusion_start": {"type": "integer"},
+                "has_position": {"type": "boolean"},
+                "has_reason": {"type": "boolean"},
+                "has_example": {"type": "boolean"},
+                "has_conclusion": {"type": "boolean"},
+                "note": {"type": "string"},
             },
-            "required": ["parts", "suggestion"],
+            "required": ["intro_end", "conclusion_start", "has_position", "has_reason", "has_example", "has_conclusion", "note"],
             "additionalProperties": False,
         },
-        "confidence": {
-            "type": "object",
-            "properties": {"score": {"type": "integer"}, "signals": {"type": "array", "items": {"type": "string"}}},
-            "required": ["score", "signals"],
-            "additionalProperties": False,
-        },
-        "priorities": {"type": "array", "items": {"type": "string"}},
+        "fillers_note": {"type": "string"},
+        "hedges_note": {"type": "string"},
+        "next_step": {"type": "string"},
     },
-    "required": ["issues", "strengths", "structure", "confidence", "priorities"],
+    "required": ["headline", "on_topic", "issues", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step"],
     "additionalProperties": False,
 }
 
@@ -137,11 +158,39 @@ def _clean_range(item: dict, n: int) -> Optional[tuple]:
     return a, b
 
 
+def _structure_shares(raw: dict, words: List[dict]) -> dict:
+    n = len(words)
+    first_s, last_e = words[0]["s"], words[-1]["e"]
+    span = max(last_e - first_s, 1.0)
+    intro_end = raw.get("intro_end", -1)
+    concl = raw.get("conclusion_start", -1)
+    intro_end = intro_end if isinstance(intro_end, int) and 0 <= intro_end < n - 1 else -1
+    concl = concl if isinstance(concl, int) and 0 < concl < n else -1
+    if intro_end >= 0 and concl >= 0 and concl <= intro_end:
+        concl = -1
+    intro = round(100 * (words[intro_end]["e"] - first_s) / span) if intro_end >= 0 else 0
+    end = round(100 * (last_e - words[concl]["s"]) / span) if concl >= 0 else 0
+    intro, end = max(0, min(intro, 60)), max(0, min(end, 60))
+    return {
+        "introPct": intro,
+        "mainPct": 100 - intro - end,
+        "endPct": end,
+        "has": {
+            "position": bool(raw.get("has_position")),
+            "reason": bool(raw.get("has_reason")),
+            "example": bool(raw.get("has_example")),
+            "conclusion": bool(raw.get("has_conclusion")),
+        },
+        "note": str(raw.get("note", "")).strip(),
+    }
+
+
 def finalize(raw: dict, words: List[dict]) -> dict:
     """Validate Claude's output against the real transcript and fold it into the report shape."""
     n = len(words)
     taken = [False] * n
     issues: List[dict] = []
+    hedges: List[dict] = []
     for item in raw.get("issues", []):
         rng = _clean_range(item, n)
         t = item.get("type")
@@ -155,20 +204,18 @@ def finalize(raw: dict, words: List[dict]) -> dict:
             for k in range(a, b + 1):
                 taken[k] = True
             continue
+        if len(issues) + len(hedges) >= MAX_ISSUES:
+            break
         for k in range(a, b + 1):
             taken[k] = True
-        issues.append(
-            {
-                "from": a,
-                "to": b,
-                "type": t,
-                "original": " ".join(w["w"] for w in words[a : b + 1]).strip(" .,;:!?¿¡\"“”"),
-                "better": str(item.get("better", "")).strip(),
-                "explanation": str(item.get("explanation", "")).strip(),
-            }
-        )
-        if len(issues) >= MAX_ISSUES:
-            break
+        original = " ".join(w["w"] for w in words[a : b + 1]).strip(" .,;:!?¿¡\"“”")
+        better = str(item.get("better", "")).strip()
+        rule = str(item.get("rule", "")).strip()
+        if t == "hedge":
+            hedges.append({"from": a, "to": b, "original": original, "better": better, "note": rule})
+            continue
+        kind = item.get("kind") if item.get("kind") in KINDS else "other"
+        issues.append({"from": a, "to": b, "type": t, "kind": kind, "original": original, "better": better, "explanation": rule})
 
     strengths: List[dict] = []
     for item in raw.get("strengths", []):
@@ -181,21 +228,36 @@ def finalize(raw: dict, words: List[dict]) -> dict:
         if len(strengths) >= MAX_STRENGTHS:
             break
 
-    by_id: Dict[str, dict] = {p.get("id"): p for p in raw.get("structure", {}).get("parts", [])}
-    parts = []
-    for pid in PART_IDS:
-        p = by_id.get(pid) or {}
-        status = p.get("status") if p.get("status") in ("good", "ok", "weak") else "ok"
-        parts.append({"id": pid, "status": status, "note": str(p.get("note", "")).strip()})
+    rewrites: List[dict] = []
+    for item in raw.get("rewrites", []):
+        rng = _clean_range(item, n)
+        better = str(item.get("better", "")).strip()
+        if not rng or not better:
+            continue
+        rewrites.append(
+            {
+                "from": rng[0],
+                "to": rng[1],
+                "original": " ".join(w["w"] for w in words[rng[0] : rng[1] + 1]).strip(" .,;:!?¿¡\"“”"),
+                "better": better,
+                "reason": str(item.get("reason", "")).strip(),
+            }
+        )
+        if len(rewrites) >= MAX_REWRITES:
+            break
 
-    conf = raw.get("confidence", {})
-    score = max(0, min(100, int(conf.get("score", 50))))
+    on_topic = raw.get("on_topic") if raw.get("on_topic") in ON_TOPIC else "yes"
     return {
+        "headline": str(raw.get("headline", "")).strip(),
+        "onTopic": on_topic,
         "issues": sorted(issues, key=lambda i: i["from"]),
+        "hedges": sorted(hedges, key=lambda h: h["from"]),
+        "rewrites": sorted(rewrites, key=lambda r: r["from"]),
         "strengths": sorted(strengths, key=lambda s: s["from"]),
-        "structure": {"parts": parts, "suggestion": str(raw.get("structure", {}).get("suggestion", "")).strip()},
-        "confidence": {"score": score, "signals": [str(s) for s in conf.get("signals", [])][:4]},
-        "priorities": [str(p) for p in raw.get("priorities", [])][:3],
+        "structure": _structure_shares(raw.get("structure", {}), words),
+        "fillersNote": str(raw.get("fillers_note", "")).strip(),
+        "hedgesNote": str(raw.get("hedges_note", "")).strip(),
+        "nextStep": str(raw.get("next_step", "")).strip(),
     }
 
 

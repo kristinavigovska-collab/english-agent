@@ -56,30 +56,58 @@ def test_fillers_do_not_count_toward_wpm():
 
 # ---------- finalize ----------
 
-def test_finalize_validates_ranges_and_derives_original():
-    words = make_words("I am walking to school yesterday and uh like it")
-    drill_metrics.mark_fillers(words, "en")
+def base_raw(**over):
     raw = {
-        "issues": [
-            {"from": 1, "to": 2, "type": "grammar", "better": "walked", "explanation": "past"},
-            {"from": 2, "to": 3, "type": "grammar", "better": "x", "explanation": "overlaps"},   # overlap -> dropped
-            {"from": 40, "to": 41, "type": "grammar", "better": "x", "explanation": "oob"},       # out of range -> dropped
-            {"from": 4, "to": 4, "type": "bogus", "better": "x", "explanation": "bad type"},      # unknown type -> dropped
-            {"from": 8, "to": 8, "type": "filler", "better": "", "explanation": "like"},          # becomes filler flag
-        ],
-        "strengths": [{"from": 0, "to": 0, "note": "ok"}, {"from": 1, "to": 1, "note": "overlap"}],
-        "structure": {"parts": [{"id": "main", "status": "weird", "note": "n"}], "suggestion": "s"},
-        "confidence": {"score": 250, "signals": ["a"]},
-        "priorities": ["p1", "p2", "p3", "p4"],
+        "headline": "Clear idea, needs specifics",
+        "on_topic": "yes",
+        "issues": [],
+        "rewrites": [],
+        "strengths": [],
+        "structure": {"intro_end": -1, "conclusion_start": -1, "has_position": True, "has_reason": True,
+                      "has_example": False, "has_conclusion": False, "note": "n"},
+        "fillers_note": "f", "hedges_note": "h", "next_step": "step",
     }
+    raw.update(over)
+    return raw
+
+
+def test_finalize_routes_issue_types_and_validates_ranges():
+    words = make_words("I am walking to school yesterday and uh like it maybe works")
+    drill_metrics.mark_fillers(words, "en")
+    raw = base_raw(
+        issues=[
+            {"from": 1, "to": 2, "type": "grammar", "kind": "tense", "better": "walked", "rule": "past"},
+            {"from": 2, "to": 3, "type": "grammar", "kind": "form", "better": "x", "rule": "overlaps"},   # overlap -> dropped
+            {"from": 40, "to": 41, "type": "grammar", "kind": "form", "better": "x", "rule": "oob"},       # out of range -> dropped
+            {"from": 4, "to": 4, "type": "bogus", "kind": "form", "better": "x", "rule": "bad type"},      # unknown type -> dropped
+            {"from": 8, "to": 8, "type": "filler", "kind": "other", "better": "", "rule": "like"},         # becomes a filler flag
+            {"from": 10, "to": 10, "type": "hedge", "kind": "other", "better": "", "rule": "weakens"},     # goes to hedges
+            {"from": 3, "to": 3, "type": "grammar", "kind": "not-a-kind", "better": "z", "rule": "r"},     # kind falls back to other
+        ],
+        strengths=[{"from": 0, "to": 0, "note": "ok"}, {"from": 1, "to": 1, "note": "overlap"}],
+        rewrites=[{"from": 0, "to": 5, "better": "Yesterday I walked to school.", "reason": "clearer"},
+                  {"from": 3, "to": 99, "better": "bad", "reason": "oob"}],
+    )
     out = drill_analysis_service.finalize(raw, words)
-    assert [(i["from"], i["to"], i["original"]) for i in out["issues"]] == [(1, 2, "am walking")]
+    assert [(i["from"], i["to"], i["original"], i["kind"]) for i in out["issues"]] == [(1, 2, "am walking", "tense"), (3, 3, "to", "other")]
     assert words[8].get("filler") is True
+    assert [(h["from"], h["original"]) for h in out["hedges"]] == [(10, "maybe")]
     assert out["strengths"] == [{"from": 0, "to": 0, "note": "ok"}]
-    assert [p["id"] for p in out["structure"]["parts"]] == ["intro", "main", "examples", "conclusion"]
-    assert out["structure"]["parts"][1]["status"] == "ok"
-    assert out["confidence"]["score"] == 100
-    assert len(out["priorities"]) == 3
+    assert len(out["rewrites"]) == 1 and out["rewrites"][0]["original"].startswith("I am walking")
+    assert out["headline"] and out["onTopic"] == "yes" and out["nextStep"] == "step"
+
+
+def test_structure_shares_sum_to_100_and_ignore_bad_indexes():
+    words = make_words("one two three four five six seven eight nine ten", step=1.0)
+    raw = base_raw(structure={"intro_end": 1, "conclusion_start": 8, "has_position": True, "has_reason": True,
+                              "has_example": True, "has_conclusion": True, "note": "n"})
+    st = drill_analysis_service.finalize(raw, words)["structure"]
+    assert st["introPct"] > 0 and st["endPct"] > 0 and st["introPct"] + st["mainPct"] + st["endPct"] == 100
+    assert st["has"] == {"position": True, "reason": True, "example": True, "conclusion": True}
+    bad = base_raw(structure={"intro_end": 500, "conclusion_start": -1, "has_position": False, "has_reason": False,
+                              "has_example": False, "has_conclusion": False, "note": ""})
+    st = drill_analysis_service.finalize(bad, make_words("a b c d e f"))["structure"]
+    assert (st["introPct"], st["mainPct"], st["endPct"]) == (0, 100, 0)
 
 
 def test_deepgram_parse_response():
@@ -118,8 +146,7 @@ def fake_stt(text, step=0.5):
 
 def fake_analysis(words, metrics, topic, language, ui_locale):
     return drill_analysis_service.finalize(
-        {"issues": [{"from": 2, "to": 3, "type": "confidence", "better": "The key thing", "explanation": "hedge"}],
-         "strengths": [], "structure": {"parts": [], "suggestion": "s"}, "confidence": {"score": 60, "signals": []}, "priorities": ["p"]},
+        base_raw(issues=[{"from": 2, "to": 3, "type": "hedge", "kind": "other", "better": "The key thing", "rule": "hedge"}]),
         words,
     )
 
@@ -135,8 +162,9 @@ def test_happy_path(client, monkeypatch):
     assert r.status_code == 200
     body = r.json()
     assert body["topic"] == "T" and body["words"][1]["filler"] is True
-    assert body["issues"][0]["original"] == "I think"
-    assert {"wpm", "pauses", "fillers", "wpmSeries", "targetWpm", "pauseRatio"} <= set(body["metrics"])
+    assert body["hedges"][0]["original"] == "I think"
+    assert body["headline"] and body["structure"]["mainPct"] == 100
+    assert {"wpm", "pauses", "fillers", "wpmSeries", "targetWpm", "pauseRatio", "longPauses"} <= set(body["metrics"])
     assert "audio" not in body
 
 
