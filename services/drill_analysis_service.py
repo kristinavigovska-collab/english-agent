@@ -162,7 +162,7 @@ def finalize(raw: dict, words: List[dict]) -> dict:
                 "from": a,
                 "to": b,
                 "type": t,
-                "original": " ".join(w["w"] for w in words[a : b + 1]),
+                "original": " ".join(w["w"] for w in words[a : b + 1]).strip(" .,;:!?¿¡\"“”"),
                 "better": str(item.get("better", "")).strip(),
                 "explanation": str(item.get("explanation", "")).strip(),
             }
