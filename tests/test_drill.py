@@ -41,7 +41,7 @@ def test_pauses_and_wpm():
     m = drill_metrics.compute_metrics(words, duration=10)
     assert len(m["pauses"]) == 1 and m["pauses"][0]["before"] == 3
     assert m["pauses"][0]["dur"] >= 2.0
-    assert m["wpm"] > 0 and m["targetWpm"] == [120, 160]
+    assert m["wpm"] > 0 and m["targetWpm"] == [110, 150]
     assert m["wpmSeries"][0]["from"] == 0.0
 
 
@@ -63,10 +63,11 @@ def base_raw(**over):
         "issues": [],
         "rewrites": [],
         "strengths": [],
-        "structure": {"intro_end": -1, "conclusion_start": -1, "has_position": True, "has_reason": True,
-                      "has_example": False, "has_conclusion": False, "note": "n"},
+        "structure": {"steps": {sid: {"present": False, "quote": ""} for sid in ("position", "reason", "example", "conclusion")}, "note": "n"},
         "fillers_note": "f", "hedges_note": "h", "next_step": "step",
-        "model_answer": {"parts": [{"role": "position", "text": "I would stay home."}], "tips": ["a"]},
+        "model_answer": {"parts": [{"role": "position", "text": "I would stay home.", "connectors": []}], "tips": ["a"]},
+        "phrase_bank": [],
+        "signposting": {"used": [], "missing": []},
     }
     raw.update(over)
     return raw
@@ -96,32 +97,56 @@ def test_finalize_routes_issue_types_and_validates_ranges():
     assert out["strengths"] == [{"from": 0, "to": 0, "note": "ok"}]
     assert len(out["rewrites"]) == 1 and out["rewrites"][0]["original"].startswith("I am walking")
     assert out["headline"] and out["onTopic"] == "yes" and out["nextStep"] == "step"
-    assert out["modelAnswer"] == {"parts": [{"role": "position", "text": "I would stay home."}], "tips": ["a"]}
+    assert out["modelAnswer"] == {"parts": [{"role": "position", "text": "I would stay home.", "connectors": []}], "tips": ["a"]}
 
 
 def test_model_answer_is_sanitised():
     words = make_words("one two three four five six seven eight")
     raw = base_raw(model_answer={
-        "parts": [{"role": "bogus", "text": "x"}, {"role": "reason", "text": "  "}] + [{"role": "example", "text": f"p{i}"} for i in range(9)],
+        "parts": [{"role": "bogus", "text": "x", "connectors": []}, {"role": "reason", "text": "  ", "connectors": []}] + [{"role": "example", "text": f"p{i}", "connectors": []} for i in range(9)],
         "tips": ["", "t1", "t2", "t3", "t4"],
     })
     ma = drill_analysis_service.finalize(raw, words)["modelAnswer"]
-    assert len(ma["parts"]) == drill_analysis_service.MAX_MODEL_PARTS and ma["parts"][0] == {"role": "example", "text": "p0"}
+    assert len(ma["parts"]) == drill_analysis_service.MAX_MODEL_PARTS and ma["parts"][0] == {"role": "example", "text": "p0", "connectors": []}
     assert ma["tips"] == ["t1", "t2", "t3"]
     assert drill_analysis_service.finalize(base_raw(model_answer={}), words)["modelAnswer"] == {"parts": [], "tips": []}
 
 
-def test_structure_shares_sum_to_100_and_ignore_bad_indexes():
-    words = make_words("one two three four five six seven eight nine ten", step=1.0)
-    raw = base_raw(structure={"intro_end": 1, "conclusion_start": 8, "has_position": True, "has_reason": True,
-                              "has_example": True, "has_conclusion": True, "note": "n"})
+def test_structure_quotes_must_be_in_the_transcript():
+    words = make_words("the main reason is simple we save time for example last week we shipped early")
+    raw = base_raw(structure={"steps": {
+        "position": {"present": False, "quote": ""},
+        "reason": {"present": True, "quote": "The main reason is simple!"},          # real quote (case/punctuation ignored)
+        "example": {"present": True, "quote": "for example in Lisbon last year"},     # invented -> evidence dropped
+        "conclusion": {"present": False, "quote": "ignored when absent"},
+    }, "note": "n"})
     st = drill_analysis_service.finalize(raw, words)["structure"]
-    assert st["introPct"] > 0 and st["endPct"] > 0 and st["introPct"] + st["mainPct"] + st["endPct"] == 100
-    assert st["has"] == {"position": True, "reason": True, "example": True, "conclusion": True}
-    bad = base_raw(structure={"intro_end": 500, "conclusion_start": -1, "has_position": False, "has_reason": False,
-                              "has_example": False, "has_conclusion": False, "note": ""})
-    st = drill_analysis_service.finalize(bad, make_words("a b c d e f"))["structure"]
-    assert (st["introPct"], st["mainPct"], st["endPct"]) == (0, 100, 0)
+    assert st["steps"]["reason"] == {"present": True, "quote": "The main reason is simple!"}
+    assert st["steps"]["example"] == {"present": True, "quote": ""}
+    assert st["steps"]["conclusion"] == {"present": False, "quote": ""}
+    assert "introPct" not in st
+
+
+def test_connectors_phrase_bank_and_signposting_are_validated():
+    words = make_words("first of all I think the cost matters for example last year and in short we win")
+    raw = base_raw(
+        model_answer={"parts": [
+            {"role": "position", "text": "The way I see it, cost matters most.", "connectors": [
+                {"phrase": "The way I see it,", "function": "argue"},
+                {"phrase": "not in the text", "function": "argue"},     # not a substring -> dropped
+                {"phrase": "cost", "function": "bogus"},                # unknown function -> dropped
+            ]}], "tips": []},
+        phrase_bank=[
+            {"function": "open", "phrases": ["To begin with,", " ", "First of all,", "Let me start by", "extra"]},
+            {"function": "open", "phrases": ["duplicate group"]},       # duplicate function -> dropped
+            {"function": "nonsense", "phrases": ["x"]},                  # unknown -> dropped
+        ],
+        signposting={"used": ["first of all", "for example", "never said this"], "missing": ["contrast", "contrast", "bogus", "soften"]},
+    )
+    out = drill_analysis_service.finalize(raw, words)
+    assert out["modelAnswer"]["parts"][0]["connectors"] == [{"phrase": "The way I see it,", "function": "argue"}]
+    assert out["phraseBank"] == [{"function": "open", "phrases": ["To begin with,", "First of all,", "Let me start by"]}]
+    assert out["signposting"] == {"used": ["first of all", "for example"], "missing": ["contrast", "soften"]}
 
 
 def test_deepgram_parse_response():
@@ -177,7 +202,8 @@ def test_happy_path(client, monkeypatch):
     body = r.json()
     assert body["topic"] == "T" and body["words"][1]["filler"] is True
     assert body["hedges"][0]["original"] == "I think"
-    assert body["headline"] and body["structure"]["mainPct"] == 100
+    assert body["headline"] and set(body["structure"]["steps"]) == {"position", "reason", "example", "conclusion"}
+    assert "phraseBank" in body and "signposting" in body
     assert {"wpm", "pauses", "fillers", "wpmSeries", "targetWpm", "pauseRatio", "longPauses"} <= set(body["metrics"])
     assert "audio" not in body
 
