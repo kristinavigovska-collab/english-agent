@@ -10,9 +10,10 @@ from typing import List
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel
 
-from services import deepgram_service, drill_analysis_service, drill_metrics, drill_rate_limit
+from services import deepgram_service, deepgram_tts, drill_analysis_service, drill_metrics, drill_rate_limit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -122,3 +123,33 @@ def _public_words(words: List[dict]) -> List[dict]:
             item["filler"] = True
         out.append(item)
     return out
+
+
+class SpeakRequest(BaseModel):
+    text: str
+    language: str = "en"
+    voice: str = "a"
+
+
+@router.post("/drill/speak", tags=["drill"])
+async def speak(body: SpeakRequest, request: Request):
+    """Natural-voice audio (mp3) for one part of a model answer. Cached; limited per IP by characters per day."""
+    text = " ".join(body.text.split())
+    if not text or len(text) > deepgram_tts.MAX_TEXT_CHARS:
+        return _error(400, "bad_request", "text is empty or too long")
+    if body.language not in LANGUAGES:
+        return _error(400, "bad_request", "unsupported language")
+    voice = body.voice if body.voice in ("a", "b") else "a"
+    model = deepgram_tts.model_for(body.language, voice)
+
+    audio = deepgram_tts.cached(text, model)
+    if audio is None:
+        if not drill_rate_limit.acquire_tts(_client_ip(request), len(text)):
+            return _error(429, "limit", "daily voice limit reached")
+        try:
+            audio = await deepgram_tts.synthesize(text, model)
+        except deepgram_tts.TtsNotConfigured:
+            return _error(503, "unavailable", "voice is not configured")
+        except deepgram_tts.TtsError:
+            return _error(502, "tts_failed", "voice generation failed")
+    return Response(content=audio, media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=3600"})
