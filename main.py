@@ -1,11 +1,12 @@
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from routers import config, demo, preview, programs, reports, webhook
+from routers import config, demo, drill, preview, programs, reports, webhook
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,10 +19,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Live Server / static dev (e.g. :5500) loads HTML while API runs on uvicorn :8000
+# Live Server / static dev (e.g. :5500) loads HTML while API runs on uvicorn :8000.
+# DRILL_CORS_ORIGINS: comma-separated website origins allowed to call the public drill API.
+_drill_origins = [o.strip() for o in os.getenv("DRILL_CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=_drill_origins + [
         "http://127.0.0.1:5500",
         "http://localhost:5500",
         "http://127.0.0.1:5501",
@@ -41,6 +44,7 @@ app.include_router(preview.router, prefix="/api", tags=["preview"])
 app.include_router(demo.router, prefix="/api", tags=["demo"])
 app.include_router(programs.router, prefix="/api", tags=["programs"])
 app.include_router(reports.router, prefix="/api", tags=["reports"])
+app.include_router(drill.router, prefix="/api", tags=["drill"])
 
 
 @app.get("/", tags=["health"])
