@@ -18,6 +18,12 @@ def make_words(text, start=0.5, step=0.4):
 
 # ---------- metrics ----------
 
+def test_polish_fillers():
+    words = make_words("no wiesz yyy to jest eee dobre")
+    drill_metrics.mark_fillers(words, "pl")
+    assert drill_metrics.count_fillers(words) == {"no wiesz": 1, "yyy": 1, "eee": 1}
+
+
 def test_fillers_phrases_and_singles_counted_by_group():
     words = make_words("So um I think you know it um works")
     drill_metrics.mark_fillers(words, "en")
@@ -295,6 +301,8 @@ def test_speak_returns_audio_caches_and_validates(client, monkeypatch):
     assert r2.status_code == 200 and calls == ["aura-2-nestor-es"]          # second call served from cache
     assert client.post("/api/drill/speak", json={"text": "x" * 2000, "language": "en"}).status_code == 400
     assert client.post("/api/drill/speak", json={"text": "hi", "language": "zz"}).status_code == 400
+    no_voice = client.post("/api/drill/speak", json={"text": "Dzień dobry", "language": "pl"})
+    assert no_voice.status_code == 400 and no_voice.json()["detail"]["code"] == "no_voice"
     assert deepgram_tts.model_for("de", "a") == "aura-2-julius-de" and deepgram_tts.model_for("xx", "a") == "aura-2-thalia-en"
 
 

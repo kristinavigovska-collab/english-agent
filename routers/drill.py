@@ -23,7 +23,7 @@ MAX_TOPIC_CHARS = 200
 MIN_WORDS = 3
 MIN_WORDS_FOR_REVIEW = 8
 MIN_SECONDS_FOR_REVIEW = 8.0
-LANGUAGES = {"en", "es", "de", "fr"}
+LANGUAGES = {"en", "es", "de", "pl"}
 UI_LOCALES = {"ru", "en", "uk", "pl", "pt"}
 AUDIO_TYPES = {
     "audio/webm", "video/webm", "audio/mp4", "video/mp4", "audio/x-m4a", "audio/m4a",
@@ -139,6 +139,8 @@ async def speak(body: SpeakRequest, request: Request):
         return _error(400, "bad_request", "text is empty or too long")
     if body.language not in LANGUAGES:
         return _error(400, "bad_request", "unsupported language")
+    if not deepgram_tts.supports(body.language):
+        return _error(400, "no_voice", "no natural voice for this language")
     voice = body.voice if body.voice in ("a", "b") else "a"
     model = deepgram_tts.model_for(body.language, voice)
 

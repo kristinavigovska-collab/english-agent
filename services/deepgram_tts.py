@@ -21,7 +21,6 @@ VOICES = {
     "en": {"a": "aura-2-thalia-en", "b": "aura-2-apollo-en"},
     "es": {"a": "aura-2-celeste-es", "b": "aura-2-nestor-es"},
     "de": {"a": "aura-2-julius-de", "b": "aura-2-viktoria-de"},
-    "fr": {"a": "aura-2-agathe-fr", "b": "aura-2-hector-fr"},
 }
 
 
@@ -46,6 +45,11 @@ def cached(text: str, model: str) -> Optional[bytes]:
         _cache.move_to_end(k)
         return _cache[k]
     return None
+
+
+def supports(language: str) -> bool:
+    """Languages that have a natural voice (Polish, for one, does not)."""
+    return language in VOICES
 
 
 def model_for(language: str, voice: str) -> str:
