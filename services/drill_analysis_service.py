@@ -19,6 +19,9 @@ PART_IDS = ("intro", "main", "examples", "conclusion")
 ISSUE_TYPES = ("grammar", "vocabulary", "filler", "hedge")
 KINDS = ("form", "missing_word", "agreement", "tense", "article", "word_order", "preposition", "word_choice", "other")
 ON_TOPIC = ("yes", "partly", "no")
+MODEL_ROLES = ("intro", "position", "reason", "example", "conclusion")
+MAX_MODEL_PARTS = 6
+MAX_MODEL_TIPS = 3
 MAX_REWRITES = 2
 
 LANGUAGE_NAMES = {"en": "English", "es": "Spanish", "de": "German", "fr": "French"}
@@ -50,6 +53,7 @@ Fields:
 - structure: intro_end = index of the last word of the opening (the learner's framing before the main content), or -1 if there is no real opening; conclusion_start = index of the first word of a closing/summary, or -1 if the answer simply stops. has_position / has_reason / has_example / has_conclusion say whether the answer states a position, gives a reason, gives an example, and ends with a conclusion. "note" is 2-3 sentences quoting a short phrase from the answer.
 - fillers_note: 1-2 sentences about the learner's fillers (or praise if there are almost none), citing specific words.
 - hedges_note: 1-2 sentences about hedging, citing the phrase, or praise if there is none.
+- model_answer: a model answer to the SAME question that the learner can aim for. About 85-120 words in the SPOKEN language (roughly one minute at a natural pace), natural spoken register, clear structure. Reuse the learner's own ideas, examples and good vocabulary and fix their errors; do not invent unrelated facts. If the learner went off topic, answer the actual question. Split it into "parts", each with a role (intro = one framing sentence, position, reason, example, conclusion) and 1-2 sentences of text; include at least position, reason and conclusion. "tips" are 2-3 short notes in the EXPLANATION language on why this version works (structure, firm wording, linking phrases).
 - next_step: ONE concrete thing to try tomorrow, as a single actionable sentence.
 """.format(max_issues=MAX_ISSUES, max_rewrites=MAX_REWRITES, max_strengths=MAX_STRENGTHS)
 
@@ -114,8 +118,25 @@ REPORT_SCHEMA = {
         "fillers_note": {"type": "string"},
         "hedges_note": {"type": "string"},
         "next_step": {"type": "string"},
+        "model_answer": {
+            "type": "object",
+            "properties": {
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"role": {"type": "string", "enum": list(MODEL_ROLES)}, "text": {"type": "string"}},
+                        "required": ["role", "text"],
+                        "additionalProperties": False,
+                    },
+                },
+                "tips": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["parts", "tips"],
+            "additionalProperties": False,
+        },
     },
-    "required": ["headline", "on_topic", "issues", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step"],
+    "required": ["headline", "on_topic", "issues", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step", "model_answer"],
     "additionalProperties": False,
 }
 
@@ -183,6 +204,18 @@ def _structure_shares(raw: dict, words: List[dict]) -> dict:
         },
         "note": str(raw.get("note", "")).strip(),
     }
+
+
+def _model_answer(raw: dict) -> dict:
+    parts = []
+    for p in raw.get("parts", []) if isinstance(raw, dict) else []:
+        text = str(p.get("text", "")).strip()
+        if p.get("role") in MODEL_ROLES and text:
+            parts.append({"role": p["role"], "text": text})
+        if len(parts) >= MAX_MODEL_PARTS:
+            break
+    tips = [str(t).strip() for t in (raw.get("tips", []) if isinstance(raw, dict) else []) if str(t).strip()]
+    return {"parts": parts, "tips": tips[:MAX_MODEL_TIPS]}
 
 
 def finalize(raw: dict, words: List[dict]) -> dict:
@@ -258,6 +291,7 @@ def finalize(raw: dict, words: List[dict]) -> dict:
         "fillersNote": str(raw.get("fillers_note", "")).strip(),
         "hedgesNote": str(raw.get("hedges_note", "")).strip(),
         "nextStep": str(raw.get("next_step", "")).strip(),
+        "modelAnswer": _model_answer(raw.get("model_answer", {})),
     }
 
 
@@ -265,7 +299,7 @@ def analyze(words: List[dict], metrics: dict, topic: str, language: str, ui_loca
     """Blocking call; run it in a worker thread. Mutates `words` (extra filler flags)."""
     response = _get_client().messages.create(
         model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-        max_tokens=3000,
+        max_tokens=4500,
         system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": build_user_message(words, metrics, topic, language, ui_locale)}],
         output_config={"format": {"type": "json_schema", "schema": REPORT_SCHEMA}},

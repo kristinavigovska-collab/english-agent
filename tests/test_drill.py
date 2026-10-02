@@ -66,6 +66,7 @@ def base_raw(**over):
         "structure": {"intro_end": -1, "conclusion_start": -1, "has_position": True, "has_reason": True,
                       "has_example": False, "has_conclusion": False, "note": "n"},
         "fillers_note": "f", "hedges_note": "h", "next_step": "step",
+        "model_answer": {"parts": [{"role": "position", "text": "I would stay home."}], "tips": ["a"]},
     }
     raw.update(over)
     return raw
@@ -95,6 +96,19 @@ def test_finalize_routes_issue_types_and_validates_ranges():
     assert out["strengths"] == [{"from": 0, "to": 0, "note": "ok"}]
     assert len(out["rewrites"]) == 1 and out["rewrites"][0]["original"].startswith("I am walking")
     assert out["headline"] and out["onTopic"] == "yes" and out["nextStep"] == "step"
+    assert out["modelAnswer"] == {"parts": [{"role": "position", "text": "I would stay home."}], "tips": ["a"]}
+
+
+def test_model_answer_is_sanitised():
+    words = make_words("one two three four five six seven eight")
+    raw = base_raw(model_answer={
+        "parts": [{"role": "bogus", "text": "x"}, {"role": "reason", "text": "  "}] + [{"role": "example", "text": f"p{i}"} for i in range(9)],
+        "tips": ["", "t1", "t2", "t3", "t4"],
+    })
+    ma = drill_analysis_service.finalize(raw, words)["modelAnswer"]
+    assert len(ma["parts"]) == drill_analysis_service.MAX_MODEL_PARTS and ma["parts"][0] == {"role": "example", "text": "p0"}
+    assert ma["tips"] == ["t1", "t2", "t3"]
+    assert drill_analysis_service.finalize(base_raw(model_answer={}), words)["modelAnswer"] == {"parts": [], "tips": []}
 
 
 def test_structure_shares_sum_to_100_and_ignore_bad_indexes():
