@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from routers import drill
-from services import deepgram_service, drill_analysis_service, drill_metrics, drill_rate_limit
+from services import deepgram_service, deepgram_tts, drill_analysis_service, drill_metrics, drill_rate_limit
 
 
 def make_words(text, start=0.5, step=0.4):
@@ -274,3 +274,38 @@ def test_analysis_failure_returns_502_and_refunds(client, monkeypatch):
     monkeypatch.setenv("DRILL_DAILY_LIMIT", "1")
     assert post(client).json()["detail"]["code"] == "analysis_failed"
     assert post(client).json()["detail"]["code"] == "analysis_failed"  # refunded, so not 429
+
+
+# ---------- text-to-speech ----------
+
+def test_speak_returns_audio_caches_and_validates(client, monkeypatch):
+    calls = []
+
+    async def fake_synth(text, model, client=None):
+        calls.append(model)
+        audio = b"ID3-fake-mp3-bytes"
+        deepgram_tts._cache[deepgram_tts._key(text, model)] = audio
+        return audio
+
+    deepgram_tts._cache.clear()
+    monkeypatch.setattr(deepgram_tts, "synthesize", fake_synth)
+    r = client.post("/api/drill/speak", json={"text": "Hello   there, this is a test.", "language": "es", "voice": "b"})
+    assert r.status_code == 200 and r.headers["content-type"] == "audio/mpeg" and r.content.startswith(b"ID3")
+    r2 = client.post("/api/drill/speak", json={"text": "Hello there, this is a test.", "language": "es", "voice": "b"})
+    assert r2.status_code == 200 and calls == ["aura-2-nestor-es"]          # second call served from cache
+    assert client.post("/api/drill/speak", json={"text": "x" * 2000, "language": "en"}).status_code == 400
+    assert client.post("/api/drill/speak", json={"text": "hi", "language": "zz"}).status_code == 400
+    assert deepgram_tts.model_for("de", "a") == "aura-2-julius-de" and deepgram_tts.model_for("xx", "a") == "aura-2-thalia-en"
+
+
+def test_speak_limit_and_errors(client, monkeypatch):
+    deepgram_tts._cache.clear()
+    monkeypatch.setenv("DRILL_TTS_DAILY_CHARS", "20")
+
+    async def boom(text, model, client=None):
+        raise deepgram_tts.TtsError("down")
+
+    monkeypatch.setattr(deepgram_tts, "synthesize", boom)
+    assert client.post("/api/drill/speak", json={"text": "a" * 15, "language": "en"}).json()["detail"]["code"] == "tts_failed"
+    r = client.post("/api/drill/speak", json={"text": "b" * 15, "language": "en"})
+    assert r.status_code == 429 and r.json()["detail"]["code"] == "limit"

@@ -53,3 +53,28 @@ def reset() -> None:
     with _lock:
         _usage.clear()
         _inflight.clear()
+        _tts_usage.clear()
+
+
+_tts_usage: Dict[str, Tuple[str, int]] = {}
+
+
+def tts_daily_chars() -> int:
+    try:
+        return int(os.getenv("DRILL_TTS_DAILY_CHARS", "12000"))
+    except ValueError:
+        return 12000
+
+
+def acquire_tts(ip: str, chars: int) -> bool:
+    """Reserve `chars` characters of voice generation for `ip` today (cache hits are not charged by the caller)."""
+    if os.getenv("DRILL_DISABLE_LIMIT") == "1":
+        return True
+    with _lock:
+        day, used = _tts_usage.get(ip, (_today(), 0))
+        if day != _today():
+            day, used = _today(), 0
+        if used + chars > tts_daily_chars():
+            return False
+        _tts_usage[ip] = (day, used + chars)
+        return True
