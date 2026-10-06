@@ -341,3 +341,13 @@ def test_parallel_and_global_limits(monkeypatch):
     assert drill_rate_limit.acquire("c") is False
     drill_rate_limit.release("b", refund=True)
     assert drill_rate_limit.acquire("c") is True
+
+
+def test_garbled_text_is_detected_and_retried():
+    from services import drill_analysis_service as svc
+
+    assert svc._garbled({"tips": ["ÐŸÐ¾Ñ‡Ð¸Ð½Ð°Ð¹Ñ‚Ðµ"]})
+    assert not svc._garbled({"tips": ["Починайте з чіткої позиції", "Zażółć gęślą jaźń"]})
+
+    calls = iter([{"tips": ["Ð’Ð¸ÐºÐ¾Ñ€Ð¸ÑÑ‚Ð¾Ð²ÑƒÐ¹Ñ‚Ðµ"]}, {"tips": ["Використовуйте"]}])
+    assert svc._without_garble(lambda: next(calls), "t") == {"tips": ["Використовуйте"]}
