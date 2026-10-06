@@ -417,8 +417,40 @@ def finalize(raw: dict, words: List[dict]) -> dict:
     }
 
 
+# UTF-8 read as Latin-1/cp1252/cp1250 ("Ð¿Ñ€Ð¸Ð²...", "ĐŸŃ€Đ¸..."): the model occasionally emits this in the
+# explanation-language fields. A lead byte letter followed by a non-ASCII, non-Cyrillic character never occurs in real text.
+_MOJIBAKE = re.compile("[ÐÑĐŃ][^\u0000-\u007f\u0400-\u04ff]")
+GARBLE_RETRIES = 3  # measured ~1 in 8 expert calls garbled for Ukrainian, so 4 attempts
+
+
+def _garbled(value) -> bool:
+    if isinstance(value, str):
+        return bool(_MOJIBAKE.search(value))
+    if isinstance(value, dict):
+        return any(_garbled(v) for v in value.values())
+    if isinstance(value, list):
+        return any(_garbled(v) for v in value)
+    return False
+
+
+def _without_garble(call, label: str):
+    """Run a model call and re-run it when the result contains mojibake; raise if it never comes out clean.
+
+    Repairing the text is not safe: the model drops some of the original bytes, so a half-repaired string would pass the check."""
+    for attempt in range(GARBLE_RETRIES + 1):
+        result = call()
+        if not _garbled(result):
+            return result
+        logger.warning("drill: %s came back with garbled text (attempt %d)", label, attempt + 1)
+    raise ValueError(f"{label} stayed garbled after {GARBLE_RETRIES + 1} attempts")
+
+
 def expert_answer(topic: str, language: str, ui_locale: str, context: str) -> dict:
     """Independent model answer written as a domain expert; blocking, run in a worker thread."""
+    return _without_garble(lambda: _expert_answer_once(topic, language, ui_locale, context), "expert answer")
+
+
+def _expert_answer_once(topic: str, language: str, ui_locale: str, context: str) -> dict:
     msg = (
         f"SPOKEN language: {LANGUAGE_NAMES.get(language, language)}\n"
         f"EXPLANATION language: {UI_LANGUAGE_NAMES.get(ui_locale, 'English')}\n"
@@ -431,7 +463,8 @@ def expert_answer(topic: str, language: str, ui_locale: str, context: str) -> di
         system=[{"type": "text", "text": EXPERT_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": msg}],
         output_config={"format": {"type": "json_schema", "schema": EXPERT_SCHEMA}},
-        **_thinking(),
+        # Default reasoning on purpose: without it ~1 in 6 uk answers came back as mojibake (0 in 40 with it).
+        # The call runs in parallel with the longer review, so the extra ~4 s is not visible.
     )
     if response.stop_reason == "max_tokens":
         raise ValueError("expert answer was cut off")
@@ -462,7 +495,7 @@ def analyze(words: List[dict], metrics: dict, topic: str, language: str, ui_loca
         return finalize(json.loads(text), words)
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        review_future = pool.submit(review)
+        review_future = pool.submit(_without_garble, review, "review")
         expert_future = pool.submit(expert_answer, topic, language, ui_locale, context)
         result = review_future.result()
         try:

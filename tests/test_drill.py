@@ -317,3 +317,37 @@ def test_speak_limit_and_errors(client, monkeypatch):
     assert client.post("/api/drill/speak", json={"text": "a" * 15, "language": "en"}).json()["detail"]["code"] == "tts_failed"
     r = client.post("/api/drill/speak", json={"text": "b" * 15, "language": "en"})
     assert r.status_code == 429 and r.json()["detail"]["code"] == "limit"
+
+
+# ---------- limits for a team sharing one IP ----------
+
+def test_parallel_and_global_limits(monkeypatch):
+    drill_rate_limit.reset()
+    monkeypatch.delenv("DRILL_DISABLE_LIMIT", raising=False)
+    monkeypatch.setenv("DRILL_DAILY_LIMIT", "50")
+    # default: one at a time per IP
+    assert drill_rate_limit.acquire("office") is True
+    assert drill_rate_limit.acquire("office") is False
+    drill_rate_limit.release("office")
+    # a team behind one IP: several in parallel
+    monkeypatch.setenv("DRILL_MAX_PARALLEL", "3")
+    assert [drill_rate_limit.acquire("office") for _ in range(4)] == [True, True, True, False]
+    for _ in range(3):
+        drill_rate_limit.release("office")
+    # overall cap protects the budget across all IPs; a refund frees a slot
+    drill_rate_limit.reset()
+    monkeypatch.setenv("DRILL_GLOBAL_DAILY_LIMIT", "2")
+    assert drill_rate_limit.acquire("a") and drill_rate_limit.acquire("b")
+    assert drill_rate_limit.acquire("c") is False
+    drill_rate_limit.release("b", refund=True)
+    assert drill_rate_limit.acquire("c") is True
+
+
+def test_garbled_text_is_detected_and_retried():
+    from services import drill_analysis_service as svc
+
+    assert svc._garbled({"tips": ["ÐŸÐ¾Ñ‡Ð¸Ð½Ð°Ð¹Ñ‚Ðµ"]})
+    assert not svc._garbled({"tips": ["Починайте з чіткої позиції", "Zażółć gęślą jaźń"]})
+
+    calls = iter([{"tips": ["Ð’Ð¸ÐºÐ¾Ñ€Ð¸ÑÑ‚Ð¾Ð²ÑƒÐ¹Ñ‚Ðµ"]}, {"tips": ["Використовуйте"]}])
+    assert svc._without_garble(lambda: next(calls), "t") == {"tips": ["Використовуйте"]}
