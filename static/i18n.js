@@ -8,7 +8,7 @@
 
   var DEFAULT_LOCALE = "ru";
   // Bump when locale JSON changes so browsers don't serve a cached dictionary.
-  var LOCALE_VERSION = "20261008-01";
+  var LOCALE_VERSION = "20261008-02";
   var SUPPORTED = ["ru", "en", "pt", "pl"];
   var dictionaries = Object.create(null);
   var currentLocale = DEFAULT_LOCALE;
