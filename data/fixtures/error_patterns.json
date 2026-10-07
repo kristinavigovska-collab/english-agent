@@ -7,12 +7,12 @@
         {
           "lesson_id": "demo-lesson-7",
           "report_id": "demo-7",
-          "date": "2026-05-28",
+          "date": "2026-05-19",
           "count_in_lesson": 1
         }
       ],
-      "first_seen_date": "2026-05-28",
-      "last_seen_date": "2026-05-28",
+      "first_seen_date": "2026-05-19",
+      "last_seen_date": "2026-05-19",
       "total_occurrences": 1,
       "consecutive_lessons_count": 1,
       "max_consecutive_lessons": 1,
@@ -30,12 +30,12 @@
         {
           "lesson_id": "demo-lesson-7",
           "report_id": "demo-7",
-          "date": "2026-05-28",
+          "date": "2026-05-19",
           "count_in_lesson": 1
         }
       ],
-      "first_seen_date": "2026-05-28",
-      "last_seen_date": "2026-05-28",
+      "first_seen_date": "2026-05-19",
+      "last_seen_date": "2026-05-19",
       "total_occurrences": 1,
       "consecutive_lessons_count": 1,
       "max_consecutive_lessons": 1,
