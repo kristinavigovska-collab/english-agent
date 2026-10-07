@@ -7,6 +7,8 @@
   "use strict";
 
   var DEFAULT_LOCALE = "ru";
+  // Bump when locale JSON changes so browsers don't serve a cached dictionary.
+  var LOCALE_VERSION = "20261008-01";
   var SUPPORTED = ["ru", "en", "pt", "pl"];
   var dictionaries = Object.create(null);
   var currentLocale = DEFAULT_LOCALE;
@@ -109,7 +111,7 @@
   }
 
   function loadLocale(locale) {
-    var url = "/static/locales/" + locale + ".json";
+    var url = "/static/locales/" + locale + ".json?v=" + LOCALE_VERSION;
     return fetch(url)
       .then(function (res) {
         if (!res.ok) return {};

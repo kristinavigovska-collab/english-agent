@@ -110,8 +110,8 @@
         </div>
         <p class="goal-form-error" id="goal-form-error" hidden></p>
         <div class="goal-form-actions">
-          <button class="btn" type="button" id="btn-goal-cancel">Отмена</button>
-          <button class="btn btn-primary" type="submit" id="btn-goal-save">Сохранить цель</button>
+          <button class="btn" type="button" id="btn-goal-cancel">Cancel</button>
+          <button class="btn btn-primary" type="submit" id="btn-goal-save">Save goal</button>
         </div>
       </form>
     </div>
@@ -133,15 +133,15 @@
       </div>
 
       <div class="book-class-step" id="book-class-step-slots" hidden>
-        <button type="button" class="book-class-back" id="btn-book-class-back">← Другой преподаватель</button>
+        <button type="button" class="book-class-back" id="btn-book-class-back">← Another teacher</button>
         <p class="book-class-step-label" id="book-class-slot-label">Шаг 2 · Выберите время</p>
         <div class="book-class-slot-list" id="book-class-slot-list" role="list"></div>
       </div>
 
       <p class="curriculum-stub-note" id="book-class-note">После подтверждения слот будет зарезервирован (интеграция с расписанием школы — в разработке).</p>
       <div class="curriculum-stub-actions">
-        <button class="btn" type="button" id="btn-book-class-cancel">Отмена</button>
-        <button class="btn btn-primary" type="button" id="btn-book-class-confirm" disabled>Подтвердить бронирование</button>
+        <button class="btn" type="button" id="btn-book-class-cancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="btn-book-class-confirm" disabled>Confirm booking</button>
       </div>
     </div>
   </div>
@@ -158,8 +158,8 @@
       <p class="curriculum-stub-material" id="practice-material">Упражнения, карточки и задания появятся здесь после подключения библиотеки материалов школы.</p>
       <p class="curriculum-stub-note">Заглушка — здесь будет ссылка на реальные учебные материалы.</p>
       <div class="curriculum-stub-actions">
-        <button class="btn" type="button" id="btn-practice-cancel">Закрыть</button>
-        <button class="btn btn-primary" type="button" id="btn-practice-confirm">Отметить выполненным</button>
+        <button class="btn" type="button" id="btn-practice-cancel">Close</button>
+        <button class="btn btn-primary" type="button" id="btn-practice-confirm">Mark as done</button>
       </div>
     </div>
   </div>
@@ -275,7 +275,7 @@
           <p class="app-nav-plan-widget-title" id="app-nav-plan-title"></p>
           <p class="app-nav-plan-widget-lead" id="app-nav-plan-lead"></p>
           <button type="button" class="app-nav-plan-widget-btn" id="btn-nav-upgrade-plan">
-            Записаться на урок
+            Book a Class
           </button>
         </div>
       </div>
@@ -324,8 +324,9 @@
                 class="sidebar-program-pick"
                 id="btn-pick-program"
                 hidden
+                data-i18n="goal.pick"
               >
-                Выбрать цель
+                Set a goal
               </button>
               <div class="sidebar-program-meta">
                 <span class="level-tag sidebar-program-level-tag" id="sidebar-level-tag" hidden></span>
@@ -423,7 +424,7 @@
                   <span class="goal-deadline" id="goal-deadline"></span>
                   <span class="goal-remaining" id="goal-remaining"></span>
                 </div>
-                <button class="goal-edit-link" type="button" id="btn-goal-edit">Изменить цель</button>
+                <button class="goal-edit-link" type="button" id="btn-goal-edit">Edit goal</button>
               </div>
 
               <div class="study-plan-card is-collapsed" id="study-plan-card">
@@ -499,7 +500,7 @@
 
       <div class="lesson-context-bar" id="lesson-context-bar" hidden>
         <span id="lesson-context-label">Просмотр урока</span>
-        <button class="btn-link" type="button" id="btn-lesson-latest">К текущему шагу</button>
+        <button class="btn-link" type="button" id="btn-lesson-latest" data-i18n="step.back">Back to current step</button>
       </div>
 
       <section class="home-teacher-card" id="home-teacher-card" aria-label="Ваш преподаватель" data-i18n-aria="teacher.card">
@@ -520,7 +521,7 @@
               <span class="teacher-next-lesson-label" data-i18n="next_lesson.title">Следующий урок</span>
               <strong class="teacher-next-lesson-value" id="teacher-next-lesson-value" data-i18n="next_lesson.not_scheduled">не назначен</strong>
             </div>
-            <button type="button" class="teacher-book-btn" id="btn-teacher-book" data-i18n="next_lesson.book">Записаться на урок ↓</button>
+            <button type="button" class="teacher-book-btn" id="btn-teacher-book" data-i18n="next_lesson.book">Book a Class</button>
           </div>
         </div>
       </section>
@@ -593,7 +594,7 @@
             <h2 class="card-title" data-i18n="report.next_step">Следующий шаг</h2>
           </div>
           <p class="report-next-step-lead" id="report-next-step-lead">Рекомендация появится после разбора урока</p>
-          <button type="button" class="btn btn-primary" id="btn-report-next-step-cta">Записаться на урок</button>
+          <button type="button" class="btn btn-primary" id="btn-report-next-step-cta">Book a Class</button>
         </section>
 
         <section class="card" aria-label="Языковая диагностика">
@@ -1080,7 +1081,7 @@
                   </div>
                 </div>
                 <p class="study-plan-disclaimer" id="analytics-study-plan-disclaimer" title=""></p>
-                <button class="goal-edit-link" type="button" id="btn-analytics-goal-edit">Изменить цель</button>
+                <button class="goal-edit-link" type="button" id="btn-analytics-goal-edit">Edit goal</button>
               </section>
             </div>
           </div>
@@ -1090,12 +1091,12 @@
   </div>
 
   <script>window.STUDENT_ID = "__STUDENT_ID__";</script>
-  <script src="/static/i18n.js?v=20260720-02"></script>
+  <script src="/static/i18n.js?v=20261008-01"></script>
   <script src="/static/dashboard-api.js?v=20260706-17"></script>
   <script src="/static/enrollment-state.js?v=20260930-01"></script>
   <script src="/static/student-learning-context.js?v=20260930-02"></script>
   <script src="/static/curriculum-stages.js?v=20260720-02"></script>
-  <script src="/static/dashboard.js?v=20260930-03" defer></script>
+  <script src="/static/dashboard.js?v=20261008-01" defer></script>
 
 </body>
 </html>

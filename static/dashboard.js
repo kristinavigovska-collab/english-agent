@@ -2897,11 +2897,11 @@
             '<div class="program-detail-module-actions">' +
             '<button type="button" class="program-detail-module-preview-btn" data-module-index="' +
             module.index +
-            '">программа</button>' +
+            '">Program</button>' +
             '<button type="button" class="btn btn-secondary program-detail-module-buy-btn" data-module-index="' +
             module.index +
-            '">Открыть ' +
-            esc(formatModuleTitle(module.index).toLowerCase()) +
+            '">' +
+            esc(t("program.open_module", { n: module.index + 1 })) +
             "</button>" +
             "</div>";
         }
@@ -2951,11 +2951,8 @@
       var last = lockedModules[lockedModules.length - 1];
       var bundleLabel =
         lockedModules.length === 2
-          ? "Открыть модули " + (first.index + 1) + " и " + (last.index + 1)
-          : "Открыть модули " +
-            (first.index + 1) +
-            "–" +
-            (last.index + 1);
+          ? t("program.open_modules_two", { a: first.index + 1, b: last.index + 1 })
+          : t("program.open_modules_range", { a: first.index + 1, b: last.index + 1 });
       bundleHtml =
         '<div class="program-detail-modules-bundle">' +
         '<button type="button" class="btn btn-primary program-detail-modules-bundle-btn" data-bundle-to="' +
@@ -3102,7 +3099,7 @@
     container.innerHTML =
       '<div class="program-detail-layout">' +
       '<div class="program-detail-main">' +
-      '<button type="button" class="program-detail-back" id="btn-program-detail-back">← Все программы</button>' +
+      '<button type="button" class="program-detail-back" id="btn-program-detail-back">← All programs</button>' +
       '<header class="program-detail-head">' +
       '<div class="program-detail-badges">' +
       '<span class="program-card-badge program-card-badge--level">' +
@@ -4451,7 +4448,7 @@
   function renderCurriculumActionBtn(kind, classNum, topic, disabled, options) {
     options = options || {};
     var isBook = kind === "lesson";
-    var label = isBook ? t("lesson.book_class") : t("lesson.practice");
+    var label = isBook ? t("lesson.book_class") : t("lesson.practice_btn");
     if (kind === "practice" && options.availableLabel) {
       label = t("lesson.available");
     }
@@ -4471,7 +4468,7 @@
       progressPct > 0;
     var labelHtml = showProgress
       ? "<span>" +
-        esc(t("lesson.practice")) +
+        esc(t("lesson.practice_btn")) +
         '</span><span class="practice-progress-pct">' +
         Math.round(progressPct) +
         "%</span>"
@@ -5313,8 +5310,8 @@
     if (STUB_TEACHER_CARD.nextLesson) {
       bookBtn.classList.remove("is-locked", "has-book-hint", "btn-secondary", "btn-primary");
       bookBtn.classList.add("btn-booked");
-      bookBtn.textContent = "Присоединиться к уроку";
-      bookBtn.setAttribute("aria-label", "Присоединиться к уроку · " + STUB_TEACHER_CARD.nextLesson);
+      bookBtn.textContent = t("teacher.join");
+      bookBtn.setAttribute("aria-label", t("teacher.join") + " · " + STUB_TEACHER_CARD.nextLesson);
       return;
     }
 
@@ -5325,7 +5322,7 @@
       "aria-label",
       view.bookRecommendPractice
         ? view.bookLabel + ". " + (view.bookPreviewHint || BOOK_CLASS_PRACTICE_HINT)
-        : "Записаться на урок с преподавателем"
+        : "Book a class with a teacher"
     );
   }
 
@@ -6234,7 +6231,7 @@
 
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.textContent = "Сохранение…";
+      saveBtn.textContent = "Saving…";
     }
     if (errorEl) errorEl.hidden = true;
 
@@ -6283,7 +6280,7 @@
       .finally(function () {
         if (saveBtn) {
           saveBtn.disabled = false;
-          saveBtn.textContent = "Сохранить цель";
+          saveBtn.textContent = "Save goal";
         }
       });
   }
@@ -6654,7 +6651,7 @@
     var dismissBtn = hypId
       ? '<button type="button" class="hyp-dismiss-btn" data-hid="' +
         esc(hypId) +
-        '">Я сказал правильно</button>'
+        '">I said it correctly</button>'
       : "";
     var examples = item.errors.map(_hypErrorItem).join("");
     return (
@@ -6803,12 +6800,12 @@
               if (card) card.remove();
             } else {
               dismissBtn.disabled = false;
-              dismissBtn.textContent = "Я сказал правильно";
+              dismissBtn.textContent = "I said it correctly";
             }
           })
           .catch(function () {
             dismissBtn.disabled = false;
-            dismissBtn.textContent = "Я сказал правильно";
+            dismissBtn.textContent = "I said it correctly";
           });
         return;
       }
