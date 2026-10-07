@@ -41,8 +41,9 @@ DEMO_REPORTS = [
         "id": "demo-7",
         "lesson_id": "demo-lesson-7",
         "student_id": "demo",
-        "lesson_date": "2026-05-28T14:00:00Z",
-        "created_at": "2026-05-28T14:00:00Z",
+        "class_num": 3,
+        "lesson_date": "2026-05-19T14:00:00Z",
+        "created_at": "2026-05-19T14:00:00Z",
         "grammar_errors": [
             {
                 "error": "She don't like spicy food",
@@ -53,7 +54,7 @@ DEMO_REPORTS = [
         ],
         "vocabulary_level": "B1",
         "fluency_score": 8.0,
-        "lesson_topic": "Travel & Past Tenses",
+        "lesson_topic": "Active listening",
         "weak_topics": ["Past Simple vs Present Perfect"],
         "recommendations": ["Gap-fill practice"],
     },
@@ -61,12 +62,13 @@ DEMO_REPORTS = [
         "id": "demo-6",
         "lesson_id": "demo-lesson-6",
         "student_id": "demo",
-        "lesson_date": "2026-05-19T14:00:00Z",
-        "created_at": "2026-05-19T14:00:00Z",
+        "class_num": 2,
+        "lesson_date": "2026-05-05T14:00:00Z",
+        "created_at": "2026-05-05T14:00:00Z",
         "grammar_errors": [],
         "vocabulary_level": "B1",
         "fluency_score": 7.5,
-        "lesson_topic": "Conditionals",
+        "lesson_topic": "Interests vs positions",
         "weak_topics": ["Conditionals"],
         "recommendations": ["1st conditional drills"],
     },
@@ -74,14 +76,15 @@ DEMO_REPORTS = [
         "id": "demo-5",
         "lesson_id": "demo-lesson-5",
         "student_id": "demo",
-        "lesson_date": "2026-05-12T14:00:00Z",
-        "created_at": "2026-05-12T14:00:00Z",
+        "class_num": 1,
+        "lesson_date": "2026-04-21T14:00:00Z",
+        "created_at": "2026-04-21T14:00:00Z",
         "grammar_errors": [],
         "vocabulary_level": "A2",
         "fluency_score": 7.0,
-        "lesson_topic": "Past Simple",
-        "weak_topics": ["Past Simple"],
-        "recommendations": ["Irregular verbs"],
+        "lesson_topic": "Opening & rapport",
+        "weak_topics": ["Opinions"],
+        "recommendations": ["Express agreement and disagreement"],
     },
 ]
 
@@ -178,6 +181,8 @@ def main() -> None:
 
     preview_bundle = demo_state.build_bundle()
     preview_bundle["curriculum"] = curriculum
+    # Anchors the activity heatmap in static preview (dashboard.js getDemoActivityToday).
+    preview_bundle["demo_activity_today"] = "2026-06-30"
     (static_dir / "demo-preview.json").write_text(
         json.dumps(preview_bundle, ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
