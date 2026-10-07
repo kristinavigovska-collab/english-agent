@@ -351,3 +351,18 @@ def test_garbled_text_is_detected_and_retried():
 
     calls = iter([{"tips": ["Ð’Ð¸ÐºÐ¾Ñ€Ð¸ÑÑ‚Ð¾Ð²ÑƒÐ¹Ñ‚Ðµ"]}, {"tips": ["Використовуйте"]}])
     assert svc._without_garble(lambda: next(calls), "t") == {"tips": ["Використовуйте"]}
+
+
+def test_cut_off_answer_is_retried():
+    from services import drill_analysis_service as svc
+
+    calls = []
+
+    def flaky():
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("expert answer was cut off")
+        return {"tips": ["ok"]}
+
+    assert svc._without_garble(flaky, "t") == {"tips": ["ok"]}
+    assert len(calls) == 2

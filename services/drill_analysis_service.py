@@ -438,7 +438,13 @@ def _without_garble(call, label: str):
 
     Repairing the text is not safe: the model drops some of the original bytes, so a half-repaired string would pass the check."""
     for attempt in range(GARBLE_RETRIES + 1):
-        result = call()
+        try:
+            result = call()
+        except ValueError as exc:
+            if "cut off" not in str(exc) or attempt == GARBLE_RETRIES:
+                raise
+            logger.warning("drill: %s was cut off (attempt %d)", label, attempt + 1)
+            continue
         if not _garbled(result):
             return result
         logger.warning("drill: %s came back with garbled text (attempt %d)", label, attempt + 1)
@@ -459,7 +465,7 @@ def _expert_answer_once(topic: str, language: str, ui_locale: str, context: str)
     )
     response = _get_client().messages.create(
         model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-        max_tokens=4000,
+        max_tokens=8000,  # reasoning tokens count too; 4000 was cut off in ~1 of 25 calls
         system=[{"type": "text", "text": EXPERT_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": msg}],
         output_config={"format": {"type": "json_schema", "schema": EXPERT_SCHEMA}},
