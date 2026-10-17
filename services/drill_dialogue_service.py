@@ -24,6 +24,13 @@ MAX_HEDGES_PER_TURN = 2
 SKILL_IDS = ("answers", "reacts", "detail", "keepsGoing")
 LEVELS = ("good", "ok", "weak")
 
+ROLES = {
+    "interview": "the interviewer",
+    "sales": "the client",
+    "negotiation": "the counterpart in the negotiation",
+    "general": "the colleague",
+}
+
 PARTNERS = {
     "interview": "an experienced hiring manager interviewing the learner for a job",
     "sales": "a busy client who has taken the learner's sales call and wants clear, specific answers",
@@ -71,6 +78,7 @@ General rules:
 - Refer to words only by their index. "from" and "to" are inclusive word indexes inside THAT turn's answer; keep each range short (usually 1-6 words).
 - Write the headline, every skill note, every turn note, every issue reason and the next step in the EXPLANATION language given in the user message, in short plain sentences. "better" (the corrected wording) is always English.
 - Never mention word indexes or numbers like "word 24" in any text the learner will read; quote the actual words instead.
+- The learner talked to {role}. In every text the learner reads, name that person by this role (translated into the EXPLANATION language); never write "the partner".
 - Be honest and kind. Do not invent mistakes; if an answer is strong, say so and report fewer items.
 
 Fields:
@@ -259,6 +267,7 @@ def review(context: str, ui_locale: str, turns: List[dict]) -> dict:
     def once() -> dict:
         system = REVIEW_PROMPT.format(
             persona_line=f"the learner talked to {_partner(context)}.",
+            role=ROLES.get(context, ROLES["general"]),
             max_issues=MAX_ISSUES_PER_TURN,
             max_hedges=MAX_HEDGES_PER_TURN,
         )
