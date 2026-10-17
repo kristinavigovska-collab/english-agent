@@ -21,8 +21,6 @@ MIN_ANSWERS, MAX_ANSWERS = 2, 3
 MAX_QUESTION_CHARS = 240
 MAX_ISSUES_PER_TURN = 4
 MAX_HEDGES_PER_TURN = 2
-SKILL_IDS = ("answers", "reacts", "detail", "keepsGoing")
-LEVELS = ("good", "ok", "weak")
 
 ROLES = {
     "interview": "the interviewer",
@@ -70,28 +68,28 @@ Rules:
 """
 
 REVIEW_PROMPT = """\
-You are an expert speaking coach reviewing a short spoken English DIALOGUE: {persona_line}
-You receive each turn: the partner's question and the learner's answer as a numbered speech-recognition transcript.
+You are two experts in one, reviewing a short spoken English DIALOGUE: {persona_line}
+1) A senior practitioner in this field: you judge WHAT the learner said (substance, argument, structure, persuasiveness) and show how an expert would answer.
+2) An English teacher: you judge HOW they said it (grammar, word choice, natural phrasing).
+You receive each turn: the question and the learner's answer as a numbered speech-recognition transcript.
 
 General rules:
 - The transcript is speech-recognition output. Ignore punctuation, capitalisation and likely recognition slips; flag only clear learner errors or clearly weak phrasing.
 - Refer to words only by their index. "from" and "to" are inclusive word indexes inside THAT turn's answer; keep each range short (usually 1-6 words).
-- Write the headline, every skill note, every turn note, every issue reason and the next step in the EXPLANATION language given in the user message, in short plain sentences. "better" (the corrected wording) is always English.
+- Write the headline, every note, every issue reason, every "why" and the next step in the EXPLANATION language given in the user message, in short plain sentences. "better" and "expert answer" are always English.
 - Never mention word indexes or numbers like "word 24" in any text the learner will read; quote the actual words instead.
 - The learner talked to {role}. In every text the learner reads, name that person by this role (translated into the EXPLANATION language); never write "the partner".
-- Be honest and kind. Do not invent mistakes; if an answer is strong, say so and report fewer items.
+- Be honest, specific and kind. Do not invent mistakes; if an answer is strong, say so and report fewer items. Keep everything short: the learner reads this on a phone.
 
 Fields:
 - headline: a verdict in at most 10 words naming the biggest strength and the biggest gap of the whole conversation.
-- skills: exactly these four, in this order, each with a "level" of good, ok or weak and a one-sentence "note" that cites what the learner did:
-  * answers: did each answer address the question that was asked?
-  * reacts: did the learner pick up the partner's words and respond to the follow-up question, rather than repeating a prepared speech?
-  * detail: did the learner give concrete details, examples or numbers?
-  * keepsGoing: did the learner keep the conversation moving (for example by asking something back, checking understanding, or inviting the partner to continue)?
 - turns: one entry per turn in the same order, each with:
-  * note: 1-2 sentences about that answer.
-  * issues (0-{max_issues}, ordered, never overlapping): grammar or word-choice errors. "better" must be a complete replacement phrase and never empty (widen the range to a neighbouring word if a word must be inserted or deleted). "reason" is one short sentence naming the rule or why it is better.
+  * note: the expert's view of the CONTENT, 1-2 sentences: what worked, what is missing for this situation (for example a concrete example, a number, a clear position, a next step), and why that matters to the listener.
+  * issues (0-{max_issues}, ordered, never overlapping): the most important grammar or word-choice errors. "better" must be a complete replacement phrase and never empty (widen the range to a neighbouring word if a word must be inserted or deleted). "reason" is one short sentence that STARTS with the name of the English grammar rule or topic (for example "Present perfect:", "Articles:", "Prepositions:", "Word order:", "Word choice:") and then says what to do. Prefer real grammar points over style preferences.
   * hedges (0-{max_hedges}): ranges of softening that weakens a point ("I think maybe", "kind of").
+  * expert: how an expert would answer the same question, using ONLY the facts, examples and numbers the learner gave. Never invent employers, figures or achievements; if the learner gave little, keep it short and general rather than making things up.
+      - answer: 2-4 spoken sentences in natural, correct English (about 40-70 words), with a clear order such as position, reason, example, result or next step.
+      - why: ONE short sentence on what makes this version stronger (the structure or technique), so the learner can reuse it.
 - next_step: ONE concrete thing to try in the next conversation, as a single actionable sentence.
 """
 
@@ -99,15 +97,6 @@ REVIEW_SCHEMA = {
     "type": "object",
     "properties": {
         "headline": {"type": "string"},
-        "skills": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"id": {"type": "string"}, "level": {"type": "string"}, "note": {"type": "string"}},
-                "required": ["id", "level", "note"],
-                "additionalProperties": False,
-            },
-        },
         "turns": {
             "type": "array",
             "items": {
@@ -137,14 +126,20 @@ REVIEW_SCHEMA = {
                             "additionalProperties": False,
                         },
                     },
+                    "expert": {
+                        "type": "object",
+                        "properties": {"answer": {"type": "string"}, "why": {"type": "string"}},
+                        "required": ["answer", "why"],
+                        "additionalProperties": False,
+                    },
                 },
-                "required": ["note", "issues", "hedges"],
+                "required": ["note", "issues", "hedges", "expert"],
                 "additionalProperties": False,
             },
         },
         "next_step": {"type": "string"},
     },
-    "required": ["headline", "skills", "turns", "next_step"],
+    "required": ["headline", "turns", "next_step"],
     "additionalProperties": False,
 }
 
@@ -205,17 +200,6 @@ def _build_review_message(ui_locale: str, turns: List[dict]) -> str:
 
 def finalize_review(raw: dict, turns: List[dict]) -> dict:
     """Check the model output against the real turns and fold it into the page's report shape."""
-    skills_by_id = {}
-    for s in raw.get("skills", []) or []:
-        sid = s.get("id")
-        if sid in SKILL_IDS and sid not in skills_by_id:
-            skills_by_id[sid] = {
-                "id": sid,
-                "level": s.get("level") if s.get("level") in LEVELS else "ok",
-                "note": str(s.get("note", "")).strip(),
-            }
-    skills = [skills_by_id[sid] for sid in SKILL_IDS if sid in skills_by_id]
-
     raw_turns = raw.get("turns", []) or []
     out_turns = []
     for i, t in enumerate(turns):
@@ -251,11 +235,14 @@ def finalize_review(raw: dict, turns: List[dict]) -> dict:
                 "issues": sorted(issues, key=lambda x: x["from"]),
                 "hedges": sorted(hedges, key=lambda x: x["from"]),
                 "note": str(r.get("note", "")).strip(),
+                "expert": {
+                    "answer": str((r.get("expert") or {}).get("answer", "")).strip(),
+                    "why": str((r.get("expert") or {}).get("why", "")).strip(),
+                },
             }
         )
     return {
         "headline": str(raw.get("headline", "")).strip(),
-        "skills": skills,
         "turns": out_turns,
         "nextStep": str(raw.get("next_step", "")).strip(),
     }
@@ -273,7 +260,7 @@ def review(context: str, ui_locale: str, turns: List[dict]) -> dict:
         )
         response = base._get_client().messages.create(
             model=_model(),
-            max_tokens=5000,
+            max_tokens=6000,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": _build_review_message(ui_locale, turns)}],
             output_config={"format": {"type": "json_schema", "schema": REVIEW_SCHEMA}},
@@ -285,6 +272,6 @@ def review(context: str, ui_locale: str, turns: List[dict]) -> dict:
         return finalize_review(json.loads(text), turns)
 
     result = base._without_garble(once, "dialogue review")
-    if len(result["skills"]) != len(SKILL_IDS) or not result["headline"]:
+    if not result["headline"] or not any(t["expert"]["answer"] for t in result["turns"]):
         raise ValueError("dialogue review is incomplete")
     return result

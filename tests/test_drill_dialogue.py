@@ -234,18 +234,15 @@ def turns_payload(n=2):
     return [{"question": f"Q{i}?", "transcript": ANSWER, "words": [dict(w) for w in make_words(ANSWER)]} for i in range(1, n + 1)]
 
 
+EXPERT = {"answer": "I have worked with international teams for three years.", "why": "Position first, then proof."}
+
+
 def raw_review(**over):
     base = {
         "headline": "Clear answers, but ask back",
-        "skills": [
-            {"id": "answers", "level": "good", "note": "Answered."},
-            {"id": "reacts", "level": "ok", "note": "Partly."},
-            {"id": "detail", "level": "ok", "note": "One example."},
-            {"id": "keepsGoing", "level": "weak", "note": "No question back."},
-        ],
         "turns": [
-            {"note": "n1", "issues": [{"from": 12, "to": 16, "better": "have worked with people from different countries for three years", "reason": "present perfect"}], "hedges": [{"from": 2, "to": 3}]},
-            {"note": "n2", "issues": [], "hedges": []},
+            {"note": "n1", "issues": [{"from": 12, "to": 16, "better": "have worked with people from different countries for three years", "reason": "present perfect"}], "hedges": [{"from": 2, "to": 3}], "expert": EXPERT},
+            {"note": "n2", "issues": [], "hedges": [], "expert": EXPERT},
         ],
         "next_step": "Ask one question back.",
     }
@@ -262,8 +259,8 @@ def test_finalize_review_keeps_valid_items_and_drops_invalid_ones():
             {"from": 14, "to": 15, "better": "overlaps the first", "reason": "r"},       # overlap -> dropped
             {"from": 0, "to": 999, "better": "out of range", "reason": "r"},             # out of range -> dropped
             {"from": 1, "to": 2, "better": "", "reason": "r"},                           # no replacement -> dropped
-        ], "hedges": [{"from": 2, "to": 3}, {"from": 14, "to": 15}]},                    # second hedge overlaps an issue
-        {"note": "n2", "issues": [], "hedges": []},
+        ], "hedges": [{"from": 2, "to": 3}, {"from": 14, "to": 15}], "expert": EXPERT},      # second hedge overlaps an issue
+        {"note": "n2", "issues": [], "hedges": [], "expert": EXPERT},
     ])
     out = drill_dialogue_service.finalize_review(raw, turns)
     t1 = out["turns"][0]
@@ -271,20 +268,14 @@ def test_finalize_review_keeps_valid_items_and_drops_invalid_ones():
     assert t1["issues"][0]["original"] == " ".join(w["w"] for w in turns[0]["words"][12:17])
     assert t1["hedges"] == [{"from": 2, "to": 3}]
     assert "filler" not in t1["words"][1]
-    assert n > 16 and [s["id"] for s in out["skills"]] == list(drill_dialogue_service.SKILL_IDS)
+    assert n > 16 and t1["expert"] == EXPERT and "skills" not in out
     assert out["nextStep"] == "Ask one question back." and out["turns"][0]["question"] == "Q1?"
 
 
-def test_finalize_review_normalises_skills():
+def test_finalize_review_tolerates_a_missing_expert_block():
     turns = [{"question": "Q?", "words": make_words(ANSWER)}]
-    raw = raw_review(skills=[
-        {"id": "keepsGoing", "level": "weak", "note": "a"},
-        {"id": "answers", "level": "amazing", "note": "b"},          # unknown level -> ok
-        {"id": "answers", "level": "good", "note": "duplicate"},     # duplicate id -> ignored
-        {"id": "made-up", "level": "good", "note": "c"},             # unknown id -> dropped
-    ], turns=[{"note": "n", "issues": [], "hedges": []}])
-    out = drill_dialogue_service.finalize_review(raw, turns)
-    assert [(s["id"], s["level"]) for s in out["skills"]] == [("answers", "ok"), ("keepsGoing", "weak")]
+    out = drill_dialogue_service.finalize_review(raw_review(turns=[{"note": "n", "issues": [], "hedges": []}]), turns)
+    assert out["turns"][0]["expert"] == {"answer": "", "why": ""}
 
 
 def post_review(client, turns=None, **extra):
@@ -303,7 +294,7 @@ def test_review_happy_path(client, monkeypatch):
     r = post_review(client)
     assert r.status_code == 200
     body = r.json()
-    assert body["headline"] and len(body["skills"]) == 4 and len(body["turns"]) == 2
+    assert body["headline"] and body["turns"][0]["expert"]["answer"] and len(body["turns"]) == 2
     assert body["turns"][0]["issues"][0]["original"]
     assert CALLS["review"]["context"] == "negotiation" and CALLS["review"]["ui_locale"] == "ru"
     assert CALLS["review"]["turns"][0]["words"][1].get("filler") is None       # flags are only what the page sent
