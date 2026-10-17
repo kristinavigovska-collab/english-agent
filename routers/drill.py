@@ -145,7 +145,7 @@ async def speak(body: SpeakRequest, request: Request):
         return _error(400, "bad_request", "unsupported language")
     if not deepgram_tts.supports(body.language):
         return _error(400, "no_voice", "no natural voice for this language")
-    voice = body.voice if body.voice in ("a", "b") else "a"
+    voice = body.voice if body.voice in ("a", "b", "p") else "a"
     model = deepgram_tts.model_for(body.language, voice)
 
     audio = deepgram_tts.cached(text, model)

@@ -334,3 +334,29 @@ def test_review_counts_as_one_analysis_and_failure_is_refunded(client, monkeypat
     assert post_review(client).status_code == 200      # the failed review did not use the only analysis
     r = post_review(client)
     assert r.status_code == 429 and r.json()["detail"]["code"] == "limit"
+
+
+# ---------- the partner's voice ----------
+
+def test_partner_voice_is_the_fast_english_model_and_falls_back_for_other_languages(monkeypatch):
+    from services import deepgram_tts
+    monkeypatch.delenv("DIALOGUE_VOICE_MODEL", raising=False)
+    assert deepgram_tts.model_for("en", "p") == "aura-orion-en"
+    assert deepgram_tts.model_for("es", "p") == deepgram_tts.model_for("es", "b")
+    monkeypatch.setenv("DIALOGUE_VOICE_MODEL", "aura-2-apollo-en")
+    assert deepgram_tts.model_for("en", "p") == "aura-2-apollo-en"
+    assert deepgram_tts.model_for("en", "a") == "aura-2-thalia-en"      # the model-answer voices are unchanged
+
+
+def test_speak_accepts_the_partner_voice(client, monkeypatch):
+    from services import deepgram_tts
+    seen = {}
+
+    async def fake(text, model, client=None):
+        seen["model"] = model
+        return b"mp3"
+
+    monkeypatch.setattr(deepgram_tts, "synthesize", fake)
+    monkeypatch.delenv("DIALOGUE_VOICE_MODEL", raising=False)
+    r = client.post("/api/drill/speak", json={"text": "How did you solve it?", "language": "en", "voice": "p"})
+    assert r.status_code == 200 and seen["model"] == "aura-orion-en"
