@@ -26,7 +26,7 @@ VOICES = {
 
 # voice "p" = the conversation partner in the trial dialogue. Aura-1 renders a sentence in about a third of a second
 # (Aura-2 needs 3-4 s), which is what a spoken exchange needs. Override with DIALOGUE_VOICE_MODEL.
-PARTNER_VOICE = {"en": "aura-orion-en"}
+PARTNER_VOICE = {"en": "aura-asteria-en"}
 
 
 class TtsError(Exception):

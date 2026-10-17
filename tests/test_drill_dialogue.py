@@ -341,7 +341,7 @@ def test_review_counts_as_one_analysis_and_failure_is_refunded(client, monkeypat
 def test_partner_voice_is_the_fast_english_model_and_falls_back_for_other_languages(monkeypatch):
     from services import deepgram_tts
     monkeypatch.delenv("DIALOGUE_VOICE_MODEL", raising=False)
-    assert deepgram_tts.model_for("en", "p") == "aura-orion-en"
+    assert deepgram_tts.model_for("en", "p") == "aura-asteria-en"
     assert deepgram_tts.model_for("es", "p") == deepgram_tts.model_for("es", "b")
     monkeypatch.setenv("DIALOGUE_VOICE_MODEL", "aura-2-apollo-en")
     assert deepgram_tts.model_for("en", "p") == "aura-2-apollo-en"
@@ -359,4 +359,4 @@ def test_speak_accepts_the_partner_voice(client, monkeypatch):
     monkeypatch.setattr(deepgram_tts, "synthesize", fake)
     monkeypatch.delenv("DIALOGUE_VOICE_MODEL", raising=False)
     r = client.post("/api/drill/speak", json={"text": "How did you solve it?", "language": "en", "voice": "p"})
-    assert r.status_code == 200 and seen["model"] == "aura-orion-en"
+    assert r.status_code == 200 and seen["model"] == "aura-asteria-en"
