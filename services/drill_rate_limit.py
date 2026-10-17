@@ -83,6 +83,8 @@ def reset() -> None:
         _inflight.clear()
         _global.clear()
         _tts_usage.clear()
+        _turn_usage.clear()
+        _turn_inflight.clear()
 
 
 _tts_usage: Dict[str, Tuple[str, int]] = {}
@@ -107,3 +109,40 @@ def acquire_tts(ip: str, chars: int) -> bool:
             return False
         _tts_usage[ip] = (day, used + chars)
         return True
+
+
+# ---- dialogue turns: every spoken answer in a dialogue costs speech-to-text and a model call ----
+_turn_usage: Dict[str, Tuple[str, int]] = {}
+_turn_inflight: Dict[str, int] = {}
+
+
+def dialogue_daily_turns(answers_per_dialogue: int = 2) -> int:
+    """Dialogue answers per IP per day. Default = the daily analyses times the answers in one dialogue."""
+    return _int_env("DRILL_DIALOGUE_DAILY_TURNS", daily_limit() * max(1, answers_per_dialogue))
+
+
+def acquire_turn(ip: str, answers_per_dialogue: int = 2) -> bool:
+    """Reserve one dialogue answer for `ip` (one at a time per IP). False when the daily cap is reached."""
+    if os.getenv("DRILL_DISABLE_LIMIT") == "1":
+        return True
+    with _lock:
+        day, n = _turn_usage.get(ip, (_today(), 0))
+        if day != _today():
+            day, n = _today(), 0
+        if n >= dialogue_daily_turns(answers_per_dialogue) or _turn_inflight.get(ip, 0) >= 1:
+            return False
+        _turn_usage[ip] = (day, n + 1)
+        _turn_inflight[ip] = _turn_inflight.get(ip, 0) + 1
+        return True
+
+
+def release_turn(ip: str, refund: bool = False) -> None:
+    with _lock:
+        left = _turn_inflight.get(ip, 0) - 1
+        if left > 0:
+            _turn_inflight[ip] = left
+        else:
+            _turn_inflight.pop(ip, None)
+        if refund and ip in _turn_usage:
+            day, n = _turn_usage[ip]
+            _turn_usage[ip] = (day, max(0, n - 1))
