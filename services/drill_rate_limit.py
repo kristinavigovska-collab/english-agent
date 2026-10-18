@@ -85,6 +85,7 @@ def reset() -> None:
         _tts_usage.clear()
         _turn_usage.clear()
         _turn_inflight.clear()
+        _define_usage.clear()
 
 
 _tts_usage: Dict[str, Tuple[str, int]] = {}
@@ -146,3 +147,24 @@ def release_turn(ip: str, refund: bool = False) -> None:
         if refund and ip in _turn_usage:
             day, n = _turn_usage[ip]
             _turn_usage[ip] = (day, max(0, n - 1))
+
+
+# ---- word lookups (click on a word in a review): a small model call, capped per IP per day ----
+_define_usage: Dict[str, Tuple[str, int]] = {}
+
+
+def define_daily() -> int:
+    return _int_env("DRILL_DEFINE_DAILY", 60)
+
+
+def acquire_define(ip: str) -> bool:
+    if os.getenv("DRILL_DISABLE_LIMIT") == "1":
+        return True
+    with _lock:
+        day, n = _define_usage.get(ip, (_today(), 0))
+        if day != _today():
+            day, n = _today(), 0
+        if n >= define_daily():
+            return False
+        _define_usage[ip] = (day, n + 1)
+        return True

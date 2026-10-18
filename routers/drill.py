@@ -3,6 +3,7 @@
 POST /api/drill/analyze  (multipart: audio, language, topic, ui_locale, context)
 POST /api/drill/dialogue/turn    (multipart: audio, topic, context, turn, total, history)   trial dialogue, English only
 POST /api/drill/dialogue/review  (JSON: context, ui_locale, turns)
+POST /api/drill/define           (JSON: word, sentence, language, ui_locale)   translation of one word in its sentence
 Nothing is stored: the audio and transcript live in memory for the length of the request.
 """
 from __future__ import annotations
@@ -17,7 +18,7 @@ from pydantic import BaseModel, Field
 
 import json
 
-from services import deepgram_service, deepgram_tts, drill_analysis_service, drill_dialogue_service, drill_metrics, drill_rate_limit
+from services import deepgram_service, deepgram_tts, drill_analysis_service, drill_define_service, drill_dialogue_service, drill_metrics, drill_rate_limit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -159,6 +160,40 @@ async def speak(body: SpeakRequest, request: Request):
         except deepgram_tts.TtsError:
             return _error(502, "tts_failed", "voice generation failed")
     return Response(content=audio, media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=3600"})
+
+
+# ---------------------------------------------------------------- word lookup
+
+MAX_DEFINE_WORD_CHARS = 40
+MAX_DEFINE_SENTENCE_CHARS = 300
+
+
+class DefineRequest(BaseModel):
+    word: str = Field(max_length=MAX_DEFINE_WORD_CHARS * 2)
+    sentence: str = Field(default="", max_length=MAX_DEFINE_SENTENCE_CHARS * 2)
+    language: str = "en"
+    ui_locale: str = "en"
+
+
+@router.post("/drill/define", tags=["drill"])
+async def define_word(body: DefineRequest, request: Request):
+    """Translation and a short note for one clicked word. Cached; capped per IP per day (cache hits are free)."""
+    word = " ".join(body.word.split()).strip(" .,;:!?\"“”()[]")
+    sentence = " ".join(body.sentence.split())[:MAX_DEFINE_SENTENCE_CHARS]
+    if not word or len(word) > MAX_DEFINE_WORD_CHARS or " " in word:
+        return _error(400, "bad_request", "send a single word")
+    if body.language not in LANGUAGES or body.ui_locale not in UI_LOCALES:
+        return _error(400, "bad_request", "unsupported language")
+    hit = drill_define_service.cached(word, sentence, body.language, body.ui_locale)
+    if hit is not None:
+        return hit
+    if not drill_rate_limit.acquire_define(_client_ip(request)):
+        return _error(429, "limit", "daily lookup limit reached")
+    try:
+        return await run_in_threadpool(drill_define_service.define, word, sentence, body.language, body.ui_locale)
+    except Exception:
+        logger.exception("drill define failed")
+        return _error(502, "define_failed", "lookup failed")
 
 
 # ---------------------------------------------------------------- trial dialogue (English only)
