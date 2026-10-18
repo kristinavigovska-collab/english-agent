@@ -234,14 +234,14 @@ def turns_payload(n=2):
     return [{"question": f"Q{i}?", "transcript": ANSWER, "words": [dict(w) for w in make_words(ANSWER)]} for i in range(1, n + 1)]
 
 
-EXPERT = {"answer": "I have worked with international teams for three years.", "why": "Position first, then proof."}
+EXPERT = {"parts": [{"kind": "position", "text": "I have worked with international teams for three years."}, {"kind": "bogus", "text": "I explain things simply."}, {"kind": "result", "text": "   "}], "why": "Position first, then proof."}
 
 
 def raw_review(**over):
     base = {
         "headline": "Clear answers, but ask back",
         "turns": [
-            {"note": "n1", "issues": [{"from": 12, "to": 16, "better": "have worked with people from different countries for three years", "reason": "present perfect"}], "hedges": [{"from": 2, "to": 3}], "expert": EXPERT},
+            {"note": "n1", "issues": [{"from": 12, "to": 16, "better": "have worked with people from different countries for three years", "topic": "Present perfect", "reason": "present perfect", "rule": {"formula": "have been + verb-ing + for", "when": "Use it for actions that continue.", "examples": ["I have lived here for five years.", "  ", "She has been working since May."]}}], "hedges": [{"from": 2, "to": 3}], "expert": EXPERT},
             {"note": "n2", "issues": [], "hedges": [], "expert": EXPERT},
         ],
         "next_step": "Ask one question back.",
@@ -255,7 +255,7 @@ def test_finalize_review_keeps_valid_items_and_drops_invalid_ones():
     n = len(turns[0]["words"])
     raw = raw_review(turns=[
         {"note": "n1", "issues": [
-            {"from": 12, "to": 16, "better": "fixed", "reason": "r"},
+            {"from": 12, "to": 16, "better": "fixed", "topic": "Present perfect", "reason": "r", "rule": {"formula": "f", "when": "w", "examples": ["e"]}},
             {"from": 14, "to": 15, "better": "overlaps the first", "reason": "r"},       # overlap -> dropped
             {"from": 0, "to": 999, "better": "out of range", "reason": "r"},             # out of range -> dropped
             {"from": 1, "to": 2, "better": "", "reason": "r"},                           # no replacement -> dropped
@@ -268,14 +268,25 @@ def test_finalize_review_keeps_valid_items_and_drops_invalid_ones():
     assert t1["issues"][0]["original"] == " ".join(w["w"] for w in turns[0]["words"][12:17])
     assert t1["hedges"] == [{"from": 2, "to": 3}]
     assert "filler" not in t1["words"][1]
-    assert n > 16 and t1["expert"] == EXPERT and "skills" not in out
+    assert n > 16 and "skills" not in out
+    assert t1["expert"]["answer"] == "I have worked with international teams for three years. I explain things simply."
+    assert [p["kind"] for p in t1["expert"]["parts"]] == ["position", "position"]       # unknown kind -> position, empty text dropped
+    assert t1["issues"][0]["topic"] == "Present perfect" and t1["issues"][0]["rule"]["examples"] == ["e"]
     assert out["nextStep"] == "Ask one question back." and out["turns"][0]["question"] == "Q1?"
+
+
+def test_finalize_review_cleans_the_rule_card():
+    turns = [{"question": "Q?", "words": make_words(ANSWER)}]
+    raw = raw_review(turns=[{"note": "n", "issues": [{"from": 12, "to": 16, "better": "x", "topic": "T", "reason": "r",
+                    "rule": {"formula": " f ", "when": " w ", "examples": ["a", " ", "b", "c", "d"]}}], "hedges": [], "expert": EXPERT}])
+    rule = drill_dialogue_service.finalize_review(raw, turns)["turns"][0]["issues"][0]["rule"]
+    assert rule == {"formula": "f", "when": "w", "examples": ["a", "b", "c"]}
 
 
 def test_finalize_review_tolerates_a_missing_expert_block():
     turns = [{"question": "Q?", "words": make_words(ANSWER)}]
     out = drill_dialogue_service.finalize_review(raw_review(turns=[{"note": "n", "issues": [], "hedges": []}]), turns)
-    assert out["turns"][0]["expert"] == {"answer": "", "why": ""}
+    assert out["turns"][0]["expert"] == {"answer": "", "parts": [], "why": ""}
 
 
 def post_review(client, turns=None, **extra):

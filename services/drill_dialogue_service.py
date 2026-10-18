@@ -85,10 +85,17 @@ Fields:
 - headline: a verdict in at most 10 words naming the biggest strength and the biggest gap of the whole conversation.
 - turns: one entry per turn in the same order, each with:
   * note: the expert's view of the CONTENT, 1-2 sentences: what worked, what is missing for this situation (for example a concrete example, a number, a clear position, a next step), and why that matters to the listener.
-  * issues (0-{max_issues}, ordered, never overlapping): the most important grammar or word-choice errors. "better" must be a complete replacement phrase and never empty (widen the range to a neighbouring word if a word must be inserted or deleted). "reason" is one short sentence that STARTS with the name of the English grammar rule or topic (for example "Present perfect:", "Articles:", "Prepositions:", "Word order:", "Word choice:") and then says what to do. Prefer real grammar points over style preferences.
+  * issues (0-{max_issues}, ordered, never overlapping): the most important grammar or word-choice errors. Pick real grammar points over style preferences. Do NOT report filler words (um, uh, well) or hedges here: delivery is handled separately. The replacement must really change the wording; never return the same phrase. Each has:
+      - better: a complete replacement phrase in English, never empty (widen the range to a neighbouring word if a word must be inserted or deleted).
+      - topic: the grammar topic in 1-3 words, in the EXPLANATION language (for example "Present perfect", "Articles", "Prepositions of time", "Word order", "Word choice").
+      - reason: ONE short sentence saying what to do instead.
+      - rule: the grammar rule as a small structured card:
+          * formula: the pattern in English as a short formula, for example "have / has been + verb-ing + for / since + time" (at most 10 words).
+          * when: ONE short sentence in the EXPLANATION language saying when to use it.
+          * examples: exactly 2 short, correct, everyday English sentences that show the pattern (different from the learner's sentence).
   * hedges (0-{max_hedges}): ranges of softening that weakens a point ("I think maybe", "kind of").
-  * expert: how an expert would answer the same question, using ONLY the facts, examples and numbers the learner gave. Never invent employers, figures or achievements; if the learner gave little, keep it short and general rather than making things up.
-      - answer: 2-4 spoken sentences in natural, correct English (about 40-70 words), with a clear order such as position, reason, example, result or next step.
+  * expert: how an expert would answer the same question, using ONLY the facts, examples and numbers the learner gave. Add NO new facts: no motives, feelings, reasons, figures, employers, results or claims the learner did not state. You may only reorder, tighten and correct their own content, and add a closing question back to the other person. If a piece (for example the result) was not mentioned, leave it out instead of making it up.
+      - parts: 2-4 pieces in speaking order, together 40-70 words of natural, correct spoken English. Each piece has "kind" (one of: position = the main point or answer; reason = why; example = a concrete case; result = the outcome; next = a next step or a question back) and "text" (one or two sentences, English).
       - why: ONE short sentence on what makes this version stronger (the structure or technique), so the learner can reuse it.
 - next_step: ONE concrete thing to try in the next conversation, as a single actionable sentence.
 """
@@ -111,9 +118,20 @@ REVIEW_SCHEMA = {
                                 "from": {"type": "integer"},
                                 "to": {"type": "integer"},
                                 "better": {"type": "string"},
+                                "topic": {"type": "string"},
                                 "reason": {"type": "string"},
+                                "rule": {
+                                    "type": "object",
+                                    "properties": {
+                                        "formula": {"type": "string"},
+                                        "when": {"type": "string"},
+                                        "examples": {"type": "array", "items": {"type": "string"}},
+                                    },
+                                    "required": ["formula", "when", "examples"],
+                                    "additionalProperties": False,
+                                },
                             },
-                            "required": ["from", "to", "better", "reason"],
+                            "required": ["from", "to", "better", "topic", "reason", "rule"],
                             "additionalProperties": False,
                         },
                     },
@@ -128,8 +146,19 @@ REVIEW_SCHEMA = {
                     },
                     "expert": {
                         "type": "object",
-                        "properties": {"answer": {"type": "string"}, "why": {"type": "string"}},
-                        "required": ["answer", "why"],
+                        "properties": {
+                            "parts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {"kind": {"type": "string"}, "text": {"type": "string"}},
+                                    "required": ["kind", "text"],
+                                    "additionalProperties": False,
+                                },
+                            },
+                            "why": {"type": "string"},
+                        },
+                        "required": ["parts", "why"],
                         "additionalProperties": False,
                     },
                 },
@@ -198,6 +227,30 @@ def _build_review_message(ui_locale: str, turns: List[dict]) -> str:
     return "\n".join(parts)
 
 
+def _norm(text: str) -> str:
+    return " ".join("".join(c for c in text.lower() if c.isalnum() or c == " ").split())
+
+
+def _clean_rule(raw) -> dict:
+    raw = raw if isinstance(raw, dict) else {}
+    examples = [str(x).strip() for x in (raw.get("examples") or []) if str(x).strip()][:3]
+    return {"formula": str(raw.get("formula", "")).strip(), "when": str(raw.get("when", "")).strip(), "examples": examples}
+
+
+PART_KINDS = ("position", "reason", "example", "result", "next")
+
+
+def _clean_expert(raw) -> dict:
+    raw = raw if isinstance(raw, dict) else {}
+    parts = []
+    for p in raw.get("parts", []) or []:
+        text = str((p or {}).get("text", "")).strip() if isinstance(p, dict) else ""
+        if text:
+            kind = (p.get("kind") or "").strip().lower()
+            parts.append({"kind": kind if kind in PART_KINDS else "position", "text": text})
+    return {"answer": " ".join(p["text"] for p in parts), "parts": parts, "why": str(raw.get("why", "")).strip()}
+
+
 def finalize_review(raw: dict, turns: List[dict]) -> dict:
     """Check the model output against the real turns and fold it into the page's report shape."""
     raw_turns = raw.get("turns", []) or []
@@ -213,10 +266,17 @@ def finalize_review(raw: dict, turns: List[dict]) -> dict:
             better = str(item.get("better", "")).strip()
             if not rng or not better or any(taken[rng[0] : rng[1] + 1]) or len(issues) >= MAX_ISSUES_PER_TURN:
                 continue
+            original = " ".join(w["w"] for w in words[rng[0] : rng[1] + 1]).strip(" .,;:!?\"“”")
+            if _norm(original) == _norm(better):
+                continue    # nothing to fix
+            if all(words[k].get("filler") for k in range(rng[0], rng[1] + 1)):
+                continue    # fillers belong to the delivery note, not to grammar
             for k in range(rng[0], rng[1] + 1):
                 taken[k] = True
-            original = " ".join(w["w"] for w in words[rng[0] : rng[1] + 1]).strip(" .,;:!?\"“”")
-            issues.append({"from": rng[0], "to": rng[1], "original": original, "better": better, "reason": str(item.get("reason", "")).strip()})
+            issues.append({
+                "from": rng[0], "to": rng[1], "original": original, "better": better,
+                "topic": str(item.get("topic", "")).strip(), "reason": str(item.get("reason", "")).strip(), "rule": _clean_rule(item.get("rule")),
+            })
         for item in r.get("hedges", []) or []:
             rng = base._clean_range(item, n)
             if not rng or any(taken[rng[0] : rng[1] + 1]) or len(hedges) >= MAX_HEDGES_PER_TURN:
@@ -235,10 +295,7 @@ def finalize_review(raw: dict, turns: List[dict]) -> dict:
                 "issues": sorted(issues, key=lambda x: x["from"]),
                 "hedges": sorted(hedges, key=lambda x: x["from"]),
                 "note": str(r.get("note", "")).strip(),
-                "expert": {
-                    "answer": str((r.get("expert") or {}).get("answer", "")).strip(),
-                    "why": str((r.get("expert") or {}).get("why", "")).strip(),
-                },
+                "expert": _clean_expert(r.get("expert")),
             }
         )
     return {
