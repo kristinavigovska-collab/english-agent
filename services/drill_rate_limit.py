@@ -154,7 +154,7 @@ _define_usage: Dict[str, Tuple[str, int]] = {}
 
 
 def define_daily() -> int:
-    return _int_env("DRILL_DEFINE_DAILY", 60)
+    return _int_env("DRILL_DEFINE_DAILY", 200)
 
 
 def acquire_define(ip: str) -> bool:
