@@ -24,6 +24,11 @@ VOICES = {
 }
 
 
+# voice "p" = the conversation partner in the trial dialogue. Aura-1 renders a sentence in about a third of a second
+# (Aura-2 needs 3-4 s), which is what a spoken exchange needs. Override with DIALOGUE_VOICE_MODEL.
+PARTNER_VOICE = {"en": "aura-asteria-en"}
+
+
 class TtsError(Exception):
     pass
 
@@ -53,6 +58,10 @@ def supports(language: str) -> bool:
 
 
 def model_for(language: str, voice: str) -> str:
+    if voice == "p" and language in PARTNER_VOICE:
+        return os.getenv("DIALOGUE_VOICE_MODEL", PARTNER_VOICE[language])
+    if voice == "p":
+        voice = "b"
     return VOICES.get(language, VOICES["en"]).get(voice, VOICES["en"]["a"]) if language in VOICES else VOICES["en"]["a"]
 
 
