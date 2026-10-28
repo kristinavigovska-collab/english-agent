@@ -354,7 +354,7 @@ def test_speak_accepts_the_partner_voice(client, monkeypatch):
     from services import deepgram_tts
     seen = {}
 
-    async def fake(text, model, client=None):
+    async def fake(text, model, client=None, fmt="mp3"):
         seen["model"] = model
         return b"mp3"
 
@@ -362,3 +362,191 @@ def test_speak_accepts_the_partner_voice(client, monkeypatch):
     monkeypatch.delenv("DIALOGUE_VOICE_MODEL", raising=False)
     r = client.post("/api/drill/speak", json={"text": "How did you solve it?", "language": "en", "voice": "p"})
     assert r.status_code == 200 and seen["model"] == "aura-asteria-en"
+
+
+def test_first_chunk_is_the_first_sentence_and_short_ones_join_the_next():
+    fc = drill_dialogue_service.first_chunk
+    assert fc("You mentioned a discount of ten percent. How would you justify it to us?") == "You mentioned a discount of ten percent."
+    assert fc("Right. What did you do next about it?") == "Right. What did you do next about it?"      # a short opener joins the next sentence
+    assert fc("How long did it take you to prepare that plan for the team? And what changed?") == "How long did it take you to prepare that plan for the team?"
+    assert fc("A single sentence without punctuation") == "A single sentence without punctuation"
+    # a long sentence is cut after its first clause so the first audio is quick to produce
+    long = "So if the supplier says the delay is due to a shipping company problem, would you still expect them to give you a discount?"
+    assert fc(long) == "So if the supplier says the delay is due to a shipping company problem,"
+    assert fc("A very long sentence with no commas at all that just keeps going and going until the end of the line?") == "A very long sentence with no commas at all that just keeps going and going until the end of the line?"
+
+
+def test_turn_answer_carries_the_first_sentence_as_audio_and_timing(client, monkeypatch):
+    seen = {}
+    stt = fake_stt()
+    monkeypatch.setattr(deepgram_service, "transcribe", stt)
+    monkeypatch.setattr(drill_dialogue_service, "next_question", lambda *a: "What discount did you have in mind exactly? And why that number?")
+
+    async def fake_synth(text, model, client=None, fmt="mp3"):
+        seen["text"], seen["model"] = text, model
+        return b"MP3DATA"
+    monkeypatch.setattr(drill.deepgram_tts, "synthesize", fake_synth)
+    r = turn(client, history=json.dumps([]))
+    assert r.status_code == 200
+    body = r.json()
+    import base64
+    assert body["questionAudio"]["text"] == "What discount did you have in mind exactly?"
+    assert base64.b64decode(body["questionAudio"]["audio"]) == b"MP3DATA" and seen["text"] == body["questionAudio"]["text"]
+    assert set(body["timing"]) == {"stt_ms", "next_ms", "llm_ms", "voice_ms"}
+
+
+def test_turn_answer_survives_a_failing_voice(client, monkeypatch):
+    monkeypatch.setattr(deepgram_service, "transcribe", fake_stt())
+    monkeypatch.setattr(drill_dialogue_service, "next_question", lambda *a: "What happened next?")
+
+    async def boom(text, model, client=None, fmt="mp3"):
+        raise drill.deepgram_tts.TtsError("down")
+    monkeypatch.setattr(drill.deepgram_tts, "synthesize", boom)
+    body = turn(client, history=json.dumps([])).json()
+    assert body["question"] == "What happened next?" and "questionAudio" not in body
+
+
+# ---------- live dialogue socket ----------
+
+class FakeLive:
+    """Stands in for the Deepgram live connection."""
+    instances = []
+    open_error = None
+    text = ANSWER
+
+    def __init__(self, language="en"):
+        self.pcm = 0
+        self.closed = False
+        FakeLive.instances.append(self)
+
+    async def open(self):
+        if FakeLive.open_error:
+            raise FakeLive.open_error
+
+    async def send(self, pcm):
+        self.pcm += len(pcm)
+
+    async def finish(self):
+        words = [{"word": w, "start": i * 0.5, "end": i * 0.5 + 0.3, "confidence": 0.99} for i, w in enumerate(FakeLive.text.split())]
+        return {"results": {"channels": [{"alternatives": [{"words": words}]}]}, "metadata": {"duration": 12.0}}
+
+    async def close(self):
+        self.closed = True
+
+
+async def _no_warm(fmt="mp3"):
+    return None
+
+
+@pytest.fixture
+def live(client, monkeypatch):
+    FakeLive.instances = []
+    FakeLive.open_error = None
+    FakeLive.text = ANSWER
+    monkeypatch.setattr(drill.deepgram_live, "LiveSession", FakeLive)
+    monkeypatch.setattr(drill_dialogue_service, "next_question", fake_next)
+    monkeypatch.setattr(drill_dialogue_service, "warm", lambda: None)
+    monkeypatch.setattr(drill, "_keep_voice_warm", _no_warm)
+
+    async def no_voice(text, model, client=None, fmt="mp3"):
+        raise drill.deepgram_tts.TtsError("off")
+    monkeypatch.setattr(drill.deepgram_tts, "synthesize", no_voice)
+    return client
+
+
+START = {"type": "start", "question": "What would you do?", "context": "negotiation", "turn": 1, "total": 2, "history": []}
+
+
+def run_live(client, start=START, frames=3, origin=None):
+    headers = {"origin": origin} if origin else {}
+    with client.websocket_connect("/api/drill/dialogue/live", headers=headers) as ws:
+        ws.send_json(start)
+        first = ws.receive_json()
+        if first.get("type") != "ready":
+            return first
+        for _ in range(frames):
+            ws.send_bytes(b"\x00\x01" * 1600)
+        ws.send_json({"type": "end"})
+        return ws.receive_json()
+
+
+def test_live_answer_returns_text_words_and_the_next_question(live):
+    out = run_live(live)
+    assert out["type"] == "result"
+    assert out["question"] == "Can you give me a concrete example?" and out["transcript"].startswith("well um I think")
+    assert out["words"][1]["filler"] is True and set(out["timing"]) == {"stt_ms", "next_ms", "llm_ms", "voice_ms"}
+    assert FakeLive.instances[0].pcm == 3 * 3200 and FakeLive.instances[0].closed
+
+
+def test_live_last_turn_has_no_question(live):
+    out = run_live(live, {**START, "turn": 2, "history": [{"question": "Q1?", "answer": "A1"}]})
+    assert out["type"] == "result" and "question" not in out
+
+
+def test_live_short_answer_is_refused_and_not_counted(live):
+    FakeLive.text = "yes sure"
+    out = run_live(live)
+    assert out == {"type": "error", "code": "empty"} or out["code"] in ("empty", "too_short")
+
+
+def test_live_provider_failure_is_reported_and_refunded(live):
+    FakeLive.open_error = drill.deepgram_service.SttError("down")
+    assert run_live(live) == {"type": "error", "code": "stt_failed"}
+    assert drill_rate_limit.acquire_turn("testclient", 2)      # the failed attempt was not charged and the slot was released
+
+
+def test_live_foreign_origin_is_rejected(live):
+    from starlette.websockets import WebSocketDisconnect as WSD
+    with pytest.raises(WSD):
+        with live.websocket_connect("/api/drill/dialogue/live", headers={"origin": "https://evil.example"}) as ws:
+            ws.send_json(START)
+            ws.receive_json()
+
+
+def test_live_bad_start_and_daily_limit(live, monkeypatch):
+    assert run_live(live, {"type": "start", "question": "", "turn": 1, "total": 2})["code"] == "bad_request"
+    assert run_live(live, {**START, "turn": 9})["code"] == "bad_request"
+    monkeypatch.setenv("DRILL_DIALOGUE_DAILY_TURNS", "1")
+    assert run_live(live)["type"] == "result"
+    assert run_live(live) == {"type": "error", "code": "limit"}
+
+
+def test_audio_format_is_chosen_by_the_page_and_cached_separately(monkeypatch):
+    from services import deepgram_tts
+    assert deepgram_tts.clean_format("ogg") == "ogg" and deepgram_tts.clean_format("wav") == "mp3" and deepgram_tts.clean_format(None) == "mp3"
+    assert deepgram_tts.mime_for("ogg") == "audio/ogg" and deepgram_tts.mime_for("mp3") == "audio/mpeg"
+    assert deepgram_tts._key("Hi.", "m") != deepgram_tts._key("Hi.", "m", "ogg")
+    assert deepgram_tts._key("Hi.", "m") == deepgram_tts._key("Hi.", "m", "mp3")
+
+
+def test_live_answer_uses_the_requested_voice_format(live, monkeypatch):
+    seen = {}
+
+    async def synth(text, model, client=None, fmt="mp3"):
+        seen["fmt"] = fmt
+        return b"OGG"
+    monkeypatch.setattr(drill.deepgram_tts, "synthesize", synth)
+    out = run_live(live, {**START, "format": "ogg"})
+    assert out["questionAudio"]["mime"] == "audio/ogg" and seen["fmt"] == "ogg"
+
+
+def test_a_stale_pooled_connection_is_retried_once(monkeypatch):
+    import asyncio
+    import httpx
+    from services import deepgram_tts
+
+    calls = {"n": 0}
+
+    class Flaky:
+        is_closed = False
+
+        async def post(self, *a, **k):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise httpx.RemoteProtocolError("server closed the connection")
+            return SimpleNamespace(status_code=200, content=b"OK")
+
+    monkeypatch.setenv("DEEPGRAM_API_KEY", "x")
+    monkeypatch.setattr(deepgram_tts, "shared_client", lambda: Flaky())
+    audio = asyncio.run(deepgram_tts.synthesize("a retry test sentence for the cache", "aura-asteria-en"))
+    assert audio == b"OK" and calls["n"] == 2

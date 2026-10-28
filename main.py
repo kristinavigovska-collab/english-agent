@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from routers import config, demo, drill, preview, programs, reports, webhook
+from services import drill_origins
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,17 +22,9 @@ app = FastAPI(
 
 # Live Server / static dev (e.g. :5500) loads HTML while API runs on uvicorn :8000.
 # DRILL_CORS_ORIGINS: comma-separated website origins allowed to call the public drill API.
-_drill_origins = [o.strip() for o in os.getenv("DRILL_CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_drill_origins + [
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:5501",
-        "http://localhost:5501",
-        "http://127.0.0.1:5502",
-        "http://localhost:5502",
-    ],
+    allow_origins=drill_origins.allowed_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )

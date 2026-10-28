@@ -59,7 +59,7 @@ You play the conversation partner in a short spoken English practice dialogue. Y
 The learner has just answered your question out loud; you receive an automatic transcript of the answer.
 
 Rules:
-- Reply with ONE short follow-up QUESTION, at most 25 words, in natural spoken English at an intermediate level.
+- Reply with ONE short follow-up QUESTION in a single sentence, 10 to 22 words, in natural spoken English at an intermediate level. Use plain punctuation only (no dashes, no colons): the sentence is read aloud.
 - React to something specific the learner actually said (a claim, a number, an example, a gap). Do not repeat earlier questions.
 - Stay in character. Do not give feedback, praise, corrections or advice. Do not mention that this is practice or a transcript.
 - If the answer was vague, ask for a concrete example. If it was concrete, challenge one point or ask about the result.
@@ -173,6 +173,29 @@ REVIEW_SCHEMA = {
 }
 
 
+def _partner_model() -> str:
+    """The follow-up is one short sentence: the small model answers in about 1 s, the large one in 2.5 s."""
+    return os.getenv("DIALOGUE_PARTNER_MODEL", "claude-haiku-4-5-20251001")
+
+
+FIRST_CHUNK_MAX = 70
+
+
+def first_chunk(text: str) -> str:
+    """The part of the question that is voiced first, so it can be ready quickly: one sentence (a short one is joined
+    to the next), and a long sentence is cut after its first clause. The rest is voiced by the page while this plays."""
+    import re
+    sentences = [x.strip() for x in (re.findall(r"[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$", text) or [text]) if x.strip()]
+    out = sentences[0] if sentences else text
+    if len(out) < 25 and len(sentences) > 1:
+        out += " " + sentences[1]
+    if len(out) > FIRST_CHUNK_MAX:
+        cut = out.rfind(",", 25, FIRST_CHUNK_MAX + 1)
+        if cut > 0:
+            out = out[: cut + 1]
+    return out
+
+
 def _partner(context: str) -> str:
     return PARTNERS.get(context, PARTNERS["general"])
 
@@ -194,6 +217,14 @@ def _clean_question(text: str) -> str:
     return text
 
 
+def warm() -> None:
+    """One tiny call so the connection to the language model is already open when the real question is needed."""
+    try:
+        base._get_client().messages.create(model=_partner_model(), max_tokens=1, messages=[{"role": "user", "content": "ok"}])
+    except Exception:
+        logger.info("drill dialogue: warm-up call failed", exc_info=True)
+
+
 def next_question(context: str, history: List[Dict[str, str]], answer: str) -> str:
     """The partner's follow-up to `answer`. Blocking; run in a worker thread. Never raises: falls back to a generic question."""
     lines = []
@@ -203,7 +234,7 @@ def next_question(context: str, history: List[Dict[str, str]], answer: str) -> s
     user = (transcript + "\n" if transcript else "") + f"Learner (latest answer): {answer}"
     try:
         response = base._get_client().messages.create(
-            model=_model(),
+            model=_partner_model(),
             max_tokens=160,
             system=[{"type": "text", "text": PARTNER_PROMPT.format(persona=_partner(context)), "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": user}],
