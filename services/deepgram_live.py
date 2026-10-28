@@ -24,11 +24,13 @@ SAMPLE_RATE = 16000
 
 
 class LiveSession:
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str = "en", on_partial=None):
         self.language = language
+        self._on_partial = on_partial          # called with the text so far (final + the current guess), for the page's turn-taking
         self._ws: Optional[Any] = None
         self._reader: Optional[asyncio.Task] = None
         self._words: List[dict] = []
+        self._final_text = ""
         self._flushed = asyncio.Event()
         self._closed = asyncio.Event()
         self.audio_seconds = 0.0
@@ -42,7 +44,7 @@ class LiveSession:
             "channels": "1",
             "punctuate": "true",
             "smart_format": "false",
-            "interim_results": "false",
+            "interim_results": "true",
         }
         if self.language == "en":
             params["filler_words"] = "true"
@@ -70,9 +72,18 @@ class LiveSession:
                     continue
                 if msg.get("type") != "Results":
                     continue
+                alts = (msg.get("channel") or {}).get("alternatives") or [{}]
                 if msg.get("is_final"):
-                    alts = (msg.get("channel") or {}).get("alternatives") or [{}]
                     self._words.extend(alts[0].get("words") or [])
+                    self._final_text = (self._final_text + " " + (alts[0].get("transcript") or "")).strip()
+                    heard = self._final_text
+                else:
+                    heard = (self._final_text + " " + (alts[0].get("transcript") or "")).strip()
+                if self._on_partial and heard and not msg.get("from_finalize"):
+                    try:
+                        self._on_partial(heard)
+                    except Exception:
+                        pass
                 if msg.get("from_finalize"):
                     self._flushed.set()
         except Exception as exc:

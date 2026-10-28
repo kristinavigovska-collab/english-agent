@@ -410,7 +410,15 @@ async def dialogue_live(ws: WebSocket):
     session = None
     warm_task = None
     try:
-        session = deepgram_live.LiveSession(DIALOGUE_LANGUAGE)
+        def relay(text: str) -> None:
+            async def push():
+                try:
+                    await ws.send_json({"type": "partial", "text": text[-400:]})
+                except Exception:
+                    pass
+            asyncio.get_running_loop().create_task(push())
+
+        session = deepgram_live.LiveSession(DIALOGUE_LANGUAGE, on_partial=relay)
         try:
             await session.open()
         except deepgram_service.SttNotConfigured:

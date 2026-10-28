@@ -414,7 +414,10 @@ class FakeLive:
     open_error = None
     text = ANSWER
 
-    def __init__(self, language="en"):
+    partials = []
+
+    def __init__(self, language="en", on_partial=None):
+        self.on_partial = on_partial
         self.pcm = 0
         self.closed = False
         FakeLive.instances.append(self)
@@ -425,6 +428,8 @@ class FakeLive:
 
     async def send(self, pcm):
         self.pcm += len(pcm)
+        if self.on_partial and FakeLive.partials:
+            self.on_partial(FakeLive.partials.pop(0))
 
     async def finish(self):
         words = [{"word": w, "start": i * 0.5, "end": i * 0.5 + 0.3, "confidence": 0.99} for i, w in enumerate(FakeLive.text.split())]
@@ -441,6 +446,7 @@ async def _no_warm(fmt="mp3"):
 @pytest.fixture
 def live(client, monkeypatch):
     FakeLive.instances = []
+    FakeLive.partials = []
     FakeLive.open_error = None
     FakeLive.text = ANSWER
     monkeypatch.setattr(drill.deepgram_live, "LiveSession", FakeLive)
@@ -457,7 +463,7 @@ def live(client, monkeypatch):
 START = {"type": "start", "question": "What would you do?", "context": "negotiation", "turn": 1, "total": 2, "history": []}
 
 
-def run_live(client, start=START, frames=3, origin=None):
+def run_live(client, start=START, frames=3, origin=None, seen=None):
     headers = {"origin": origin} if origin else {}
     with client.websocket_connect("/api/drill/dialogue/live", headers=headers) as ws:
         ws.send_json(start)
@@ -467,7 +473,12 @@ def run_live(client, start=START, frames=3, origin=None):
         for _ in range(frames):
             ws.send_bytes(b"\x00\x01" * 1600)
         ws.send_json({"type": "end"})
-        return ws.receive_json()
+        msg = ws.receive_json()
+        while msg.get("type") == "partial":          # live text for the page's turn-taking comes before the result
+            if seen is not None:
+                seen.append(msg["text"])
+            msg = ws.receive_json()
+        return msg
 
 
 def test_live_answer_returns_text_words_and_the_next_question(live):
@@ -550,3 +561,10 @@ def test_a_stale_pooled_connection_is_retried_once(monkeypatch):
     monkeypatch.setattr(deepgram_tts, "shared_client", lambda: Flaky())
     audio = asyncio.run(deepgram_tts.synthesize("a retry test sentence for the cache", "aura-asteria-en"))
     assert audio == b"OK" and calls["n"] == 2
+
+
+def test_live_text_so_far_is_relayed_to_the_page(live):
+    FakeLive.partials = ["well um", "well um I think we can"]
+    seen = []
+    out = run_live(live, seen=seen)
+    assert out["type"] == "result" and seen == ["well um", "well um I think we can"]
