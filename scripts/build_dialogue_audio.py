@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pre-record the partner's fixed lines for the website's trial dialogue (the partner voice, English).
 
-The four opening questions per situation and a few short acknowledgements ("Mm-hm.") never change, so the page plays
+The four opening questions per situation and a few short acknowledgements ("Okay.") never change, so the page plays
 them from static files: no waiting for speech synthesis and no cost per visitor. Follow-up questions are synthesised live.
 
 Usage:  python3 scripts/build_dialogue_audio.py --site ../Website-YappiFlow
@@ -25,7 +25,8 @@ load_dotenv(ROOT / ".env")
 
 from services import deepgram_tts  # noqa: E402
 
-ACKS = ["Mm-hm.", "I see.", "Right.", "Okay."]
+# Real words only: a synthetic "Mm-hm" comes out as a strange laugh-like sound.
+ACKS = ["Okay.", "I see.", "Right.", "Got it."]
 
 
 def read_lines(site: Path) -> dict:
