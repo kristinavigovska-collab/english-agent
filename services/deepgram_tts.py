@@ -40,12 +40,28 @@ class TtsNotConfigured(TtsError):
 _cache: "OrderedDict[str, bytes]" = OrderedDict()
 
 
-def _key(text: str, model: str) -> str:
-    return hashlib.sha1(f"{model}|{text}".encode("utf-8")).hexdigest()
+# "ogg" (Opus) is generated about twice as fast as mp3 and is a quarter of the size, but not every browser plays it.
+FORMATS = {
+    "mp3": ({"encoding": "mp3"}, "audio/mpeg"),
+    "ogg": ({"encoding": "opus", "container": "ogg"}, "audio/ogg"),
+}
 
 
-def cached(text: str, model: str) -> Optional[bytes]:
-    k = _key(text, model)
+def clean_format(fmt: Optional[str]) -> str:
+    return fmt if fmt in FORMATS else "mp3"
+
+
+def mime_for(fmt: str) -> str:
+    return FORMATS[clean_format(fmt)][1]
+
+
+def _key(text: str, model: str, fmt: str = "mp3") -> str:
+    prefix = model if fmt == "mp3" else f"{model}|{fmt}"
+    return hashlib.sha1(f"{prefix}|{text}".encode("utf-8")).hexdigest()
+
+
+def cached(text: str, model: str, fmt: str = "mp3") -> Optional[bytes]:
+    k = _key(text, model, clean_format(fmt))
     if k in _cache:
         _cache.move_to_end(k)
         return _cache[k]
@@ -65,19 +81,44 @@ def model_for(language: str, voice: str) -> str:
     return VOICES.get(language, VOICES["en"]).get(voice, VOICES["en"]["a"]) if language in VOICES else VOICES["en"]["a"]
 
 
-async def synthesize(text: str, model: str, client: Optional[httpx.AsyncClient] = None) -> bytes:
+# A pooled connection the provider has already closed fails once with one of these; the retry opens a fresh one.
+RETRYABLE = (httpx.RemoteProtocolError, httpx.ReadError, httpx.WriteError, httpx.ConnectError, httpx.PoolTimeout)
+
+_shared = {"client": None, "loop": None}
+
+
+def shared_client() -> httpx.AsyncClient:
+    import asyncio
+    loop = asyncio.get_running_loop()
+    if _shared["client"] is None or _shared["loop"] is not loop or _shared["client"].is_closed:
+        _shared["client"] = httpx.AsyncClient(timeout=TIMEOUT_SEC, limits=httpx.Limits(max_keepalive_connections=4, keepalive_expiry=60))
+        _shared["loop"] = loop
+    return _shared["client"]
+
+
+async def synthesize(text: str, model: str, client: Optional[httpx.AsyncClient] = None, fmt: str = "mp3") -> bytes:
+    fmt = clean_format(fmt)
     key = os.getenv("DEEPGRAM_API_KEY")
     if not key:
         raise TtsNotConfigured("DEEPGRAM_API_KEY is not set")
-    owns = client is None
-    client = client or httpx.AsyncClient(timeout=TIMEOUT_SEC)
+    owns = False
+    owns_shared = client is None
+    client = client or shared_client()
     try:
-        resp = await client.post(
-            SPEAK_URL,
-            params={"model": model, "encoding": "mp3"},
-            headers={"Authorization": f"Token {key}", "Content-Type": "application/json"},
-            json={"text": text},
-        )
+        for attempt in (1, 2):
+            try:
+                resp = await client.post(
+                    SPEAK_URL,
+                    params={"model": model, **FORMATS[fmt][0]},
+                    headers={"Authorization": f"Token {key}", "Content-Type": "application/json"},
+                    json={"text": text},
+                )
+                break
+            except RETRYABLE:
+                if attempt == 2 or not owns_shared:
+                    raise
+                _shared["client"] = None
+                client = shared_client()
     except httpx.HTTPError as exc:
         logger.warning("Deepgram TTS request failed: %s", type(exc).__name__)
         raise TtsError("provider unreachable") from exc
@@ -87,7 +128,7 @@ async def synthesize(text: str, model: str, client: Optional[httpx.AsyncClient] 
     if resp.status_code != 200 or not resp.content:
         logger.warning("Deepgram TTS returned HTTP %s", resp.status_code)
         raise TtsError(f"provider returned {resp.status_code}")
-    k = _key(text, model)
+    k = _key(text, model, fmt)
     _cache[k] = resp.content
     while len(_cache) > CACHE_ITEMS:
         _cache.popitem(last=False)

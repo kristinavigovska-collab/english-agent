@@ -287,7 +287,7 @@ def test_analysis_failure_returns_502_and_refunds(client, monkeypatch):
 def test_speak_returns_audio_caches_and_validates(client, monkeypatch):
     calls = []
 
-    async def fake_synth(text, model, client=None):
+    async def fake_synth(text, model, client=None, fmt="mp3"):
         calls.append(model)
         audio = b"ID3-fake-mp3-bytes"
         deepgram_tts._cache[deepgram_tts._key(text, model)] = audio
@@ -310,7 +310,7 @@ def test_speak_limit_and_errors(client, monkeypatch):
     deepgram_tts._cache.clear()
     monkeypatch.setenv("DRILL_TTS_DAILY_CHARS", "20")
 
-    async def boom(text, model, client=None):
+    async def boom(text, model, client=None, fmt="mp3"):
         raise deepgram_tts.TtsError("down")
 
     monkeypatch.setattr(deepgram_tts, "synthesize", boom)

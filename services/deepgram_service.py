@@ -57,15 +57,40 @@ def parse_response(payload: dict) -> Tuple[List[dict], float]:
     return words, duration
 
 
+# A pooled connection the provider has already closed fails once with one of these; the retry opens a fresh one.
+RETRYABLE = (httpx.RemoteProtocolError, httpx.ReadError, httpx.WriteError, httpx.ConnectError, httpx.PoolTimeout)
+
+_shared = {"client": None, "loop": None}
+
+
+def shared_client() -> httpx.AsyncClient:
+    """One keep-alive client per event loop: a new connection per request costs 100-300 ms of TLS."""
+    import asyncio
+    loop = asyncio.get_running_loop()
+    if _shared["client"] is None or _shared["loop"] is not loop or _shared["client"].is_closed:
+        _shared["client"] = httpx.AsyncClient(timeout=TIMEOUT_SEC, limits=httpx.Limits(max_keepalive_connections=4, keepalive_expiry=60))
+        _shared["loop"] = loop
+    return _shared["client"]
+
+
 async def transcribe(audio: bytes, content_type: str, language: str, client: Optional[httpx.AsyncClient] = None) -> Tuple[List[dict], float]:
     key = os.getenv("DEEPGRAM_API_KEY")
     if not key:
         raise SttNotConfigured("DEEPGRAM_API_KEY is not set")
     headers = {"Authorization": f"Token {key}", "Content-Type": content_type}
-    owns = client is None
-    client = client or httpx.AsyncClient(timeout=TIMEOUT_SEC)
+    owns = False
+    owns_shared = client is None
+    client = client or shared_client()
     try:
-        resp = await client.post(DEEPGRAM_URL, params=_params(language), headers=headers, content=audio)
+        for attempt in (1, 2):
+            try:
+                resp = await client.post(DEEPGRAM_URL, params=_params(language), headers=headers, content=audio)
+                break
+            except RETRYABLE:
+                if attempt == 2 or not owns_shared:
+                    raise
+                _shared["client"] = None
+                client = shared_client()
     except httpx.HTTPError as exc:
         logger.warning("Deepgram request failed: %s", type(exc).__name__)
         raise SttError("provider unreachable") from exc
