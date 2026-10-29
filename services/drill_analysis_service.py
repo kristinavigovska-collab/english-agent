@@ -68,12 +68,13 @@ Fields:
   * "hedge": softening that weakens a point ("maybe", "I think", "kind of", "sort of"). better = the firm version. rule = why it weakens the point.
   For filler and hedge set kind = "other" and topic = "".
   For grammar and vocabulary, "better" must NEVER be empty: when a word has to be deleted or inserted, widen the range to include a neighbouring word so "better" is a complete replacement phrase (e.g. range "should to" -> better "should"; range "for meeting" with a missing article -> better "for a meeting").
-- rules: exactly one entry for every distinct topic used by grammar or vocabulary issues, with the same "topic" text. "card" is a small teaching card written as FOUR parts separated by " || " (two vertical bars with spaces):
-    when || formula || example 1 || example 2
-  * when: ONE short sentence in the EXPLANATION language saying when to use the right form.
-  * formula: the pattern in the SPOKEN language as a short formula (at most 10 words), for example "I / we + verb-ed (past simple)" or "on + day / date"; write "-" if the point has no pattern (word choice).
-  * example 1 and example 2: short, correct, everyday sentences in the SPOKEN language that show the pattern (not the learner's sentences).
-  Example card: "Use it for an action that is finished. || I / we + verb-ed || I called the client yesterday. || We finished the report on Friday."
+- rules: exactly one entry for every distinct topic used by grammar or vocabulary issues, with the same "topic" text. "card" is a small teaching card written as FIVE parts separated by " || " (two vertical bars with spaces):
+    when || formula || example 1 || example 2 || signal words
+  * when: ONE or TWO short, friendly sentences in the EXPLANATION language for an intermediate learner: when to use the right form and how it differs from what the learner said.
+  * formula: the pattern in the SPOKEN language as building blocks joined by " + " (at most 10 words), with an optional note in brackets, for example "I / we + verb-ed (or the irregular past form)" or "on + day / date"; write "-" if the point has no pattern (word choice).
+  * example 1 and example 2: short, correct, everyday work sentences in the SPOKEN language that show the pattern (not the learner's sentences).
+  * signal words: 2-5 typical words or phrases in the SPOKEN language that call for this form, comma separated (for example "yesterday, last year, ago, in 2020"); write "-" if there are none.
+  Example card: "Use it for an action that finished at a known time in the past. Do not add was or did before the verb in a positive sentence. || I / we + verb-ed (or the irregular past form) || I called the client yesterday. || We finished the report on Friday. || yesterday, last week, ago, in 2020"
 - rewrites (0-{max_rewrites}): rewrite the one or two weakest whole sentences or clauses (from/to cover the original stretch, typically 8-25 words) into a clearer, shorter, stronger version in the spoken language. "reason" is one sentence on why it is better. Rewrites may overlap issues; they are shown separately.
 - strengths (1-{max_strengths}): specific phrases that worked, never overlapping issues, with a one-sentence note.
 - structure: for each of position, reason, example and conclusion say whether the answer contains it ("present") and, if it does, copy a SHORT exact quote (3-10 words, word for word from the transcript) as evidence; otherwise quote = "". "note" is 2-3 sentences on how the answer was organised for a one-minute talk.
@@ -382,7 +383,7 @@ def _match_topic(key: str, used: dict, seen: set):
 def _clean_text(text) -> str:
     """Drop any JSON debris the model occasionally leaks into a text field ('..."}, {"from": 10,')."""
     text = str(text or "")
-    for marker in ('"}', '{"', '"from"', '", "'):
+    for marker in ('"}, {"', '{"from"', '"from":', '"from" :'):
         at = text.find(marker)
         if at >= 0:
             text = text[:at]
@@ -405,14 +406,17 @@ def _rules(raw, issues: List[dict]) -> List[dict]:
             parts = [x.strip() for x in str(item.get("card", "")).split("||")]
             if len(parts) < 2:
                 parts = [parts[0] if parts else "", ""]
-            when, formula, examples = parts[0], parts[1], parts[2:]
+            when, formula, examples = parts[0], parts[1], parts[2:4]
+            signals = parts[4] if len(parts) > 4 else ""
         else:
             when, formula, examples = str(item.get("when", "")), str(item.get("formula", "")), list(item.get("examples") or [])
+            signals = str(item.get("signals", ""))
         formula = "" if formula.strip() in ("-", "—", "–") else formula
+        signals = [x.strip() for x in signals.split(",") if x.strip() and x.strip() not in ("-", "—", "–")][:5]
         examples = [str(x).strip() for x in examples if str(x).strip()][:2]
         if not when.strip():
             continue
-        out.append({"topic": used[key], "when": when.strip(), "formula": formula.strip()[:80], "examples": examples})
+        out.append({"topic": used[key], "when": when.strip(), "formula": formula.strip()[:80], "examples": examples, "signals": signals})
     return out
 
 
@@ -574,16 +578,22 @@ def analyze(words: List[dict], metrics: dict, topic: str, language: str, ui_loca
     def review() -> dict:
         response = _get_client().messages.create(
             model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-            max_tokens=7000,
+            max_tokens=12000,
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": build_user_message(words, metrics, topic, language, ui_locale, context)}],
             output_config={"format": {"type": "json_schema", "schema": REPORT_SCHEMA}},
             **_thinking(),
         )
         if response.stop_reason == "max_tokens":
+            logger.warning("drill: review hit max_tokens (output %s tokens)", getattr(response.usage, "output_tokens", "?"))
             raise ValueError("review was cut off")
         text = next(b.text for b in response.content if b.type == "text")
-        return finalize(json.loads(text), words)
+        raw = json.loads(text)
+        # Rarely the model writes the rest of its JSON inside one text field (issues and rules then go missing): ask again.
+        if any('"from":' in str(i.get("rule", "")) or '"from":' in str(i.get("better", "")) for i in raw.get("issues", []) if isinstance(i, dict)):
+            logger.warning("drill: review wrote its JSON inside a text field")
+            raise ValueError("review was cut off (JSON written inside a field)")
+        return finalize(raw, words)
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         review_future = pool.submit(_without_garble, review, "review")
