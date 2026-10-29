@@ -59,12 +59,22 @@ Fields:
 - headline: a verdict in at most 8 words that names the biggest strength and the biggest gap, e.g. "The idea is clear, but it needs specifics".
 - on_topic: "yes", "partly" or "no" - did the answer address the question?
 - issues (at most {max_issues}, ordered by importance, never overlapping):
-  * "grammar": a wrong form. Set "kind" to the closest of: form, missing_word, agreement, tense, article, word_order, preposition, other. "rule" is one short sentence naming the rule.
+  * "grammar": a wrong form. Set "kind" to the closest of: form, missing_word, agreement, tense, article, word_order, preposition, other.
   * "vocabulary": an imprecise or unnatural word choice. kind = word_choice.
+  For grammar and vocabulary:
+    - "topic" is the ONE specific point the learner has to learn, in 1-3 words in the EXPLANATION language (for example "Past simple", "Present perfect", "Articles", "Prepositions of time", "Repeated words", "Word choice"). Use exactly the same topic text for every issue that is fixed by the same rule, and a different topic when the rule is different (a repeated word is not a tense error).
+    - "rule" is ONE short sentence about THIS sentence only (what was wrong here and why the fix is right). Do not restate the general rule; it goes into "rules".
   * "filler": a discourse filler the recogniser kept that is NOT already marked {{filler}} (for example "actually", "like", "basically", "so" used as filler). better = "".
   * "hedge": softening that weakens a point ("maybe", "I think", "kind of", "sort of"). better = the firm version. rule = why it weakens the point.
-  For filler and hedge set kind = "other".
+  For filler and hedge set kind = "other" and topic = "".
   For grammar and vocabulary, "better" must NEVER be empty: when a word has to be deleted or inserted, widen the range to include a neighbouring word so "better" is a complete replacement phrase (e.g. range "should to" -> better "should"; range "for meeting" with a missing article -> better "for a meeting").
+- rules: exactly one entry for every distinct topic used by grammar or vocabulary issues, with the same "topic" text. "card" is a small teaching card written as FIVE parts separated by " || " (two vertical bars with spaces):
+    when || formula || example 1 || example 2 || signal words
+  * when: ONE or TWO short, friendly sentences in the EXPLANATION language for an intermediate learner: when to use the right form and how it differs from what the learner said.
+  * formula: the pattern in the SPOKEN language as building blocks joined by " + " (at most 10 words), with an optional note in brackets, for example "I / we + verb-ed (or the irregular past form)" or "on + day / date"; write "-" if the point has no pattern (word choice).
+  * example 1 and example 2: short, correct, everyday work sentences in the SPOKEN language that show the pattern (not the learner's sentences).
+  * signal words: 2-5 typical words or phrases in the SPOKEN language that call for this form, comma separated (for example "yesterday, last year, ago, in 2020"); write "-" if there are none.
+  Example card: "Use it for an action that finished at a known time in the past. Do not add was or did before the verb in a positive sentence. || I / we + verb-ed (or the irregular past form) || I called the client yesterday. || We finished the report on Friday. || yesterday, last week, ago, in 2020"
 - rewrites (0-{max_rewrites}): rewrite the one or two weakest whole sentences or clauses (from/to cover the original stretch, typically 8-25 words) into a clearer, shorter, stronger version in the spoken language. "reason" is one sentence on why it is better. Rewrites may overlap issues; they are shown separately.
 - strengths (1-{max_strengths}): specific phrases that worked, never overlapping issues, with a one-sentence note.
 - structure: for each of position, reason, example and conclusion say whether the answer contains it ("present") and, if it does, copy a SHORT exact quote (3-10 words, word for word from the transcript) as evidence; otherwise quote = "". "note" is 2-3 sentences on how the answer was organised for a one-minute talk.
@@ -139,10 +149,20 @@ REPORT_SCHEMA = {
                     "to": {"type": "integer"},
                     "type": {"type": "string", "enum": list(ISSUE_TYPES)},
                     "kind": {"type": "string"},
+                    "topic": {"type": "string"},
                     "better": {"type": "string"},
                     "rule": {"type": "string"},
                 },
-                "required": ["from", "to", "type", "kind", "better", "rule"],
+                "required": ["from", "to", "type", "kind", "topic", "better", "rule"],
+                "additionalProperties": False,
+            },
+        },
+        "rules": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"topic": {"type": "string"}, "card": {"type": "string"}},
+                "required": ["topic", "card"],
                 "additionalProperties": False,
             },
         },
@@ -214,7 +234,7 @@ REPORT_SCHEMA = {
         },
         "model_answer": ANSWER_SCHEMA,
     },
-    "required": ["headline", "on_topic", "issues", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step", "model_answer", "phrase_bank", "signposting"],
+    "required": ["headline", "on_topic", "issues", "rules", "rewrites", "strengths", "structure", "fillers_note", "hedges_note", "next_step", "model_answer", "phrase_bank", "signposting"],
     "additionalProperties": False,
 }
 
@@ -337,6 +357,69 @@ def _signposting(raw: dict, words: List[dict]) -> dict:
     return {"used": list(dict.fromkeys(used)), "missing": missing}
 
 
+def _topic_key(text: str) -> str:
+    return " ".join("".join(c for c in text.lower() if c.isalnum() or c.isspace()).split())
+
+
+def _match_topic(key: str, used: dict, seen: set):
+    """The model sometimes words the topic of a rule slightly differently from the issue ("Articles" / "Articles and plurals")."""
+    if not key:
+        return None
+    if key in used and key not in seen:
+        return key
+    best, score = None, 0.0
+    words = set(key.split())
+    for k in used:
+        if k in seen:
+            continue
+        if key in k or k in key:
+            return k
+        overlap = len(words & set(k.split())) / max(1, len(words | set(k.split())))
+        if overlap > score:
+            best, score = k, overlap
+    return best if score >= 0.5 else None
+
+
+def _clean_text(text) -> str:
+    """Drop any JSON debris the model occasionally leaks into a text field ('..."}, {"from": 10,')."""
+    text = str(text or "")
+    for marker in ('"}, {"', '{"from"', '"from":', '"from" :'):
+        at = text.find(marker)
+        if at >= 0:
+            text = text[:at]
+    return text.strip().rstrip(",").strip()
+
+
+def _rules(raw, issues: List[dict]) -> List[dict]:
+    """One teaching card per topic that the kept issues actually use (the topic text links them)."""
+    used = {_topic_key(i["topic"]): i["topic"] for i in issues if i.get("topic")}
+    out: List[dict] = []
+    seen = set()
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        key = _match_topic(_topic_key(str(item.get("topic", ""))), used, seen)
+        if key is None:
+            continue
+        seen.add(key)
+        if "card" in item:          # the model packs the card into one string (a smaller output schema)
+            parts = [x.strip() for x in str(item.get("card", "")).split("||")]
+            if len(parts) < 2:
+                parts = [parts[0] if parts else "", ""]
+            when, formula, examples = parts[0], parts[1], parts[2:4]
+            signals = parts[4] if len(parts) > 4 else ""
+        else:
+            when, formula, examples = str(item.get("when", "")), str(item.get("formula", "")), list(item.get("examples") or [])
+            signals = str(item.get("signals", ""))
+        formula = "" if formula.strip() in ("-", "—", "–") else formula
+        signals = [x.strip() for x in signals.split(",") if x.strip() and x.strip() not in ("-", "—", "–")][:5]
+        examples = [str(x).strip() for x in examples if str(x).strip()][:2]
+        if not when.strip():
+            continue
+        out.append({"topic": used[key], "when": when.strip(), "formula": formula.strip()[:80], "examples": examples, "signals": signals})
+    return out
+
+
 def finalize(raw: dict, words: List[dict]) -> dict:
     """Validate Claude's output against the real transcript and fold it into the report shape."""
     n = len(words)
@@ -361,13 +444,18 @@ def finalize(raw: dict, words: List[dict]) -> dict:
         for k in range(a, b + 1):
             taken[k] = True
         original = " ".join(w["w"] for w in words[a : b + 1]).strip(" .,;:!?¿¡\"“”")
-        better = str(item.get("better", "")).strip()
-        rule = str(item.get("rule", "")).strip()
+        better = _clean_text(item.get("better", ""))
+        rule = _clean_text(item.get("rule", ""))
         if t == "hedge":
             hedges.append({"from": a, "to": b, "original": original, "better": better, "note": rule})
             continue
+        if _topic_key(original) == _topic_key(better):
+            for k in range(a, b + 1):
+                taken[k] = False
+            continue    # a "fix" that changes nothing
         kind = item.get("kind") if item.get("kind") in KINDS else "other"
-        issues.append({"from": a, "to": b, "type": t, "kind": kind, "original": original, "better": better, "explanation": rule})
+        topic = " ".join(str(item.get("topic", "")).split())[:40]
+        issues.append({"from": a, "to": b, "type": t, "kind": kind, "topic": topic, "original": original, "better": better, "explanation": rule})
 
     strengths: List[dict] = []
     for item in raw.get("strengths", []):
@@ -403,6 +491,7 @@ def finalize(raw: dict, words: List[dict]) -> dict:
         "headline": str(raw.get("headline", "")).strip(),
         "onTopic": on_topic,
         "issues": sorted(issues, key=lambda i: i["from"]),
+        "rules": _rules(raw.get("rules", []), issues),
         "hedges": sorted(hedges, key=lambda h: h["from"]),
         "rewrites": sorted(rewrites, key=lambda r: r["from"]),
         "strengths": sorted(strengths, key=lambda s: s["from"]),
@@ -465,7 +554,7 @@ def _expert_answer_once(topic: str, language: str, ui_locale: str, context: str)
     )
     response = _get_client().messages.create(
         model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-        max_tokens=8000,  # reasoning tokens count too; 4000 was cut off in ~1 of 25 calls
+        max_tokens=12000,  # reasoning tokens count too; the rule cards made 8000 too tight
         system=[{"type": "text", "text": EXPERT_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": msg}],
         output_config={"format": {"type": "json_schema", "schema": EXPERT_SCHEMA}},
@@ -489,16 +578,22 @@ def analyze(words: List[dict], metrics: dict, topic: str, language: str, ui_loca
     def review() -> dict:
         response = _get_client().messages.create(
             model=os.getenv("DRILL_CLAUDE_MODEL", DEFAULT_MODEL),
-            max_tokens=7000,
+            max_tokens=12000,
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": build_user_message(words, metrics, topic, language, ui_locale, context)}],
             output_config={"format": {"type": "json_schema", "schema": REPORT_SCHEMA}},
             **_thinking(),
         )
         if response.stop_reason == "max_tokens":
+            logger.warning("drill: review hit max_tokens (output %s tokens)", getattr(response.usage, "output_tokens", "?"))
             raise ValueError("review was cut off")
         text = next(b.text for b in response.content if b.type == "text")
-        return finalize(json.loads(text), words)
+        raw = json.loads(text)
+        # Rarely the model writes the rest of its JSON inside one text field (issues and rules then go missing): ask again.
+        if any('"from":' in str(i.get("rule", "")) or '"from":' in str(i.get("better", "")) for i in raw.get("issues", []) if isinstance(i, dict)):
+            logger.warning("drill: review wrote its JSON inside a text field")
+            raise ValueError("review was cut off (JSON written inside a field)")
+        return finalize(raw, words)
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         review_future = pool.submit(_without_garble, review, "review")

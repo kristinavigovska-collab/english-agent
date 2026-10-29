@@ -366,3 +366,80 @@ def test_cut_off_answer_is_retried():
 
     assert svc._without_garble(flaky, "t") == {"tips": ["ok"]}
     assert len(calls) == 2
+
+
+
+def test_issue_topics_and_one_rule_card_per_used_topic():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("yesterday I am walking to office and I propose I propose a plan".split())]
+    raw = base_raw(
+        issues=[
+            {"from": 1, "to": 3, "type": "grammar", "kind": "tense", "topic": " Past  simple ", "better": "I walked", "rule": "finished action"},
+            {"from": 7, "to": 10, "type": "grammar", "kind": "other", "topic": "Repeated words", "better": "I proposed", "rule": "say it once"},
+            {"from": 5, "to": 5, "type": "hedge", "kind": "other", "topic": "", "better": "", "rule": "weak"},
+        ],
+        rules=[
+            {"topic": "past simple", "card": "For a finished action. || verb + ed || I walked. || We met. ||  -  "},
+            {"topic": "Past simple", "card": "duplicate || x || y || z"},                   # same topic twice -> first wins
+            {"topic": "Articles", "card": "not used by any issue || a / the || x || y"},     # no issue -> dropped
+            {"topic": "Repeated words", "card": "Say the verb once. || - || I proposed a plan. || We agreed."},  # "-" = no pattern
+        ],
+    )
+    out = drill_analysis_service.finalize(raw, words)
+    assert [i["topic"] for i in out["issues"]] == ["Past simple", "Repeated words"]
+    assert out["rules"] == [
+        {"topic": "Past simple", "when": "For a finished action.", "formula": "verb + ed", "examples": ["I walked.", "We met."], "signals": []},
+        {"topic": "Repeated words", "when": "Say the verb once.", "formula": "", "examples": ["I proposed a plan.", "We agreed."], "signals": []},
+    ]
+
+
+def test_old_output_without_topics_or_rules_still_works():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("I am walking to office".split())]
+    raw = base_raw(issues=[{"from": 0, "to": 2, "type": "grammar", "kind": "tense", "better": "I walked", "rule": "past"}])
+    raw.pop("rules", None)
+    out = drill_analysis_service.finalize(raw, words)
+    assert out["issues"][0]["topic"] == "" and out["rules"] == []
+
+
+def test_a_card_without_separators_keeps_the_sentence_as_the_rule():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("I am walking to office".split())]
+    raw = base_raw(issues=[{"from": 0, "to": 2, "type": "grammar", "kind": "tense", "topic": "Past simple", "better": "I walked", "rule": "past"}],
+                   rules=[{"topic": "Past simple", "card": "Use the past simple for finished actions."}])
+    assert drill_analysis_service.finalize(raw, words)["rules"] == [{"topic": "Past simple", "when": "Use the past simple for finished actions.", "formula": "", "examples": [], "signals": []}]
+
+
+def test_rule_topic_worded_a_bit_differently_still_links_and_json_debris_is_cut():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("I was struggled with other team".split())]
+    raw = base_raw(
+        issues=[
+            {"from": 0, "to": 2, "type": "grammar", "kind": "tense", "topic": "Past simple", "better": "I struggled", "rule": 'Finished action."}, {"from":10,'},
+            {"from": 4, "to": 5, "type": "grammar", "kind": "article", "topic": "Articles and plurals", "better": "other teams", "rule": "plural"},
+        ],
+        rules=[
+            {"topic": "Past simple tense", "card": "Finished actions. || verb-ed || I called. || We met."},
+            {"topic": "Articles", "card": "Countable nouns need a / the or a plural. || a / the + noun || I met a client. || We have two teams."},
+        ],
+    )
+    out = drill_analysis_service.finalize(raw, words)
+    assert out["issues"][0]["explanation"] == "Finished action."
+    assert [r["topic"] for r in out["rules"]] == ["Past simple", "Articles and plurals"]
+
+
+def test_a_fix_that_changes_nothing_is_dropped():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("every day before the deadline".split())]
+    raw = base_raw(issues=[{"from": 0, "to": 4, "type": "grammar", "kind": "word_order", "topic": "Word order", "better": "Every day before the deadline.", "rule": "x"}])
+    assert drill_analysis_service.finalize(raw, words)["issues"] == []
+
+
+def test_rule_card_signal_words():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("I am walking to office".split())]
+    raw = base_raw(issues=[{"from": 0, "to": 2, "type": "grammar", "kind": "tense", "topic": "Past simple", "better": "I walked", "rule": "past"}],
+                   rules=[{"topic": "Past simple", "card": "Finished actions. || I + verb-ed || I called. || We met. || yesterday, last week ,  , ago"}])
+    r = drill_analysis_service.finalize(raw, words)["rules"][0]
+    assert r["examples"] == ["I called.", "We met."] and r["signals"] == ["yesterday", "last week", "ago"]
+
+
+def test_quotes_inside_a_rule_are_kept():
+    words = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.3} for i, w in enumerate("I was struggled".split())]
+    raw = base_raw(issues=[{"from": 0, "to": 2, "type": "grammar", "kind": "tense", "topic": "Past simple", "better": "I struggled",
+                            "rule": 'Use one past verb: "struggled", not "was struggled".'}])
+    assert drill_analysis_service.finalize(raw, words)["issues"][0]["explanation"] == 'Use one past verb: "struggled", not "was struggled".'
